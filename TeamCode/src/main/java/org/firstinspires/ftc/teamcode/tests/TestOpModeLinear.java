@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.tests;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -108,7 +108,7 @@ public class TestOpModeLinear extends LinearOpMode {
             // Set up a variable for each drive wheel to save the power level for telemetry.
             double motorPower = axial + lateral + yaw;
 
-            motorPower = 0.5;
+            motorPower = axial;
 
             if (motorPower > 1.0) {
                 motorPower = 1.0;
