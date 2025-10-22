@@ -105,11 +105,11 @@ public class AutoLeagueMeet0 extends LinearOpMode {
             }
 
             // Stop all motion
-            frontLeftDrive.setPower(0);
-            backLeftDrive.setPower(0);
+            frontLeftDrive.setPower(0.0);
+            backLeftDrive.setPower(0.0);
 
-            frontRightDrive.setPower(0);
-            backRightDrive.setPower(0);
+            frontRightDrive.setPower(0.0);
+            backRightDrive.setPower(0.0);
         }
     }
 }

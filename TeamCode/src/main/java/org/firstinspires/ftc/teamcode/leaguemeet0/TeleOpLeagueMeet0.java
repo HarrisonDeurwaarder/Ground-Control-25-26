@@ -33,6 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -49,8 +50,26 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
 
+    private DcMotor intakeMotor = null;
+    private DcMotor beltMotor = null;
+    private DcMotor flywheelMotor = null;
+
+    private double intakePower = 0.8;
+    private double beltPower = 0.8;
+    private double flywheelPower = 0.8;
+
     @Override
     public void runOpMode() {
+
+        // Previous button statuses are stored to prevent over-toggling
+        boolean prevIntakeButton = false;
+        boolean prevBeltButton = false;
+        boolean prevFlywheelButton = false;
+
+        // Previous button statuses are stored to prevent over-toggling
+        boolean intakeToggle = false;
+        boolean beltToggle = false;
+        boolean flywheelToggle = false;
 
         // Initialize the motor variables
         frontLeftDrive = hardwareMap.get(DcMotor.class, "drivetrain_fl");
@@ -58,11 +77,20 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
         frontRightDrive = hardwareMap.get(DcMotor.class, "drivetrain_fr");
         backRightDrive = hardwareMap.get(DcMotor.class, "drivetrain_br");
 
+        intakeMotor = hardwareMap.get(DcMotor.class, "intake");
+        beltMotor = hardwareMap.get(DcMotor.class, "belt");
+        flywheelMotor = hardwareMap.get(DcMotor.class, "flywheel");
+
+        // Set directions
         // The left-side motors need to be reversed
         frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        intakeMotor.setDirection(DcMotor.Direction.FORWARD);
+        beltMotor.setDirection(DcMotor.Direction.FORWARD);
+        flywheelMotor.setDirection(DcMotor.Direction.FORWARD);
 
         // Set motors to brake if under zero power
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -79,6 +107,11 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+            /*
+            * Handle wheel powering
+            * Compute desired power for each wheel given the gamepad inputs
+            * Normalize power to ensure nothing exceeds 1.0
+            */
             double max;
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
@@ -113,10 +146,38 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
             backLeftDrive.setPower(backLeftPower);
             backRightDrive.setPower(backRightPower);
 
+            /*
+            * Handle selective mechanism powering
+            * Get the button presses assigned to each mechanism
+            * Only when the button is pressed, toggle each mechanism
+            */
+
+            // Corresponding button presses active given motors for tests
+            boolean intakeButton = gamepad2.a;
+            boolean beltButton = gamepad2.b;
+            boolean flywheelButton = gamepad2.x;
+
+            // Update toggles
+            intakeToggle = (!prevIntakeButton && intakeButton) != intakeToggle;
+            beltToggle = (!prevBeltButton && beltButton) != beltToggle;
+            flywheelToggle = (!prevFlywheelButton && flywheelButton) != flywheelToggle;
+
+            // Send power to motors (only if they are toggled ON)
+            intakeMotor.setPower((intakeToggle) ? intakePower : 0.0);
+            beltMotor.setPower((beltToggle) ? beltPower : 0.0);
+            flywheelMotor.setPower((flywheelToggle) ? flywheelPower : 0.0);
+
+            // Update previous button statuses
+            prevIntakeButton = intakeButton;
+            prevBeltButton = beltButton;
+            prevFlywheelButton = flywheelButton;
+
             // Show the elapsed game time and wheel power.
             telemetry.addData("Active Time", "%.1f seconds", runtime.seconds());
-            telemetry.addData("Front Left : Right", "%4.2f : %4.2f", frontLeftPower, frontRightPower);
-            telemetry.addData("Back Left : Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
+            telemetry.addData("Front (Left / Right)", "(%4.2f / %4.2f)", frontLeftPower, frontRightPower);
+            telemetry.addData("Back (Left / Right)", "(%4.2f / %4.2f)", backLeftPower, backRightPower);
+            telemetry.addData("Mechanism Speeds (Intake / Belt / Flywheel)", "(%4.2f / %4.2f / %4.2f)", intakePower, beltPower, flywheelPower);
+            telemetry.addData("Mechanism Power (Intake / Belt / Flywheel)", "(%b / %b / %b)", intakeToggle, beltToggle, flywheelToggle);
             telemetry.update();
         }
     }}
