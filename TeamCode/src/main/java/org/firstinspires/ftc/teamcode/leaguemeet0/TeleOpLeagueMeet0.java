@@ -63,7 +63,6 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
 
         // Previous button statuses are stored to prevent over-toggling
         boolean prevIntakeButton = false;
-        boolean prevBeltButton = false;
         boolean prevFlywheelButton = false;
 
         // Previous button statuses are stored to prevent over-toggling
@@ -159,17 +158,15 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
 
             // Update toggles
             intakeToggle = (!prevIntakeButton && intakeButton) != intakeToggle;
-            beltToggle = (!prevBeltButton && beltButton) != beltToggle;
             flywheelToggle = (!prevFlywheelButton && flywheelButton) != flywheelToggle;
 
             // Send power to motors (only if they are toggled ON)
             intakeMotor.setPower((intakeToggle) ? intakePower : 0.0);
-            beltMotor.setPower((beltToggle) ? beltPower : 0.0);
+            beltMotor.setPower((beltButton) ? beltPower : 0.0);
             flywheelMotor.setPower((flywheelToggle) ? flywheelPower : 0.0);
 
             // Update previous button statuses
             prevIntakeButton = intakeButton;
-            prevBeltButton = beltButton;
             prevFlywheelButton = flywheelButton;
 
             // Show the elapsed game time and wheel power.
