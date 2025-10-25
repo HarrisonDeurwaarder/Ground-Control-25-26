@@ -49,26 +49,31 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
+    private double maxDrivePower = 0.6;
 
     private DcMotor intakeMotor = null;
     private DcMotor beltMotor = null;
     private DcMotor flywheelMotor = null;
 
-    private double intakePower = 0.8;
-    private double beltPower = 0.8;
-    private double flywheelPower = 0.8;
+    private double intakePower = 0.6;
+    private double beltPower = 0.6;
+    private double flywheelPower = 0.7;
 
     @Override
     public void runOpMode() {
 
         // Previous button statuses are stored to prevent over-toggling
         boolean prevIntakeButton = false;
+        boolean prevIntakeDirectionButton = false;
         boolean prevFlywheelButton = false;
 
         // Previous button statuses are stored to prevent over-toggling
         boolean intakeToggle = false;
-        boolean beltToggle = false;
+        boolean intakeDirectionToggle = false;
         boolean flywheelToggle = false;
+
+        // String to control direction of intake
+        String intakeDirection = "FORWARD";
 
         // Initialize the motor variables
         frontLeftDrive = hardwareMap.get(DcMotor.class, "drivetrain_fl");
@@ -88,7 +93,7 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         intakeMotor.setDirection(DcMotor.Direction.FORWARD);
-        beltMotor.setDirection(DcMotor.Direction.FORWARD);
+        beltMotor.setDirection(DcMotor.Direction.REVERSE);
         flywheelMotor.setDirection(DcMotor.Direction.FORWARD);
 
         // Set motors to brake if under zero power
@@ -132,7 +137,7 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
             max = Math.max(max, Math.abs(backLeftPower));
             max = Math.max(max, Math.abs(backRightPower));
 
-            if (max > 1.0) {
+            if (max > maxDrivePower) {
                 frontLeftPower  /= max;
                 frontRightPower /= max;
                 backLeftPower   /= max;
@@ -140,10 +145,10 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
             }
 
             // Send calculated power to wheels
-            frontLeftDrive.setPower(frontLeftPower);
-            frontRightDrive.setPower(frontRightPower);
-            backLeftDrive.setPower(backLeftPower);
-            backRightDrive.setPower(backRightPower);
+            frontLeftDrive.setPower(frontLeftPower * maxDrivePower);
+            frontRightDrive.setPower(frontRightPower * maxDrivePower);
+            backLeftDrive.setPower(backLeftPower * maxDrivePower);
+            backRightDrive.setPower(backRightPower * maxDrivePower);
 
             /*
             * Handle selective mechanism powering
@@ -152,29 +157,50 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
             */
 
             // Corresponding button presses active given motors for tests
-            boolean intakeButton = gamepad2.a;
-            boolean beltButton = gamepad2.b;
-            boolean flywheelButton = gamepad2.x;
+            boolean intakeButton = gamepad1.b;
+            boolean intakeDirectionButton = gamepad1.a;
+            boolean flywheelButton = gamepad1.right_bumper;
+
+            float beltButton = gamepad1.right_trigger;
 
             // Update toggles
             intakeToggle = (!prevIntakeButton && intakeButton) != intakeToggle;
+            intakeDirectionToggle = (!prevIntakeDirectionButton && intakeDirectionButton) != intakeDirectionButton;
             flywheelToggle = (!prevFlywheelButton && flywheelButton) != flywheelToggle;
+
+            // Toggle the intake direction
+            if (intakeDirectionToggle && intakeDirection.equals("FORWARD")) {
+                intakeDirection = "REVERSE";
+                intakeMotor.setDirection(DcMotor.Direction.REVERSE);
+            } else if (intakeDirectionToggle) {
+                intakeDirection = "FORWARD";
+                intakeMotor.setDirection(DcMotor.Direction.FORWARD);
+            }
 
             // Send power to motors (only if they are toggled ON)
             intakeMotor.setPower((intakeToggle) ? intakePower : 0.0);
-            beltMotor.setPower((beltButton) ? beltPower : 0.0);
+            beltMotor.setPower((beltButton > 0.1) ? beltPower : 0.0);
             flywheelMotor.setPower((flywheelToggle) ? flywheelPower : 0.0);
 
             // Update previous button statuses
             prevIntakeButton = intakeButton;
+            prevIntakeDirectionButton = intakeDirectionButton;
             prevFlywheelButton = flywheelButton;
 
             // Show the elapsed game time and wheel power.
-            telemetry.addData("Active Time", "%.1f seconds", runtime.seconds());
+            telemetry.addData("Active Time", "%.1f seconds\n", runtime.seconds());
+
             telemetry.addData("Front (Left / Right)", "(%4.2f / %4.2f)", frontLeftPower, frontRightPower);
-            telemetry.addData("Back (Left / Right)", "(%4.2f / %4.2f)", backLeftPower, backRightPower);
+            telemetry.addData("Back (Left / Right)", "(%4.2f / %4.2f)\n", backLeftPower, backRightPower);
+
             telemetry.addData("Mechanism Speeds (Intake / Belt / Flywheel)", "(%4.2f / %4.2f / %4.2f)", intakePower, beltPower, flywheelPower);
-            telemetry.addData("Mechanism Power (Intake / Belt / Flywheel)", "(%b / %b / %b)", intakeToggle, beltToggle, flywheelToggle);
+            telemetry.addData("Mechanism Power (Intake / Belt / Flywheel)", "(%b / %b / %b)", intakeToggle, beltButton > 0.1, flywheelToggle);
+            telemetry.addData("Intake Direction", "%s\n", intakeDirection);
+
+            telemetry.addData("A", "Intake Direction Toggle");
+            telemetry.addData("B", "Intake Toggle");
+            telemetry.addData("RB", "Flywheel Toggle");
+            telemetry.addData("RT", "Launch");
             telemetry.update();
         }
     }}
