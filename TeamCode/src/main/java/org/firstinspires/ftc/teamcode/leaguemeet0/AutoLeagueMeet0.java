@@ -100,7 +100,7 @@ public class AutoLeagueMeet0 extends LinearOpMode {
                 telemetry.addData("Active Time", "%.1f seconds", runtime.seconds());
                 telemetry.addData("Remaining Drive Time", "%.1f seconds", DURATION - runtime.seconds());
                 telemetry.addData("Front Left : Right", "%4.2f : %4.2f", DRIVE_SPEED, DRIVE_SPEED);
-                telemetry.addData("Back  Left : Right", "%4.2f, %4.2f", DRIVE_SPEED, DRIVE_SPEED);
+                telemetry.addData("Back  Left : Right", "%4.2f : %4.2f", DRIVE_SPEED, DRIVE_SPEED);
                 telemetry.update();
             }
 

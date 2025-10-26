@@ -49,31 +49,28 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
-    private double maxDrivePower = 0.9;
 
     private DcMotor intakeMotor = null;
     private DcMotor beltMotor = null;
     private DcMotor flywheelMotor = null;
 
-    private double intakePower = 0.6;
-    private double beltPower = 0.6;
-    private double flywheelPower = 0.7;
+    private boolean flywheelButton = false;
+    private boolean intakeButton = false;
+    private boolean outtakeButton = false;
+    private boolean releaseTrigger = false;
+
+    final private double intakePower = 0.6;
+    final private double beltPower = 0.6;
+    final private double flywheelPower = 0.6;
+
+    final private double triggerThreshold = 0.1;
+    final private double maxDrivePower = 1.0;
 
     @Override
     public void runOpMode() {
 
         // Previous button statuses are stored to prevent over-toggling
-        boolean prevIntakeButton = false;
-        boolean prevIntakeDirectionButton = false;
-        boolean prevFlywheelButton = false;
-
-        // Previous button statuses are stored to prevent over-toggling
-        boolean intakeToggle = false;
-        boolean intakeDirectionToggle = false;
         boolean flywheelToggle = false;
-
-        // String to control direction of intake
-        String intakeDirection = "FORWARD";
 
         // Initialize the motor variables
         frontLeftDrive = hardwareMap.get(DcMotor.class, "drivetrain_fl");
@@ -156,50 +153,38 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
             * Only when the button is pressed, toggle each mechanism
             */
 
-            // Corresponding button presses active given motors for tests
-            boolean intakeButton = gamepad1.b;
-            boolean intakeDirectionButton = gamepad1.a;
-            boolean flywheelButton = gamepad1.right_bumper;
+            // Corresponding button/trigger presses active given motors for tests
+            outtakeButton = gamepad1.left_bumper;
+            intakeButton = gamepad1.right_bumper;
 
-            float beltButton = gamepad1.right_trigger;
+            flywheelButton = gamepad1.a;
+            releaseTrigger = gamepad1.right_trigger >= triggerThreshold;
 
-            // Update toggles
-            intakeToggle = (!prevIntakeButton && intakeButton) != intakeToggle;
-            intakeDirectionToggle = (!prevIntakeDirectionButton && intakeDirectionButton) != intakeDirectionButton;
-            flywheelToggle = (!prevFlywheelButton && flywheelButton) != flywheelToggle;
-
-            // Toggle the intake direction
-            if (intakeDirectionToggle && intakeDirection.equals("FORWARD")) {
-                intakeDirection = "REVERSE";
-                intakeMotor.setDirection(DcMotor.Direction.REVERSE);
-            } else if (intakeDirectionToggle) {
-                intakeDirection = "FORWARD";
+            // Update intake direction toggle
+            if (intakeButton && intakeMotor.getDirection().equals(DcMotor.Direction.REVERSE)) {
                 intakeMotor.setDirection(DcMotor.Direction.FORWARD);
+            } else if (outtakeButton && intakeMotor.getDirection().equals(DcMotor.Direction.FORWARD)) {
+                intakeMotor.setDirection(DcMotor.Direction.REVERSE);
             }
 
-            // Send power to motors (only if they are toggled ON)
-            intakeMotor.setPower((intakeToggle) ? intakePower : 0.0);
-            beltMotor.setPower((beltButton > 0.1) ? beltPower : 0.0);
-            flywheelMotor.setPower((flywheelToggle) ? flywheelPower : 0.0);
-
-            // Update previous button statuses
-            prevIntakeButton = intakeButton;
-            prevIntakeDirectionButton = intakeDirectionButton;
-            prevFlywheelButton = flywheelButton;
+            // Conditionally send power to motors
+            intakeMotor.setPower((outtakeButton || intakeButton) ? intakePower : 0.0);
+            beltMotor.setPower((releaseTrigger) ? beltPower : 0.0);
+            flywheelMotor.setPower(!(flywheelMotor.getPowerFloat() && !flywheelButton) ? flywheelPower : 0.0);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Active Time", "%.1f seconds\n", runtime.seconds());
 
+            telemetry.addData("Drivetrain Max Power", "%4.2f", maxDrivePower);
             telemetry.addData("Front (Left / Right)", "(%4.2f / %4.2f)", frontLeftPower, frontRightPower);
             telemetry.addData("Back (Left / Right)", "(%4.2f / %4.2f)\n", backLeftPower, backRightPower);
 
             telemetry.addData("Mechanism Speeds (Intake / Belt / Flywheel)", "(%4.2f / %4.2f / %4.2f)", intakePower, beltPower, flywheelPower);
-            telemetry.addData("Mechanism Power (Intake / Belt / Flywheel)", "(%b / %b / %b)", intakeToggle, beltButton > 0.1, flywheelToggle);
-            telemetry.addData("Intake Direction", "%s\n", intakeDirection);
+            telemetry.addData("Mechanism Power (Intake / Outtake / Belt / Flywheel)", "(%b / %b / %b / %b)", intakeButton, outtakeButton, releaseTrigger, flywheelToggle);
 
-            telemetry.addData("A", "Intake Direction Toggle");
-            telemetry.addData("B", "Intake Toggle");
-            telemetry.addData("RB", "Flywheel Toggle");
+            telemetry.addData("A", "Flywheel Toggle");
+            telemetry.addData("RB", "Intake");
+            telemetry.addData("LB", "Outtake");
             telemetry.addData("RT", "Launch");
             telemetry.update();
         }
