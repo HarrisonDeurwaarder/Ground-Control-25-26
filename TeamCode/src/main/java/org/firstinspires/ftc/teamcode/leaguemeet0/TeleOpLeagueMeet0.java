@@ -49,7 +49,7 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
-    private double maxDrivePower = 0.6;
+    private double maxDrivePower = 0.9;
 
     private DcMotor intakeMotor = null;
     private DcMotor beltMotor = null;
