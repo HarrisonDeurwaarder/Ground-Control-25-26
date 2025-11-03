@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.keybinds;
+package org.firstinspires.ftc.teamcode.teamcode.keybinds;
 
 import java.util.Arrays;
 import java.util.HashMap;

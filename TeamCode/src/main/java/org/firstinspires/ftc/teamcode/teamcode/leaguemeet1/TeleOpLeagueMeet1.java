@@ -27,37 +27,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.leaguemeet0;
+package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.teamcode.keybinds.GamepadBindings;
+
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 /*
  * This OpMode runs a manual omni-directional drivetrain
  */
 
 @TeleOp(name="League Meet 0 (TeleOp)", group="Linear OpMode")
-public class TeleOpLeagueMeet0 extends LinearOpMode {
+public class TeleOpLeagueMeet1 extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor frontLeftDrive = null;
-    private DcMotor backLeftDrive = null;
-    private DcMotor frontRightDrive = null;
-    private DcMotor backRightDrive = null;
+    private DcMotor frontLeftDrive;
+    private DcMotor backLeftDrive;
+    private DcMotor frontRightDrive;
+    private DcMotor backRightDrive;
 
-    private DcMotor intakeMotor = null;
-    private DcMotor beltMotor = null;
-    private DcMotor flywheelMotor = null;
+    private DcMotor intakeMotor;
+    private DcMotor beltMotor;
+    private DcMotor flywheelMotor;
 
-    private boolean flywheelButton = false;
-    private boolean intakeButton = false;
-    private boolean outtakeButton = false;
-    private boolean releaseTrigger = false;
+    private GamepadBindings keybinds;
+    private Map<Supplier<Boolean>, Consumer<Boolean>> toggleKeybinds;
+    private Map<Supplier<Boolean>, Consumer<Boolean>> holdKeybinds;
 
     final private double intakePower = 0.6;
     final private double beltPower = 0.6;
@@ -68,9 +72,6 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
-        // Previous button statuses are stored to prevent over-toggling
-        boolean flywheelToggle = false;
 
         // Initialize the motor variables
         frontLeftDrive = hardwareMap.get(DcMotor.class, "drivetrain_fl");
@@ -102,6 +103,34 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+
+        // Define the toggle keybinds
+        toggleKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
+            // Cycle to intake
+            () -> gamepad1.right_trigger > triggerThreshold,
+            (Boolean mode) -> intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD),
+            // Cycle to outtake
+            () -> gamepad1.left_trigger > triggerThreshold,
+            (Boolean mode) -> intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE),
+            // Toggle flywheel
+            () -> gamepad1.left_bumper,
+            (Boolean mode) -> flywheelMotor.setPower((mode) ? flywheelPower : 0.0)
+        );
+        // Define the hold keybinds
+        holdKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
+            // Power the intake/outtake wheel
+            () -> gamepad1.right_trigger > triggerThreshold || gamepad1.left_trigger > triggerThreshold,
+            (Boolean mode) -> intakeMotor.setPower((mode) ? intakePower : 0.0),
+            // Power the transfer mechanism (launch)
+            () -> gamepad1.right_bumper,
+            (Boolean mode) -> beltMotor.setPower((mode) ? flywheelPower : 0.0)
+        );
+
+        // Create the keybind handler
+        keybinds = new GamepadBindings(
+            toggleKeybinds,
+            holdKeybinds
+        );
 
         waitForStart();
         runtime.reset();
@@ -147,30 +176,8 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
             backLeftDrive.setPower(backLeftPower * maxDrivePower);
             backRightDrive.setPower(backRightPower * maxDrivePower);
 
-            /*
-            * Handle selective mechanism powering
-            * Get the button presses assigned to each mechanism
-            * Only when the button is pressed, toggle each mechanism
-            */
-
-            // Corresponding button/trigger presses active given motors for tests
-            outtakeButton = gamepad1.left_bumper;
-            intakeButton = gamepad1.right_bumper;
-
-            flywheelButton = gamepad1.a;
-            releaseTrigger = gamepad1.right_trigger >= triggerThreshold;
-
-            // Update intake direction toggle
-            if (intakeButton && intakeMotor.getDirection().equals(DcMotor.Direction.REVERSE)) {
-                intakeMotor.setDirection(DcMotor.Direction.FORWARD);
-            } else if (outtakeButton && intakeMotor.getDirection().equals(DcMotor.Direction.FORWARD)) {
-                intakeMotor.setDirection(DcMotor.Direction.REVERSE);
-            }
-
-            // Conditionally send power to motors
-            intakeMotor.setPower((outtakeButton || intakeButton) ? intakePower : 0.0);
-            beltMotor.setPower((releaseTrigger) ? beltPower : 0.0);
-            flywheelMotor.setPower(!(flywheelMotor.getPowerFloat() && !flywheelButton) ? flywheelPower : 0.0);
+            // Update control binds
+            keybinds.update();
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Active Time", "%.1f seconds\n", runtime.seconds());
@@ -180,12 +187,12 @@ public class TeleOpLeagueMeet0 extends LinearOpMode {
             telemetry.addData("Back (Left / Right)", "(%4.2f / %4.2f)\n", backLeftPower, backRightPower);
 
             telemetry.addData("Mechanism Speeds (Intake / Belt / Flywheel)", "(%4.2f / %4.2f / %4.2f)", intakePower, beltPower, flywheelPower);
-            telemetry.addData("Mechanism Power (Intake / Outtake / Belt / Flywheel)", "(%b / %b / %b / %b)", intakeButton, outtakeButton, releaseTrigger, flywheelToggle);
+            telemetry.addData("Mechanism Power (Intake / Outtake / Belt / Flywheel)", "(%b / %b / %b)", intakeMotor.getPowerFloat(), beltMotor.getPowerFloat(), flywheelMotor.getPowerFloat());
 
-            telemetry.addData("A", "Flywheel Toggle");
-            telemetry.addData("RB", "Intake");
-            telemetry.addData("LB", "Outtake");
-            telemetry.addData("RT", "Launch");
+            telemetry.addData("RT", "Intake");
+            telemetry.addData("LT", "Outtake");
+            telemetry.addData("RB", "Launch");
+            telemetry.addData("LB", "Flywheel Toggle");
             telemetry.update();
         }
     }}
