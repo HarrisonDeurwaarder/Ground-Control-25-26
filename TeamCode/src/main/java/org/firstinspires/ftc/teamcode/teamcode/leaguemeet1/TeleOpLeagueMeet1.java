@@ -35,6 +35,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.MecanumDrive;
+import org.firstinspires.ftc.teamcode.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.teamcode.keybinds.GamepadBindings;
 
 import java.util.Map;
@@ -45,30 +47,18 @@ import java.util.function.Supplier;
  * This OpMode runs a manual omni-directional drivetrain
  */
 
-@TeleOp(name="League Meet 0 (TeleOp)", group="Linear OpMode")
+@TeleOp(name="League Meet 1 (TeleOp)", group="Linear OpMode")
 public class TeleOpLeagueMeet1 extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor frontLeftDrive;
-    private DcMotor backLeftDrive;
-    private DcMotor frontRightDrive;
-    private DcMotor backRightDrive;
+    private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
 
-    private DcMotor intakeMotor;
-    private DcMotor beltMotor;
-    private DcMotor flywheelMotor;
+    private DcMotor intakeMotor, beltMotor, flywheelMotor;
 
     private GamepadBindings keybinds;
-    private Map<Supplier<Boolean>, Consumer<Boolean>> toggleKeybinds;
-    private Map<Supplier<Boolean>, Consumer<Boolean>> holdKeybinds;
+    private Map<Supplier<Boolean>, Consumer<Boolean>> toggleKeybinds, holdKeybinds;
 
-    final private double intakePower = 0.6;
-    final private double beltPower = 0.6;
-    final private double flywheelPower = 0.6;
-
-    final private double triggerThreshold = 0.1;
-    final private double maxDrivePower = 1.0;
 
     @Override
     public void runOpMode() {
@@ -107,23 +97,23 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
         // Define the toggle keybinds
         toggleKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
             // Cycle to intake
-            () -> gamepad1.right_trigger > triggerThreshold,
+            () -> gamepad1.right_trigger > LM1DriveConfig.TRIGGER_THRESHOLD,
             (Boolean mode) -> intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD),
             // Cycle to outtake
-            () -> gamepad1.left_trigger > triggerThreshold,
+            () -> gamepad1.left_trigger > LM1DriveConfig.TRIGGER_THRESHOLD,
             (Boolean mode) -> intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE),
             // Toggle flywheel
             () -> gamepad1.left_bumper,
-            (Boolean mode) -> flywheelMotor.setPower((mode) ? flywheelPower : 0.0)
+            (Boolean mode) -> flywheelMotor.setPower((mode) ? LM1DriveConfig.FLYWHEEL_POWER : 0.0)
         );
         // Define the hold keybinds
         holdKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
             // Power the intake/outtake wheel
-            () -> gamepad1.right_trigger > triggerThreshold || gamepad1.left_trigger > triggerThreshold,
-            (Boolean mode) -> intakeMotor.setPower((mode) ? intakePower : 0.0),
+            () -> gamepad1.right_trigger > LM1DriveConfig.TRIGGER_THRESHOLD || gamepad1.left_trigger > LM1DriveConfig.TRIGGER_THRESHOLD,
+            (Boolean mode) -> intakeMotor.setPower((mode) ? LM1DriveConfig.INTAKE_POWER : 0.0),
             // Power the transfer mechanism (launch)
             () -> gamepad1.right_bumper,
-            (Boolean mode) -> beltMotor.setPower((mode) ? flywheelPower : 0.0)
+            (Boolean mode) -> beltMotor.setPower((mode) ? LM1DriveConfig.FLYWHEEL_POWER : 0.0)
         );
 
         // Create the keybind handler
@@ -145,17 +135,17 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
             double max;
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral =  gamepad1.left_stick_x;
-            double yaw     =  gamepad1.right_stick_x;
+            double y   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double x =  gamepad1.left_stick_x;
+            double rx     =  gamepad1.right_stick_x;
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
-            double frontLeftPower  = axial + lateral + yaw;
-            double backLeftPower   = axial - lateral + yaw;
+            double frontLeftPower  = y + x + rx;
+            double backLeftPower   = y - x + rx;
 
-            double frontRightPower = axial - lateral - yaw;
-            double backRightPower  = axial + lateral - yaw;
+            double frontRightPower = y - x - rx;
+            double backRightPower  = y + x - rx;
 
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
@@ -163,7 +153,7 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
             max = Math.max(max, Math.abs(backLeftPower));
             max = Math.max(max, Math.abs(backRightPower));
 
-            if (max > maxDrivePower) {
+            if (max > LM1DriveConfig.MAX_DRIVE_POWER) {
                 frontLeftPower  /= max;
                 frontRightPower /= max;
                 backLeftPower   /= max;
@@ -171,10 +161,10 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
             }
 
             // Send calculated power to wheels
-            frontLeftDrive.setPower(frontLeftPower * maxDrivePower);
-            frontRightDrive.setPower(frontRightPower * maxDrivePower);
-            backLeftDrive.setPower(backLeftPower * maxDrivePower);
-            backRightDrive.setPower(backRightPower * maxDrivePower);
+            frontLeftDrive.setPower(frontLeftPower * LM1DriveConfig.MAX_DRIVE_POWER);
+            frontRightDrive.setPower(frontRightPower * LM1DriveConfig.MAX_DRIVE_POWER);
+            backLeftDrive.setPower(backLeftPower * LM1DriveConfig.MAX_DRIVE_POWER);
+            backRightDrive.setPower(backRightPower * LM1DriveConfig.MAX_DRIVE_POWER);
 
             // Update control binds
             keybinds.update();
@@ -182,11 +172,11 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
             // Show the elapsed game time and wheel power.
             telemetry.addData("Active Time", "%.1f seconds\n", runtime.seconds());
 
-            telemetry.addData("Drivetrain Max Power", "%4.2f", maxDrivePower);
+            telemetry.addData("Drivetrain Max Power", "%4.2f", LM1DriveConfig.MAX_DRIVE_POWER);
             telemetry.addData("Front (Left / Right)", "(%4.2f / %4.2f)", frontLeftPower, frontRightPower);
             telemetry.addData("Back (Left / Right)", "(%4.2f / %4.2f)\n", backLeftPower, backRightPower);
 
-            telemetry.addData("Mechanism Speeds (Intake / Belt / Flywheel)", "(%4.2f / %4.2f / %4.2f)", intakePower, beltPower, flywheelPower);
+            telemetry.addData("Mechanism Speeds (Intake / Belt / Flywheel)", "(%4.2f / %4.2f / %4.2f)", LM1DriveConfig.INTAKE_POWER, LM1DriveConfig.BELT_POWER, LM1DriveConfig.FLYWHEEL_POWER);
             telemetry.addData("Mechanism Power (Intake / Outtake / Belt / Flywheel)", "(%b / %b / %b)", intakeMotor.getPowerFloat(), beltMotor.getPowerFloat(), flywheelMotor.getPowerFloat());
 
             telemetry.addData("RT", "Intake");
