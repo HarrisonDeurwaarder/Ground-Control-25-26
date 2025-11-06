@@ -32,13 +32,11 @@ package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
-import com.qualcomm.hardware.sparkfun.SparkFunOTOS.Pose2D;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -57,42 +55,17 @@ public class AutoLeagueMeet1 extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
-
-    // Declare OpMode members
-    private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
-    private DcMotor intakeMotor, beltMotor, flywheelMotor;
-
+    private MotorDriverLeagueMeet1 motorDriver = new MotorDriverLeagueMeet1(hardwareMap);
     private static final boolean USE_WEBCAM = true;
 
 
     @Override
     public void runOpMode() {
 
-        initMotors();
         initAprilTag();
 
-        // Initialize the drive system variables.
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "drivetrain_fl");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "drivetrain_fr");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "drivetrain_bl");
-        backRightDrive = hardwareMap.get(DcMotor.class, "drivetrain_br");
-
-        intakeMotor = hardwareMap.get(DcMotor.class, "intake");
-        beltMotor = hardwareMap.get(DcMotor.class, "belt");
-        flywheelMotor = hardwareMap.get(DcMotor.class, "flywheel");
-
-        // The left-side motors need to be reversed
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
-
-        intakeMotor.setDirection(DcMotor.Direction.FORWARD);
-        beltMotor.setDirection(DcMotor.Direction.REVERSE);
-        flywheelMotor.setDirection(DcMotor.Direction.FORWARD);
-
         // Build starter pose and odometry drive
-        Pose2d start = new Pose2d(0, 0, Math.toRadians(0));
+        Pose2d start = new Pose2d(0.0, 0.0, Math.toRadians(0.0));
         MecanumDrive drive = new MecanumDrive(hardwareMap, start);
 
         // Build drive action
@@ -126,45 +99,6 @@ public class AutoLeagueMeet1 extends LinearOpMode {
 
         // Quit streaming
         visionPortal.close();
-    }
-
-    private void initMotors() {
-
-        // Initialize motors
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "drivetrain_fl");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "drivetrain_fr");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "drivetrain_bl");
-        backRightDrive = hardwareMap.get(DcMotor.class, "drivetrain_br");
-
-        intakeMotor = hardwareMap.get(DcMotor.class, "intake");
-        beltMotor = hardwareMap.get(DcMotor.class, "belt");
-        flywheelMotor = hardwareMap.get(DcMotor.class, "flywheel");
-
-        // The left-side motors need to be reversed
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
-
-        intakeMotor.setDirection(DcMotor.Direction.FORWARD);
-        beltMotor.setDirection(DcMotor.Direction.REVERSE);
-        flywheelMotor.setDirection(DcMotor.Direction.FORWARD);
-
-        // Set motors to brake if under zero power
-        frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // Set motor power
-        frontLeftDrive.setPower(LM1DriveConfig.MAX_DRIVE_POWER);
-        frontRightDrive.setPower(LM1DriveConfig.MAX_DRIVE_POWER);
-        backLeftDrive.setPower(LM1DriveConfig.MAX_DRIVE_POWER);
-        backRightDrive.setPower(LM1DriveConfig.MAX_DRIVE_POWER);
-
-        intakeMotor.setPower(LM1DriveConfig.INTAKE_POWER);
-        beltMotor.setPower(LM1DriveConfig.BELT_POWER);
-        flywheelMotor.setPower(LM1DriveConfig.FLYWHEEL_POWER);
     }
 
     private void initAprilTag() {
