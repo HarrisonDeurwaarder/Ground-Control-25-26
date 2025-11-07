@@ -1,11 +1,10 @@
-package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
+package org.firstinspires.ftc.teamcode.teamcode.utils;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-public class MotorDriverLeagueMeet1 {
+public class MotorDriver {
     public static final double INTAKE_POWER = 0.6;
     public static final double TRANSPORT_POWER = 0.6;
     public static final double FLYWHEEL_SPEED = 1.5; // Revolutions per second
@@ -18,7 +17,7 @@ public class MotorDriverLeagueMeet1 {
     public DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive, intakeMotor, transportMotor;
     public DcMotorEx flywheelMotor;
 
-    public MotorDriverLeagueMeet1(HardwareMap hardwareMap) {
+    public MotorDriver(HardwareMap hardwareMap) {
         /*
          * Get motor configurations from hardware map
         */

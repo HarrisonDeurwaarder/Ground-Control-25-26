@@ -31,11 +31,12 @@ package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.teamcode.keybinds.GamepadBindings;
+import org.firstinspires.ftc.teamcode.teamcode.utils.GamepadBindings;
+import org.firstinspires.ftc.teamcode.teamcode.utils.GamepadBindingsCfg;
+import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriver;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -50,13 +51,9 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
-    private MotorDriverLeagueMeet1 motorDriver;
+    private MotorDriver motorDriver;
     private GamepadBindings keybinds;
-    private Map<Supplier<Boolean>, Consumer<Boolean>> toggleKeybinds, holdKeybinds;
-
-    // Scales the drivetrain power (for precision mode)
-    private double drivetrainPowerScale = MotorDriverLeagueMeet1.MAX_DRIVE_POWER;
-
+    private GamepadBindingsCfg keybindsCfg;
 
     @Override
     public void runOpMode() {
@@ -65,44 +62,24 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+        
         // Instanciate a motor driver using the now non-null hardwareMap
-        motorDriver = new MotorDriverLeagueMeet1(hardwareMap);
+        motorDriver = new MotorDriver(hardwareMap);
 
-        // Define the toggle keybinds
-        toggleKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
-            // Cycle to intake
-            () -> gamepad1.right_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
-            (Boolean mode) -> motorDriver.intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE),
-            // Cycle to outtake (both transport and intake)
-            () -> gamepad1.left_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
-            (Boolean mode) -> {
-                motorDriver.intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-                motorDriver.transportMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-            },
-            // Revert transport to default (launch direction)
-            () -> gamepad1.left_trigger <= MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
-            (Boolean mode) -> motorDriver.transportMotor.setDirection(DcMotorSimple.Direction.FORWARD),
-            // Toggle flywheel
-            () -> gamepad1.left_bumper,
-            (Boolean mode) -> motorDriver.flywheelMotor.setVelocity((mode) ? MotorDriverLeagueMeet1.FLYWHEEL_SPEED * MotorDriverLeagueMeet1.TPR : 0.0),
-            // Toggle precision drive mode
-            () -> gamepad1.a,
-            (Boolean mode) -> drivetrainPowerScale = ((mode) ? MotorDriverLeagueMeet1.PRECISE_DRIVE_POWER : MotorDriverLeagueMeet1.MAX_DRIVE_POWER)
+        // Access bindings for current driver
+        // Set config bindings to Louis setting
+        keybindsCfg = new GamepadBindingsCfg(
+            gamepad1,
+            motorDriver,
+            MotorDriver.TRIGGER_THRESHOLD,
+            MotorDriver.MAX_DRIVE_POWER
         );
-        // Define the hold keybinds
-        holdKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
-            // Power the intake/outtake wheel
-            () -> gamepad1.right_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD || gamepad1.left_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
-            (Boolean mode) -> motorDriver.intakeMotor.setPower((mode) ? MotorDriverLeagueMeet1.INTAKE_POWER : 0.0),
-            // Power the transfer mechanism (launch)
-            () -> gamepad1.right_bumper || gamepad1.left_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
-            (Boolean mode) -> motorDriver.transportMotor.setPower((mode) ? MotorDriverLeagueMeet1.TRANSPORT_POWER : 0.0)
-        );
+        keybindsCfg.initLouis();
 
         // Create the keybind handler
         keybinds = new GamepadBindings(
-            toggleKeybinds,
-            holdKeybinds
+            keybindsCfg.toggleKeybinds,
+            keybindsCfg.holdKeybinds
         );
 
         waitForStart();
@@ -135,7 +112,7 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
             max = Math.max(max, Math.abs(backLeftPower));
             max = Math.max(max, Math.abs(backRightPower));
 
-            if (max > MotorDriverLeagueMeet1.MAX_DRIVE_POWER) {
+            if (max > MotorDriver.MAX_DRIVE_POWER) {
                 frontLeftPower  /= max;
                 frontRightPower /= max;
                 backLeftPower   /= max;
@@ -161,12 +138,13 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
             telemetry.addData("Front Power (Left / Right)", "(%4.2f / %4.2f)", frontLeftPower, frontRightPower);
             telemetry.addData("Back Power (Left / Right)", "(%4.2f / %4.2f)", backLeftPower, backRightPower);
             telemetry.addData("Mechanism Power (Intake / Transport)", "(%b / %b)", !motorDriver.intakeMotor.getPowerFloat(), !motorDriver.transportMotor.getPowerFloat());
-            telemetry.addData("Flywheel Velocity", "%4.2f Revolutions / Second\n", motorDriver.flywheelMotor.getVelocity() / MotorDriverLeagueMeet1.TPR);
+            telemetry.addData("Flywheel Velocity", "%4.2f Revolutions / Second\n", motorDriver.flywheelMotor.getVelocity() / MotorDriver.TPR);
 
             telemetry.addData("RT", "Intake");
             telemetry.addData("LT", "Outtake");
             telemetry.addData("RB", "Launch");
             telemetry.addData("LB", "Flywheel Toggle");
+            telemetry.addData("A", "Precision Movement");
             telemetry.update();
         }
     }}

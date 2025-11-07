@@ -34,11 +34,11 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
+import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriver;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -55,7 +55,7 @@ public class AutoLeagueMeet1 extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
-    private MotorDriverLeagueMeet1 motorDriver = new MotorDriverLeagueMeet1(hardwareMap);
+    private MotorDriver motorDriver = new MotorDriver(hardwareMap);
     private static final boolean USE_WEBCAM = true;
 
 
