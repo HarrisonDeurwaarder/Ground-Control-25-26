@@ -12,6 +12,7 @@ public class MotorDriverLeagueMeet1 {
 
     public static final double TRIGGER_THRESHOLD = 0.05;
     public static final double MAX_DRIVE_POWER = 1.0;
+    public static final double PRECISE_DRIVE_POWER = 0.15;
     public static final double TPR = 537.6;
 
     public DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive, intakeMotor, transportMotor;
@@ -82,11 +83,12 @@ public class MotorDriverLeagueMeet1 {
         double frontLeftPower,
         double backLeftPower,
         double frontRightPower,
-        double backRightPower
+        double backRightPower,
+        double max_power
     ) {
-        frontLeftDrive.setPower(frontLeftPower * MotorDriverLeagueMeet1.MAX_DRIVE_POWER);
-        frontRightDrive.setPower(frontRightPower * MotorDriverLeagueMeet1.MAX_DRIVE_POWER);
-        backLeftDrive.setPower(backLeftPower * MotorDriverLeagueMeet1.MAX_DRIVE_POWER);
-        backRightDrive.setPower(backRightPower * MotorDriverLeagueMeet1.MAX_DRIVE_POWER);
+        frontLeftDrive.setPower(frontLeftPower * max_power);
+        frontRightDrive.setPower(frontRightPower * max_power);
+        backLeftDrive.setPower(backLeftPower * max_power);
+        backRightDrive.setPower(backRightPower * max_power);
     }
 }

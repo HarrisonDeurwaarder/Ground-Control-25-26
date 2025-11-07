@@ -47,6 +47,11 @@ public class GamepadBindings {
             }
         }
 
+        // Update the past presses
+        for (Supplier<Boolean> pressedGetter : toggle.keySet()) {
+            previousPresses.put(pressedGetter, pressedGetter.get());
+        }
+
         // Execute actions for the hold buttons
         for (Supplier<Boolean> pressedGetter : hold.keySet()) {
             // Send the button status to the executor

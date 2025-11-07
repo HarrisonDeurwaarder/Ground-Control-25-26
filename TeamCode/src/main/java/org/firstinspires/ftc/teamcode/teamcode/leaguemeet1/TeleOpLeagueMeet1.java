@@ -54,6 +54,9 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
     private GamepadBindings keybinds;
     private Map<Supplier<Boolean>, Consumer<Boolean>> toggleKeybinds, holdKeybinds;
 
+    // Scales the drivetrain power (for precision mode)
+    private double drivetrainPowerScale = MotorDriverLeagueMeet1.MAX_DRIVE_POWER;
+
 
     @Override
     public void runOpMode() {
@@ -70,12 +73,21 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
             // Cycle to intake
             () -> gamepad1.right_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
             (Boolean mode) -> motorDriver.intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE),
-            // Cycle to outtake
+            // Cycle to outtake (both transport and intake)
             () -> gamepad1.left_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
-            (Boolean mode) -> motorDriver.intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD),
+            (Boolean mode) -> {
+                motorDriver.intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+                motorDriver.transportMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+            },
+            // Revert transport to default (launch direction)
+            () -> gamepad1.left_trigger <= MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
+            (Boolean mode) -> motorDriver.transportMotor.setDirection(DcMotorSimple.Direction.FORWARD),
             // Toggle flywheel
             () -> gamepad1.left_bumper,
-            (Boolean mode) -> motorDriver.flywheelMotor.setVelocity((mode) ? MotorDriverLeagueMeet1.FLYWHEEL_SPEED * MotorDriverLeagueMeet1.TPR : 0.0)
+            (Boolean mode) -> motorDriver.flywheelMotor.setVelocity((mode) ? MotorDriverLeagueMeet1.FLYWHEEL_SPEED * MotorDriverLeagueMeet1.TPR : 0.0),
+            // Toggle precision drive mode
+            () -> gamepad1.a,
+            (Boolean mode) -> drivetrainPowerScale = ((mode) ? MotorDriverLeagueMeet1.PRECISE_DRIVE_POWER : MotorDriverLeagueMeet1.MAX_DRIVE_POWER)
         );
         // Define the hold keybinds
         holdKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
@@ -83,7 +95,7 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
             () -> gamepad1.right_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD || gamepad1.left_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
             (Boolean mode) -> motorDriver.intakeMotor.setPower((mode) ? MotorDriverLeagueMeet1.INTAKE_POWER : 0.0),
             // Power the transfer mechanism (launch)
-            () -> gamepad1.right_bumper,
+            () -> gamepad1.right_bumper || gamepad1.left_trigger > MotorDriverLeagueMeet1.TRIGGER_THRESHOLD,
             (Boolean mode) -> motorDriver.transportMotor.setPower((mode) ? MotorDriverLeagueMeet1.TRANSPORT_POWER : 0.0)
         );
 
@@ -135,7 +147,8 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
                     frontLeftPower,
                     backLeftPower,
                     frontRightPower,
-                    backRightPower
+                    backRightPower,
+                    drivetrainPowerScale
             );
 
             // Update control binds
@@ -147,7 +160,7 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
 
             telemetry.addData("Front Power (Left / Right)", "(%4.2f / %4.2f)", frontLeftPower, frontRightPower);
             telemetry.addData("Back Power (Left / Right)", "(%4.2f / %4.2f)", backLeftPower, backRightPower);
-            telemetry.addData("Mechanism Power (Intake / Belt)", "(%b / %b)", motorDriver.intakeMotor.getPowerFloat(), motorDriver.transportMotor.getPowerFloat());
+            telemetry.addData("Mechanism Power (Intake / Transport)", "(%b / %b)", !motorDriver.intakeMotor.getPowerFloat(), !motorDriver.transportMotor.getPowerFloat());
             telemetry.addData("Flywheel Velocity", "%4.2f Revolutions / Second\n", motorDriver.flywheelMotor.getVelocity() / MotorDriverLeagueMeet1.TPR);
 
             telemetry.addData("RT", "Intake");
