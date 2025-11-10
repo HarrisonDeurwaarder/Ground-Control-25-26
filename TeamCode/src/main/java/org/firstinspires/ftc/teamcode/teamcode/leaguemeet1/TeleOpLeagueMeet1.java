@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.teamcode.utils.GamepadBindings;
 import org.firstinspires.ftc.teamcode.teamcode.utils.GamepadBindingsCfg;
 import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriver;
+import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriverPID;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -51,7 +52,7 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
-    private MotorDriver motorDriver;
+    private MotorDriverPID motorDriver;
     private GamepadBindings keybinds;
     private GamepadBindingsCfg keybindsCfg;
 
@@ -62,19 +63,17 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        
         // Instanciate a motor driver using the now non-null hardwareMap
-        motorDriver = new MotorDriver(hardwareMap);
+        motorDriver = new MotorDriverPID(hardwareMap);
 
         // Access bindings for current driver
         // Set config bindings to Louis setting
         keybindsCfg = new GamepadBindingsCfg(
             gamepad1,
             motorDriver,
-            MotorDriver.TRIGGER_THRESHOLD,
-            MotorDriver.MAX_DRIVE_POWER
+            MotorDriverPID.MAX_DRIVE_RPS
         );
-        keybindsCfg.initLouis();
+        keybindsCfg.initLouisPID();
 
         // Create the keybind handler
         keybinds = new GamepadBindings(
@@ -89,8 +88,8 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
         while (opModeIsActive()) {
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double y = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double x = gamepad1.left_stick_x;
+            double y = gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double x = -gamepad1.left_stick_x;
             double rx = gamepad1.right_stick_x;
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
@@ -121,11 +120,11 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
 
             // Send calculated power to wheels
             motorDriver.setDrivetrainPower(
-                    frontLeftPower,
-                    backLeftPower,
-                    frontRightPower,
-                    backRightPower,
-                    drivetrainPowerScale
+                    MotorDriverPID.toTPS(frontLeftPower),
+                    MotorDriverPID.toTPS(backLeftPower),
+                    MotorDriverPID.toTPS(frontRightPower),
+                    MotorDriverPID.toTPS(backRightPower),
+                    keybindsCfg.drivetrainPowerScale
             );
 
             // Update control binds
@@ -135,10 +134,10 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
             // Show the elapsed game time and wheel power.
             telemetry.addData("Active Time", "%.1f seconds\n", runtime.seconds());
 
-            telemetry.addData("Front Power (Left / Right)", "(%4.2f / %4.2f)", frontLeftPower, frontRightPower);
-            telemetry.addData("Back Power (Left / Right)", "(%4.2f / %4.2f)", backLeftPower, backRightPower);
+            telemetry.addData("Front RPS (Left / Right)", "(%4.2f / %4.2f)", MotorDriverPID.toRPS(motorDriver.frontLeftDrive.getVelocity()), MotorDriverPID.toRPS(motorDriver.frontRightDrive.getVelocity()));
+            telemetry.addData("Back RPS (Left / Right)", "(%4.2f / %4.2f)", MotorDriverPID.toRPS(motorDriver.backLeftDrive.getVelocity()), MotorDriverPID.toRPS(motorDriver.backRightDrive.getVelocity()));
             telemetry.addData("Mechanism Power (Intake / Transport)", "(%b / %b)", !motorDriver.intakeMotor.getPowerFloat(), !motorDriver.transportMotor.getPowerFloat());
-            telemetry.addData("Flywheel Velocity", "%4.2f Revolutions / Second\n", motorDriver.flywheelMotor.getVelocity() / MotorDriver.TPR);
+            telemetry.addData("Flywheel RPS", "%4.2f Revolutions / Second\n", MotorDriverPID.toRPS(motorDriver.flywheelMotor.getVelocity()));
 
             telemetry.addData("RT", "Intake");
             telemetry.addData("LT", "Outtake");

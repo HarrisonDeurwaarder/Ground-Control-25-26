@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class MotorDriver {
     public static final double INTAKE_POWER = 0.6;
     public static final double TRANSPORT_POWER = 0.6;
-    public static final double FLYWHEEL_SPEED = 1.5; // Revolutions per second
+    public static final double FLYWHEEL_SPEED = 5.0; // Revolutions per second
 
     public static final double TRIGGER_THRESHOLD = 0.05;
     public static final double MAX_DRIVE_POWER = 1.0;
@@ -83,11 +83,11 @@ public class MotorDriver {
         double backLeftPower,
         double frontRightPower,
         double backRightPower,
-        double max_power
+        double maxPower
     ) {
-        frontLeftDrive.setPower(frontLeftPower * max_power);
-        frontRightDrive.setPower(frontRightPower * max_power);
-        backLeftDrive.setPower(backLeftPower * max_power);
-        backRightDrive.setPower(backRightPower * max_power);
+        frontLeftDrive.setPower(frontLeftPower * maxPower);
+        frontRightDrive.setPower(frontRightPower * maxPower);
+        backLeftDrive.setPower(backLeftPower * maxPower);
+        backRightDrive.setPower(backRightPower * maxPower);
     }
 }

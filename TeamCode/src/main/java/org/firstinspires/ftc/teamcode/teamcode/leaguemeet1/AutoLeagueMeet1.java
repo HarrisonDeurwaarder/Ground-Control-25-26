@@ -79,6 +79,12 @@ public class AutoLeagueMeet1 extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
+
+
+        /*
+
+        // Basic AprilTag code to adapt at a later date
+
         // Begin streaming
         visionPortal.resumeStreaming();
 
@@ -99,6 +105,8 @@ public class AutoLeagueMeet1 extends LinearOpMode {
 
         // Quit streaming
         visionPortal.close();
+
+        */
     }
 
     private void initAprilTag() {
