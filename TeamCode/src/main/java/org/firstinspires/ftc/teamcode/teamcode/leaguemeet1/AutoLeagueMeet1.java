@@ -31,14 +31,18 @@ package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriver;
+import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriverPID;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -55,8 +59,11 @@ public class AutoLeagueMeet1 extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
-    private MotorDriver motorDriver = new MotorDriver(hardwareMap);
     private static final boolean USE_WEBCAM = true;
+
+    private DcMotorEx intake;
+    private DcMotorEx transport;
+    private DcMotorEx flywheel;
 
 
     @Override
@@ -68,9 +75,62 @@ public class AutoLeagueMeet1 extends LinearOpMode {
         Pose2d start = new Pose2d(0.0, 0.0, Math.toRadians(0.0));
         MecanumDrive drive = new MecanumDrive(hardwareMap, start);
 
-        // Build drive action
-        TrajectoryActionBuilder tab = drive.actionBuilder(start);
-        Action route = tab.build();
+        // Map mechanisms
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
+        transport = hardwareMap.get(DcMotorEx.class, "transport");
+        flywheel = hardwareMap.get(DcMotorEx.class, "flywheel");
+
+        // Always power the flywheel and intake (for testing)
+        intake.setVelocity(
+                MotorDriverPID.toTPS(MotorDriverPID.INTAKE_RPS)
+        );
+        flywheel.setVelocity(
+                MotorDriverPID.toTPS(MotorDriverPID.FLYWHEEL_RPS)
+        );
+
+        /*
+        * =====================
+        * Determine trajectories for all stages of (9-ball) auto
+        * =====================
+        */
+
+        // Build initial batch cycle (no intake)
+        TrajectoryActionBuilder tabBatch0 = drive.actionBuilder(start)
+                // Linear position to shoot first batch
+                .lineToY(0)
+                // Angular orientation to shoot first batch
+                .turn(Math.toRadians(45));
+
+        // Build first intake batch cycle
+        TrajectoryActionBuilder tabBatch1 = drive.actionBuilder(start)
+                // Angular reorientation
+                .turn(Math.toRadians(-45))
+                // Align with first set of balls
+                .lineToY(0)
+                // Intake and return
+                .lineToX(0)
+                .lineToY(0)
+                // Turn to face goal
+                .turn(Math.toRadians(45))
+
+        // Build second intake batch cycle
+        TrajectoryActionBuilder tabBatch2 = drive.actionBuilder(start)
+                // Angular reorientation
+                .turn(Math.toRadians(-45))
+                // Align with second set of balls
+                .lineToY(0)
+                // Intake and return
+                .lineToX(0)
+                .lineToY(0)
+                // Turn to face goal
+                .turn(Math.toRadians(45));
+
+        Action route = new SequentialAction(
+                tabBatch0,
+                transport.setVelocity(
+                        MotorDriverPID.toTPS(MotorDriverPID.TRANSPORT_RPS)
+                )
+        )
 
         // Add preliminary telemetry data
         telemetry.addData("Status", "Initialized");
@@ -78,8 +138,6 @@ public class AutoLeagueMeet1 extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
-
-
 
         /*
 
