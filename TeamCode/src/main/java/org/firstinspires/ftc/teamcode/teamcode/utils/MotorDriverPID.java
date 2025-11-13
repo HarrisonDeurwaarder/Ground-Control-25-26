@@ -21,10 +21,10 @@ public class MotorDriverPID {
          * Get motor configurations from hardware map
         */
 
-        frontLeftDrive = hardwareMap.get(DcMotorEx.class, "frontleft");
-        backLeftDrive = hardwareMap.get(DcMotorEx.class, "backleft");
-        frontRightDrive = hardwareMap.get(DcMotorEx.class, "frontright");
-        backRightDrive = hardwareMap.get(DcMotorEx.class, "backright");
+        frontLeftDrive = hardwareMap.get(DcMotorEx.class, "frontLeft");
+        backLeftDrive = hardwareMap.get(DcMotorEx.class, "backLeft");
+        frontRightDrive = hardwareMap.get(DcMotorEx.class, "frontRight");
+        backRightDrive = hardwareMap.get(DcMotorEx.class, "backRight");
 
         intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
         transportMotor = hardwareMap.get(DcMotorEx.class, "transport");

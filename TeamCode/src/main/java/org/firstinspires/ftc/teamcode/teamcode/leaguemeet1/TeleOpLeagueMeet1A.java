@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.teamcode.utils.GamepadBindings;
@@ -39,16 +38,12 @@ import org.firstinspires.ftc.teamcode.teamcode.utils.GamepadBindingsCfg;
 import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriver;
 import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriverPID;
 
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
 /*
  * This OpMode runs a manual omni-directional drivetrain
  */
 
-@TeleOp(name="League Meet 1 (TeleOp)", group="Linear OpMode")
-public class TeleOpLeagueMeet1 extends LinearOpMode {
+@TeleOp(name="League Meet 1A (TeleOp)", group="Linear OpMode")
+public class TeleOpLeagueMeet1A extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
@@ -136,6 +131,7 @@ public class TeleOpLeagueMeet1 extends LinearOpMode {
 
             telemetry.addData("Front RPS (Left / Right)", "(%4.2f / %4.2f)", MotorDriverPID.toRPS(motorDriver.frontLeftDrive.getVelocity()), MotorDriverPID.toRPS(motorDriver.frontRightDrive.getVelocity()));
             telemetry.addData("Back RPS (Left / Right)", "(%4.2f / %4.2f)", MotorDriverPID.toRPS(motorDriver.backLeftDrive.getVelocity()), MotorDriverPID.toRPS(motorDriver.backRightDrive.getVelocity()));
+            telemetry.addData("Intake Direction", "%s", motorDriver.intakeMotor.getDirection().toString());
             telemetry.addData("Mechanism Power (Intake / Transport)", "(%b / %b)", !motorDriver.intakeMotor.getPowerFloat(), !motorDriver.transportMotor.getPowerFloat());
             telemetry.addData("Flywheel RPS", "%4.2f Revolutions / Second\n", MotorDriverPID.toRPS(motorDriver.flywheelMotor.getVelocity()));
 

@@ -22,10 +22,10 @@ public class MotorDriver {
          * Get motor configurations from hardware map
         */
 
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontleft");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "backleft");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "frontright");
-        backRightDrive = hardwareMap.get(DcMotor.class, "backright");
+        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeft");
+        backLeftDrive = hardwareMap.get(DcMotor.class, "backLeft");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "frontRight");
+        backRightDrive = hardwareMap.get(DcMotor.class, "backRight");
 
         intakeMotor = hardwareMap.get(DcMotor.class, "intake");
         transportMotor = hardwareMap.get(DcMotor.class, "transport");
