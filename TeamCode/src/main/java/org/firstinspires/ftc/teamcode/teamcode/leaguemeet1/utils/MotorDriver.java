@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.teamcode.utils;
+package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -22,10 +22,10 @@ public class MotorDriver {
          * Get motor configurations from hardware map
         */
 
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeft");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "backLeft");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "frontRight");
-        backRightDrive = hardwareMap.get(DcMotor.class, "backRight");
+        frontLeftDrive = hardwareMap.get(DcMotor.class, "leftFront");
+        backLeftDrive = hardwareMap.get(DcMotor.class, "leftBack");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "rightFront");
+        backRightDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
         intakeMotor = hardwareMap.get(DcMotor.class, "intake");
         transportMotor = hardwareMap.get(DcMotor.class, "transport");

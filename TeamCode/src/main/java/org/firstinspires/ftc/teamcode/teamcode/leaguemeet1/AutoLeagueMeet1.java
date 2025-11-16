@@ -29,10 +29,11 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
 
-import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -41,13 +42,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
-import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriver;
-import org.firstinspires.ftc.teamcode.teamcode.utils.MotorDriverPID;
+import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.MotorDriverPID;
+import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.RRMotorActions;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-
-import java.util.List;
 
 /*
  * This OpMode runs a simple 9 ball auto
@@ -59,32 +57,41 @@ public class AutoLeagueMeet1 extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
+    private RRMotorActions motorActions;
+
+    private DcMotorEx intakeMotor;
+    private DcMotorEx transportMotor;
+    private DcMotorEx flywheelMotor;
+
     private static final boolean USE_WEBCAM = true;
-
-    private DcMotorEx intake;
-    private DcMotorEx transport;
-    private DcMotorEx flywheel;
-
+    private static final double FEED_DURATION = 5.0;
 
     @Override
     public void runOpMode() {
 
-        initAprilTag();
+        //initAprilTag();
+
+        // Map mechanism motors
+        intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
+        transportMotor = hardwareMap.get(DcMotorEx.class, "transport");
+        flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheel");
+
+        intakeMotor.setDirection(DcMotor.Direction.REVERSE);
+        transportMotor.setDirection(DcMotor.Direction.FORWARD);
+        flywheelMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // Build starter pose and odometry drive
         Pose2d start = new Pose2d(0.0, 0.0, Math.toRadians(0.0));
         MecanumDrive drive = new MecanumDrive(hardwareMap, start);
 
-        // Map mechanisms
-        intake = hardwareMap.get(DcMotorEx.class, "intake");
-        transport = hardwareMap.get(DcMotorEx.class, "transport");
-        flywheel = hardwareMap.get(DcMotorEx.class, "flywheel");
+        // Instanciate new action handler
+        motorActions = new RRMotorActions(transportMotor);
 
         // Always power the flywheel and intake (for testing)
-        intake.setVelocity(
+        intakeMotor.setVelocity(
                 MotorDriverPID.toTPS(MotorDriverPID.INTAKE_RPS)
         );
-        flywheel.setVelocity(
+        flywheelMotor.setVelocity(
                 MotorDriverPID.toTPS(MotorDriverPID.FLYWHEEL_RPS)
         );
 
@@ -97,40 +104,33 @@ public class AutoLeagueMeet1 extends LinearOpMode {
         // Build initial batch cycle (no intake)
         TrajectoryActionBuilder tabBatch0 = drive.actionBuilder(start)
                 // Linear position to shoot first batch
-                .lineToY(0)
-                // Angular orientation to shoot first batch
-                .turn(Math.toRadians(45));
+                .lineToX(4.0);
 
         // Build first intake batch cycle
         TrajectoryActionBuilder tabBatch1 = drive.actionBuilder(start)
-                // Angular reorientation
-                .turn(Math.toRadians(-45))
+                // Orient to intake
+                .turn(Math.toRadians(127))
                 // Align with first set of balls
-                .lineToY(0)
+                .splineTo(new Vector2d(14.5, 0.0), 127.0)
                 // Intake and return
-                .lineToX(0)
-                .lineToY(0)
+                .splineTo(new Vector2d(0.0, 35.0), 127.0)
+                .splineTo(new Vector2d(0.0, -35.0), 127.0)
+                .splineTo(new Vector2d(-14.5, 0.0), 127.0)
                 // Turn to face goal
-                .turn(Math.toRadians(45))
+                .turn(Math.toRadians(127));
 
         // Build second intake batch cycle
         TrajectoryActionBuilder tabBatch2 = drive.actionBuilder(start)
-                // Angular reorientation
-                .turn(Math.toRadians(-45))
-                // Align with second set of balls
-                .lineToY(0)
+                // Orient to intake
+                .turn(Math.toRadians(127))
+                // Align with first set of balls
+                .splineTo(new Vector2d(14.5, 0.0), 127.0)
                 // Intake and return
-                .lineToX(0)
-                .lineToY(0)
+                .splineTo(new Vector2d(0.0, 35.0), 127.0)
+                .splineTo(new Vector2d(0.0, -35.0), 127.0)
+                .splineTo(new Vector2d(-14.5, 0.0), 127.0)
                 // Turn to face goal
-                .turn(Math.toRadians(45));
-
-        Action route = new SequentialAction(
-                tabBatch0,
-                transport.setVelocity(
-                        MotorDriverPID.toTPS(MotorDriverPID.TRANSPORT_RPS)
-                )
-        )
+                .turn(Math.toRadians(127));
 
         // Add preliminary telemetry data
         telemetry.addData("Status", "Initialized");
@@ -138,6 +138,28 @@ public class AutoLeagueMeet1 extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+
+        // Quit auto if stop is requested
+        if (isStopRequested()) return;
+
+        // Chain trajectories
+        Actions.runBlocking(
+                new SequentialAction(
+                        // Follow pre-launch trajectory
+                        tabBatch0.build(),
+                        // Feed for set duration
+                        motorActions.feedFlywheel(FEED_DURATION),
+                        // Follow second set trajectory and feed
+                        tabBatch1.build(),
+                        motorActions.feedFlywheel(FEED_DURATION),
+                        // Follow final set trajectory
+                        tabBatch2.build(),
+                        motorActions.feedFlywheel(FEED_DURATION)
+                )
+        );
+
+        intakeMotor.setVelocity(0.0);
+        flywheelMotor.setVelocity(0.0);
 
         /*
 
