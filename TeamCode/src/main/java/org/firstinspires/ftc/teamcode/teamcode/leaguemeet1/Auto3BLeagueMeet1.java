@@ -42,7 +42,7 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.MotorDriverPID;
  * This OpMode runs a manual omni-directional drivetrain
  */
 
-@Autonomous(name="League Meet 1 (3BAuto)", group="Linear OpMode")
+@Autonomous(name="League Meet 1 (3BAuto)", group="League Meet 1")
 public class Auto3BLeagueMeet1 extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.

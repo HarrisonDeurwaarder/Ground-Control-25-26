@@ -51,7 +51,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * This OpMode runs a simple 9 ball auto
  */
 
-@Autonomous(name="League Meet 1 (Auto)", group="Robot")
+@Autonomous(name="League Meet 1 (Auto)", group="League Meet 1")
 public class AutoLeagueMeet1 extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();

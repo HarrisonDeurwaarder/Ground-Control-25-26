@@ -42,7 +42,7 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.MotorDriverPID;
  * This OpMode runs a manual omni-directional drivetrain
  */
 
-@TeleOp(name="League Meet 1A (TeleOp)", group="Linear OpMode")
+@TeleOp(name="League Meet 1A (TeleOp)", group="League Meet 1")
 public class TeleOpLeagueMeet1A extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
