@@ -103,12 +103,13 @@ public class AutoLeagueMeet1 extends LinearOpMode {
          */
 
         // Build initial batch cycle (no intake)
-        TrajectoryActionBuilder traj0 = drive.actionBuilder(start)
+        Action traj0 = drive.actionBuilder(start)
                 // Linear position to shoot first batch
-                .lineToX(4.0);
+                .lineToX(4.0)
+                .build();
 
         // Build first intake batch cycle
-        TrajectoryActionBuilder traj1 = drive.actionBuilder(start)
+        Action traj1 = drive.actionBuilder(start)
                 // Orient to intake
                 .turn(Math.toRadians(127))
                 // Align with first set of balls
@@ -118,10 +119,11 @@ public class AutoLeagueMeet1 extends LinearOpMode {
                 .strafeTo(new Vector2d(0.0, -35.0))
                 .strafeTo(new Vector2d(-14.5, 0.0))
                 // Turn to face goal
-                .turn(Math.toRadians(127));
+                .turn(Math.toRadians(127))
+                .build();
 
         // Build second intake batch cycle
-        TrajectoryActionBuilder traj2 = drive.actionBuilder(start)
+        Action traj2 = drive.actionBuilder(start)
                 // Orient to intake
                 .turn(Math.toRadians(127))
                 // Align with first set of balls
@@ -131,19 +133,20 @@ public class AutoLeagueMeet1 extends LinearOpMode {
                 .strafeTo(new Vector2d(0.0, -35.0))
                 .strafeTo(new Vector2d(-14.5, 0.0))
                 // Turn to face goal
-                .turn(Math.toRadians(127));
+                .turn(Math.toRadians(127))
+                .build();
 
         // Compile actions
         SequentialAction sequentialAction = new SequentialAction(
                 // Follow pre-launch trajectory
-                traj0.build(),
+                traj0,
                 // Feed for set duration
                 motorActions.feedFlywheel(FEED_DURATION),
                 // Follow second set trajectory and feed
-                traj1.build(),
+                traj1,
                 motorActions.feedFlywheel(FEED_DURATION),
                 // Follow final set trajectory
-                traj2.build(),
+                traj2,
                 motorActions.feedFlywheel(FEED_DURATION)
         );
 
