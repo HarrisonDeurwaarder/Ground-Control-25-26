@@ -38,7 +38,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * This OpMode runs a drivetrain forward for one second
  */
 
-@Autonomous(name="League Meet 0 (Auto)", group="Robot")
+@Autonomous(name="League Meet 0 (Auto)", group="League Meet 0")
 public class AutoLeagueMeet0 extends LinearOpMode {
 
     static final double DRIVE_SPEED = 0.5;
