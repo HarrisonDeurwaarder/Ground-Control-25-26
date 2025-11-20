@@ -76,7 +76,7 @@ public class MotorDriverPID {
 
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
         transportMotor.setDirection(DcMotor.Direction.FORWARD);
-        flywheelMotor.setDirection(DcMotor.Direction.REVERSE);
+        flywheelMotor.setDirection(DcMotor.Direction.FORWARD);
 
         /*
          * Force motors to break under no power
