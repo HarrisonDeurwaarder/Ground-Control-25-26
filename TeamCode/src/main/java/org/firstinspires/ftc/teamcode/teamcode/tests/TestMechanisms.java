@@ -56,7 +56,7 @@ public class TestMechanisms extends com.qualcomm.robotcore.eventloop.opmode.Line
 
         // Initialize the hardware variables
         intakeMotor = hardwareMap.get(DcMotor.class, "intake");
-        beltMotor = hardwareMap.get(DcMotor.class, "belt");
+        beltMotor = hardwareMap.get(DcMotor.class, "transport");
         flywheelMotor = hardwareMap.get(DcMotor.class, "flywheel");
 
         // Previous button statuses are stored to prevent over-toggling
@@ -72,7 +72,7 @@ public class TestMechanisms extends com.qualcomm.robotcore.eventloop.opmode.Line
         // These directions WILL need to be changed
         intakeMotor.setDirection(DcMotor.Direction.FORWARD);
         beltMotor.setDirection(DcMotor.Direction.FORWARD);
-        flywheelMotor.setDirection(DcMotor.Direction.FORWARD);
+        flywheelMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");

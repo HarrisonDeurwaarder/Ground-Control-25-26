@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
 
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
@@ -80,7 +81,7 @@ public class AutoLeagueMeet1 extends LinearOpMode {
         transportMotor.setDirection(DcMotor.Direction.FORWARD);
         flywheelMotor.setDirection(DcMotor.Direction.REVERSE);
 
-        // Build starter pose and odometry drive
+        // Build starter pose and mechanum drive
         Pose2d start = new Pose2d(0.0, 0.0, Math.toRadians(0.0));
         MecanumDrive drive = new MecanumDrive(hardwareMap, start);
 
@@ -102,35 +103,52 @@ public class AutoLeagueMeet1 extends LinearOpMode {
          */
 
         // Build initial batch cycle (no intake)
-        TrajectoryActionBuilder tabBatch0 = drive.actionBuilder(start)
+        Action traj0 = drive.actionBuilder(start)
                 // Linear position to shoot first batch
-                .lineToX(4.0);
+                .lineToX(4.0)
+                .build();
 
         // Build first intake batch cycle
-        TrajectoryActionBuilder tabBatch1 = drive.actionBuilder(start)
+        Action traj1 = drive.actionBuilder(start)
                 // Orient to intake
                 .turn(Math.toRadians(127))
                 // Align with first set of balls
-                .splineTo(new Vector2d(14.5, 0.0), 127.0)
+                .strafeTo(new Vector2d(14.5, 0.0))
                 // Intake and return
-                .splineTo(new Vector2d(0.0, 35.0), 127.0)
-                .splineTo(new Vector2d(0.0, -35.0), 127.0)
-                .splineTo(new Vector2d(-14.5, 0.0), 127.0)
+                .strafeTo(new Vector2d(0.0, 35.0))
+                .strafeTo(new Vector2d(0.0, -35.0))
+                .strafeTo(new Vector2d(-14.5, 0.0))
                 // Turn to face goal
-                .turn(Math.toRadians(127));
+                .turn(Math.toRadians(127))
+                .build();
 
         // Build second intake batch cycle
-        TrajectoryActionBuilder tabBatch2 = drive.actionBuilder(start)
+        Action traj2 = drive.actionBuilder(start)
                 // Orient to intake
                 .turn(Math.toRadians(127))
                 // Align with first set of balls
-                .splineTo(new Vector2d(14.5, 0.0), 127.0)
+                .strafeTo(new Vector2d(14.5, 0.0))
                 // Intake and return
-                .splineTo(new Vector2d(0.0, 35.0), 127.0)
-                .splineTo(new Vector2d(0.0, -35.0), 127.0)
-                .splineTo(new Vector2d(-14.5, 0.0), 127.0)
+                .strafeTo(new Vector2d(0.0, 35.0))
+                .strafeTo(new Vector2d(0.0, -35.0))
+                .strafeTo(new Vector2d(-14.5, 0.0))
                 // Turn to face goal
-                .turn(Math.toRadians(127));
+                .turn(Math.toRadians(127))
+                .build();
+
+        // Compile actions
+        SequentialAction sequentialAction = new SequentialAction(
+                // Follow pre-launch trajectory
+                traj0,
+                // Feed for set duration
+                motorActions.feedFlywheel(FEED_DURATION),
+                // Follow second set trajectory and feed
+                traj1,
+                motorActions.feedFlywheel(FEED_DURATION),
+                // Follow final set trajectory
+                traj2,
+                motorActions.feedFlywheel(FEED_DURATION)
+        );
 
         // Add preliminary telemetry data
         telemetry.addData("Status", "Initialized");
@@ -144,18 +162,7 @@ public class AutoLeagueMeet1 extends LinearOpMode {
 
         // Chain trajectories
         Actions.runBlocking(
-                new SequentialAction(
-                        // Follow pre-launch trajectory
-                        tabBatch0.build(),
-                        // Feed for set duration
-                        motorActions.feedFlywheel(FEED_DURATION),
-                        // Follow second set trajectory and feed
-                        tabBatch1.build(),
-                        motorActions.feedFlywheel(FEED_DURATION),
-                        // Follow final set trajectory
-                        tabBatch2.build(),
-                        motorActions.feedFlywheel(FEED_DURATION)
-                )
+                sequentialAction
         );
 
         intakeMotor.setVelocity(0.0);

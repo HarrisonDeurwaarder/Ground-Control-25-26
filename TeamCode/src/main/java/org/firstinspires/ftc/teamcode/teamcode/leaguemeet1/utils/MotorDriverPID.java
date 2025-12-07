@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class MotorDriverPID {
     public static final double INTAKE_RPS = 2.0;
     public static final double TRANSPORT_RPS = 2.0;
-    public static final double FLYWHEEL_RPS = 4.25;
+    public static final double FLYWHEEL_RPS = 3.0;
 
     public static final double TRIGGER_THRESHOLD = 0.05;
     public static final double FW_VEL_ERROR = 2.0;
@@ -76,7 +76,7 @@ public class MotorDriverPID {
 
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
         transportMotor.setDirection(DcMotor.Direction.FORWARD);
-        flywheelMotor.setDirection(DcMotor.Direction.REVERSE);
+        flywheelMotor.setDirection(DcMotor.Direction.FORWARD);
 
         /*
          * Force motors to break under no power

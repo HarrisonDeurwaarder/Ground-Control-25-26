@@ -86,7 +86,7 @@ public class TestLinearOpMode extends com.qualcomm.robotcore.eventloop.opmode.Li
         // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
         // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
         // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
-        motor.setDirection(DcMotor.Direction.REVERSE);
+        motor.setDirection(DcMotor.Direction.FORWARD);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
