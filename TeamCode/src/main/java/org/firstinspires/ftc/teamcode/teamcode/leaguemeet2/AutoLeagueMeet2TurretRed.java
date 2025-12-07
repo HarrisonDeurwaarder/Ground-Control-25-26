@@ -34,10 +34,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.GamepadBindings;
-import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.GamepadBindingsCfg;
-import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.MotorDriver;
-import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.MotorDriverPID;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.LimelightController;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
@@ -45,8 +41,8 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareControl
  * This OpMode runs a manual omni-directional drivetrain
  */
 
-@TeleOp(name="League Meet Turrent Test Red (Auto)", group="League Meet 2")
-public class AutoLeagueMeet2TurrentRed extends LinearOpMode {
+@TeleOp(name="League Meet Turret Test Red (Auto)", group="League Meet 2")
+public class AutoLeagueMeet2TurretRed extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
@@ -60,7 +56,7 @@ public class AutoLeagueMeet2TurrentRed extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            // Do limelight thingy then do turrent thingy
+            // Do limelight thingy then do turret thingy
             LLResultTypes.FiducialResult goalOffset = limelightController.getGoalOffset("Red");
             // if the red goal can't be found (update later to include for any goal)
             if (goalOffset == null) {
