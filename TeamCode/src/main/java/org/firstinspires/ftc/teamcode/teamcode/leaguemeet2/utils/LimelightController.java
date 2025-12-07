@@ -5,12 +5,6 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-
 public class LimelightController {
     // Define constants
     private static final int POLL_RATE = 100; // Hz
@@ -24,7 +18,8 @@ public class LimelightController {
     private HardwareMap hardwareMap;
     private Limelight3A limelight;
     private LLResult result;
-    private void initAprilTag() {
+
+    private LimelightController() {
         // Map and set the limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         // Set poll rate
@@ -51,7 +46,7 @@ public class LimelightController {
         return -1;
     }
 
-    public Pose3D getGoalOffset(String team) throws NullPointerException, IllegalArgumentException {
+    public LLResultTypes.FiducialResult getGoalOffset(String team) throws NullPointerException, IllegalArgumentException {
         // Determine the ID of the tag for the given team
         int goalID;
         if (team.equals("BLUE")) {
@@ -64,16 +59,13 @@ public class LimelightController {
 
         // Loop through all detections
         for (LLResultTypes.FiducialResult fiducial : result.getFiducialResults()) {
-            // If the goal is in frame, return the offset from it
+            // If the goal is in frame
             if (fiducial.getFiducialId() == goalID) {
-                return fiducial.getRobotPoseTargetSpace();
+                return fiducial;
             }
         }
 
-        // Else, return an arbitrary pose
-        return new Pose3D(
-                new Position(DistanceUnit.METER, 0.0, 0.0, 0.0, 0),
-                new YawPitchRollAngles(AngleUnit.RADIANS, 0.0, 0.0, 0.0, 0)
-        );
+        // Else, return null to indicate that no goal fiducial was detected
+        return null;
     }
 }
