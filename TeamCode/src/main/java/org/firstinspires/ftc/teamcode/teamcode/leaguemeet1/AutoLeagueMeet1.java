@@ -81,7 +81,7 @@ public class AutoLeagueMeet1 extends LinearOpMode {
         transportMotor.setDirection(DcMotor.Direction.FORWARD);
         flywheelMotor.setDirection(DcMotor.Direction.REVERSE);
 
-        // Build starter pose and odometry drive
+        // Build starter pose and mechanum drive
         Pose2d start = new Pose2d(0.0, 0.0, Math.toRadians(0.0));
         MecanumDrive drive = new MecanumDrive(hardwareMap, start);
 

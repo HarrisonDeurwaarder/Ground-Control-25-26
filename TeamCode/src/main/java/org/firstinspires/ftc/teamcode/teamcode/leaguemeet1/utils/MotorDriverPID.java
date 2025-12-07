@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class MotorDriverPID {
     public static final double INTAKE_RPS = 2.0;
     public static final double TRANSPORT_RPS = 2.0;
-    public static final double FLYWHEEL_RPS = 4.25;
+    public static final double FLYWHEEL_RPS = 3.0;
 
     public static final double TRIGGER_THRESHOLD = 0.05;
     public static final double FW_VEL_ERROR = 2.0;
