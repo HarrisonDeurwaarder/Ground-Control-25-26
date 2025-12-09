@@ -35,15 +35,15 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.LimelightController;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
+import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.LimelightController;
 
 /*
  * This OpMode runs a manual omni-directional drivetrain
  */
 
 @Autonomous(name="League Meet Turret Test Red (Auto)", group="League Meet 2")
-public class AutoLeagueMeet2TurretRed extends LinearOpMode {
+public class AutoLeagueMeet2TurretBlue extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();

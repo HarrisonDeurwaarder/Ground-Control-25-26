@@ -4,6 +4,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import androidx.annotation.Nullable;
 
 public class LimelightController {
     // Define constants
@@ -46,6 +47,7 @@ public class LimelightController {
         return -1;
     }
 
+    @Nullable // so the function can return null
     public LLResultTypes.FiducialResult getGoalOffset(String team) throws NullPointerException, IllegalArgumentException {
         // Determine the ID of the tag for the given team
         int goalID;
