@@ -70,28 +70,27 @@ public class GamepadBindingsCfg {
         toggleKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
                 // Cycle to intake
                 () -> gamepad.right_trigger > MotorDriverPID.TRIGGER_THRESHOLD,
-                (Boolean mode) -> motorDriverPID.intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE),
+                (Boolean mode) -> motorDriverPID.intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD),
                 // Cycle to outtake (both transport and intake)
                 () -> gamepad.left_trigger > MotorDriverPID.TRIGGER_THRESHOLD,
-                (Boolean mode) -> {
-                    motorDriverPID.intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-                    motorDriverPID.transportMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-                },
-                // Revert transport to default (launch direction)
-                () -> gamepad.left_trigger <= MotorDriverPID.TRIGGER_THRESHOLD,
-                (Boolean mode) -> motorDriverPID.transportMotor.setDirection(DcMotorSimple.Direction.FORWARD),
+                (Boolean mode) -> motorDriverPID.intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE),
                 // Toggle flywheel
                 () -> gamepad.left_bumper,
                 (Boolean mode) -> motorDriverPID.flywheelMotor.setVelocity((mode) ? MotorDriverPID.toTPS(MotorDriverPID.FLYWHEEL_RPS) : 0.0),
                 // Toggle precision drive mode
                 () -> gamepad.a,
-                (Boolean mode) -> drivetrainPowerScale = ((mode) ? MotorDriverPID.PRECISE_DRIVE_RPS : MotorDriverPID.MAX_DRIVE_RPS)
+                (Boolean mode) -> drivetrainPowerScale = ((mode) ? MotorDriverPID.PRECISE_DRIVE_RPS : MotorDriverPID.MAX_DRIVE_RPS),
+                // Toggle
+                () -> gamepad.right_bumper,
+                (Boolean mode) -> motorDriverPID.transportMotor.setDirection(DcMotorSimple.Direction.REVERSE),
+                () -> !gamepad.right_bumper,
+                (Boolean mode) -> motorDriverPID.transportMotor.setDirection(DcMotorSimple.Direction.FORWARD)
         );
         // Define the hold keybinds
         holdKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
                 // Power the intake/outtake wheel
                 () -> gamepad.right_trigger > MotorDriverPID.TRIGGER_THRESHOLD || gamepad.left_trigger > MotorDriverPID.TRIGGER_THRESHOLD,
-                (Boolean mode) -> motorDriverPID.intakeMotor.setVelocity((mode) ? MotorDriverPID.toTPS(MotorDriverPID.INTAKE_RPS) : 0.0),
+                (Boolean mode) -> motorDriverPID.intakeMotor.setPower((mode) ? MotorDriverPID.INTAKE_POWER : 0.0),
                 // Power the transfer mechanism (launch)
                 () -> (gamepad.right_bumper && motorDriverPID.flywheelInRange()) || gamepad.left_trigger > MotorDriverPID.TRIGGER_THRESHOLD,
                 (Boolean mode) -> motorDriverPID.transportMotor.setVelocity((mode) ? MotorDriverPID.toTPS(MotorDriverPID.TRANSPORT_RPS) : 0.0)
@@ -124,7 +123,7 @@ public class GamepadBindingsCfg {
         holdKeybinds = Map.<Supplier<Boolean>, Consumer<Boolean>>of(
                 // Power the intake/outtake wheel
                 () -> gamepad.right_trigger > MotorDriverPID.TRIGGER_THRESHOLD || gamepad.left_trigger > MotorDriverPID.TRIGGER_THRESHOLD,
-                (Boolean mode) -> motorDriverPID.intakeMotor.setVelocity((mode) ? MotorDriverPID.toTPS(MotorDriverPID.INTAKE_RPS) : 0.0),
+                (Boolean mode) -> motorDriverPID.intakeMotor.setVelocity((mode) ? MotorDriverPID.toTPS(MotorDriverPID.INTAKE_POWER) : 0.0),
                 // Power the transfer mechanism (launch)
                 () -> gamepad.right_bumper || gamepad.left_trigger > MotorDriverPID.TRIGGER_THRESHOLD,
                 (Boolean mode) -> motorDriverPID.transportMotor.setVelocity((mode) ? MotorDriverPID.toTPS(MotorDriverPID.TRANSPORT_RPS) : 0.0)

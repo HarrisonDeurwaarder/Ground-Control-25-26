@@ -36,13 +36,14 @@ import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.MecanumDrive;
+//import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.MotorDriverPID;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.RRMotorActions;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -52,6 +53,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * This OpMode runs a simple 9 ball auto
  */
 
+@Disabled
 @Autonomous(name="League Meet 1 (Auto)", group="League Meet 1")
 public class AutoLeagueMeet1 extends LinearOpMode {
 
@@ -83,14 +85,14 @@ public class AutoLeagueMeet1 extends LinearOpMode {
 
         // Build starter pose and mechanum drive
         Pose2d start = new Pose2d(0.0, 0.0, Math.toRadians(0.0));
-        MecanumDrive drive = new MecanumDrive(hardwareMap, start);
+        //MecanumDrive drive = new MecanumDrive(hardwareMap, start);
 
         // Instanciate new action handler
         motorActions = new RRMotorActions(transportMotor);
 
         // Always power the flywheel and intake (for testing)
-        intakeMotor.setVelocity(
-                MotorDriverPID.toTPS(MotorDriverPID.INTAKE_RPS)
+        intakeMotor.setPower(
+                MotorDriverPID.INTAKE_POWER
         );
         flywheelMotor.setVelocity(
                 MotorDriverPID.toTPS(MotorDriverPID.FLYWHEEL_RPS)
@@ -103,13 +105,13 @@ public class AutoLeagueMeet1 extends LinearOpMode {
          */
 
         // Build initial batch cycle (no intake)
-        Action traj0 = drive.actionBuilder(start)
+        /*Action traj0 = drive.actionBuilder(start)
                 // Linear position to shoot first batch
                 .lineToX(4.0)
-                .build();
+                .build();*/
 
         // Build first intake batch cycle
-        Action traj1 = drive.actionBuilder(start)
+        /*Action traj1 = drive.actionBuilder(start)
                 // Orient to intake
                 .turn(Math.toRadians(127))
                 // Align with first set of balls
@@ -120,10 +122,10 @@ public class AutoLeagueMeet1 extends LinearOpMode {
                 .strafeTo(new Vector2d(-14.5, 0.0))
                 // Turn to face goal
                 .turn(Math.toRadians(127))
-                .build();
+                .build();*/
 
         // Build second intake batch cycle
-        Action traj2 = drive.actionBuilder(start)
+        /*Action traj2 = drive.actionBuilder(start)
                 // Orient to intake
                 .turn(Math.toRadians(127))
                 // Align with first set of balls
@@ -134,10 +136,10 @@ public class AutoLeagueMeet1 extends LinearOpMode {
                 .strafeTo(new Vector2d(-14.5, 0.0))
                 // Turn to face goal
                 .turn(Math.toRadians(127))
-                .build();
+                .build();*/
 
         // Compile actions
-        SequentialAction sequentialAction = new SequentialAction(
+        /*SequentialAction sequentialAction = new SequentialAction(
                 // Follow pre-launch trajectory
                 traj0,
                 // Feed for set duration
@@ -148,7 +150,7 @@ public class AutoLeagueMeet1 extends LinearOpMode {
                 // Follow final set trajectory
                 traj2,
                 motorActions.feedFlywheel(FEED_DURATION)
-        );
+        );*/
 
         // Add preliminary telemetry data
         telemetry.addData("Status", "Initialized");
@@ -161,9 +163,9 @@ public class AutoLeagueMeet1 extends LinearOpMode {
         if (isStopRequested()) return;
 
         // Chain trajectories
-        Actions.runBlocking(
+        /*Actions.runBlocking(
                 sequentialAction
-        );
+        );*/
 
         intakeMotor.setVelocity(0.0);
         flywheelMotor.setVelocity(0.0);

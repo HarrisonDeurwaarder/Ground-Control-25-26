@@ -97,8 +97,8 @@ public class Auto3BLeagueMeet1 extends LinearOpMode {
                 motorDriver.transportMotor.setVelocity(
                         (motorDriver.flywheelInRange()) ? MotorDriverPID.toTPS(MotorDriverPID.TRANSPORT_RPS) : 0.0
                 );
-                motorDriver.intakeMotor.setVelocity(
-                        MotorDriverPID.toTPS(MotorDriverPID.INTAKE_RPS)
+                motorDriver.intakeMotor.setPower(
+                        MotorDriverPID.INTAKE_POWER
                 );
                 // Stop motors
                 motorDriver.frontRightDrive.setPower(0.0);
