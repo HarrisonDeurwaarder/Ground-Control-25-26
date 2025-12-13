@@ -40,33 +40,46 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import java.util.regex.Pattern;
+import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
-@Disabled
-@Autonomous(name="LM2 Auto (Close, Blue)", group="League Meet 2")
-public class AutoCloseBlue extends LinearOpMode {
+@Autonomous(name="LM2 Auto (Close, Red)", group="League Meet 2")
+public class AutoCloseRed extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
+    private HardwareController hardwareController;
     private int pathState;
 
     private static final double FEED_DURATION = 5.0;
 
-    private final Pose startPose =       new Pose();
-    private final Pose scorePose =       new Pose();
-    private final Pose prePickup1Pose =  new Pose();
-    private final Pose postPickup1Pose = new Pose();
-    private final Pose prePickup2Pose =  new Pose();
-    private final Pose postPickup2Pose = new Pose();
-    private final Pose prePickup3Pose =  new Pose();
-    private final Pose postPickup3Pose = new Pose();
+    private final Pose startPose =       new Pose(49.534, 61.089, 217.7 * (Math.PI / 180));
+    private final Pose scorePose =       new Pose(7.107, 21.663, 225 * (Math.PI / 180));
+    private final Pose prePickup1Pose =  new Pose(0.0, 0.0, 0.0);
+    private final Pose postPickup1Pose = new Pose(35.0, 12.0, 0.0);
+    private final Pose prePickup2Pose =  new Pose(25.0, -12.0, 0.0);
+    private final Pose postPickup2Pose = new Pose(35.0, -12.0, 0.0);
+    private final Pose prePickup3Pose =  new Pose(25.0, -36.0, 0.0);
+    private final Pose postPickup3Pose = new Pose(35.0, -36.0, 0.0);
 
     private Path scorePreload;
     private PathChain readyPickup1, grabPickup1, scorePickup1, readyPickup2, grabPickup2, scorePickup2, readyPickup3, grabPickup3, scorePickup3;
 
     @Override
     public void runOpMode() {
+
+        // Pedro objects
+        pathTimer = new Timer();
+        opmodeTimer = new Timer();
+        opmodeTimer.resetTimer();
+
+        follower = Constants.createFollower(hardwareMap);
+        buildPaths();
+        follower.setStartingPose(startPose);
+
+        // Hardware controller for mechanism access
+        hardwareController = new HardwareController(hardwareMap);
 
         waitForStart();
         runtime.reset();
@@ -151,87 +164,129 @@ public class AutoCloseBlue extends LinearOpMode {
                 .build();
     }
 
-    private void autoPathUpdate() {
+    private void autoPathUpdate(){
         switch (pathState) {
             // Score preload position
             case 0:
                 follower.followPath(scorePreload);
                 setPathState(1);
                 break;
+            // Score preload
+            case 1:
+                if (pathTimer.getElapsedTime() < FEED_DURATION) {
+                    hardwareController.conditionalFeed();
+                } else {
+                    hardwareController.transfer.setPower(0.0);
+                }
+                break;
 
 
             // Artifact set #1 pre-grab
-            case 1:
+            case 2:
                 if (!follower.isBusy()) {
+                    // Score first
                     follower.followPath(readyPickup1, true);
                     setPathState(2);
                 }
                 break;
             // Artifact set #1 artifact intake
-            case 2:
+            case 3:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup1, true);
                     setPathState(3);
                 }
                 break;
             // Artifact set #1 scoring
-            case 3:
+            case 4:
                 if (!follower.isBusy()) {
                     follower.followPath(scorePickup1, true);
                     setPathState(4);
                 }
                 break;
+            // Score artifact set #1
+            case 5:
+                if (pathTimer.getElapsedTime() < FEED_DURATION) {
+                    hardwareController.conditionalFeed();
+                } else {
+                    hardwareController.transfer.setPower(0.0);
+                }
+                break;
 
 
             // Artifact set #2 pre-grab
-            case 4:
+            case 6:
                 if (!follower.isBusy()) {
                     follower.followPath(readyPickup2, true);
                     setPathState(5);
                 }
                 break;
             // Artifact set #2 artifact intake
-            case 5:
+            case 7:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup2, true);
                     setPathState(6);
                 }
                 break;
             // Artifact set #2 scoring
-            case 6:
+            case 8:
                 if (!follower.isBusy()) {
                     follower.followPath(scorePickup2, true);
                     setPathState(7);
                 }
                 break;
+            // Score artifact set #2
+            case 9:
+                if (pathTimer.getElapsedTime() < FEED_DURATION) {
+                    hardwareController.conditionalFeed();
+                } else {
+                    hardwareController.transfer.setPower(0.0);
+                }
+                break;
 
 
             // Artifact set #1 pre-grab
-            case 7:
+            case 10:
                 if (!follower.isBusy()) {
                     follower.followPath(readyPickup3, true);
                     setPathState(8);
                 }
                 break;
             // Artifact set #1 artifact intake
-            case 8:
+            case 11:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup3, true);
                     setPathState(9);
                 }
                 break;
             // Artifact set #1 scoring
-            case 9:
+            case 12:
                 if (!follower.isBusy()) {
                     follower.followPath(scorePickup3, true);
                     setPathState(-1);
+                }
+                break;
+            // Score artifact set #3
+            case 13:
+                if (pathTimer.getElapsedTime() < FEED_DURATION) {
+                    hardwareController.conditionalFeed();
+                } else {
+                    hardwareController.transfer.setPower(0.0);
                 }
                 break;
         }
     }
 
     private void updateTelemetry() {
+        // Write telemetry
+        telemetry.addData("Path State", pathState);
+        telemetry.addData("Path Timer", pathTimer.getElapsedTime());
+        telemetry.addLine();
 
+        telemetry.addData("X", follower.getPose().getX());
+        telemetry.addData("Y", follower.getPose().getY());
+        telemetry.addData("Heading", follower.getPose().getHeading());
+
+        telemetry.update();
     }
 
     private void setPathState(int pathState) {
