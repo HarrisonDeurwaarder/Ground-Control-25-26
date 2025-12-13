@@ -177,6 +177,7 @@ public class AutoCloseRed extends LinearOpMode {
                     hardwareController.conditionalFeed();
                 } else {
                     hardwareController.transfer.setPower(0.0);
+                    setPathState(2);
                 }
                 break;
 
@@ -186,21 +187,21 @@ public class AutoCloseRed extends LinearOpMode {
                 if (!follower.isBusy()) {
                     // Score first
                     follower.followPath(readyPickup1, true);
-                    setPathState(2);
+                    setPathState(3);
                 }
                 break;
             // Artifact set #1 artifact intake
             case 3:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup1, true);
-                    setPathState(3);
+                    setPathState(4);
                 }
                 break;
             // Artifact set #1 scoring
             case 4:
                 if (!follower.isBusy()) {
                     follower.followPath(scorePickup1, true);
-                    setPathState(4);
+                    setPathState(5);
                 }
                 break;
             // Score artifact set #1
@@ -209,6 +210,7 @@ public class AutoCloseRed extends LinearOpMode {
                     hardwareController.conditionalFeed();
                 } else {
                     hardwareController.transfer.setPower(0.0);
+                    setPathState(6);
                 }
                 break;
 
@@ -217,21 +219,21 @@ public class AutoCloseRed extends LinearOpMode {
             case 6:
                 if (!follower.isBusy()) {
                     follower.followPath(readyPickup2, true);
-                    setPathState(5);
+                    setPathState(7);
                 }
                 break;
             // Artifact set #2 artifact intake
             case 7:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup2, true);
-                    setPathState(6);
+                    setPathState(8);
                 }
                 break;
             // Artifact set #2 scoring
             case 8:
                 if (!follower.isBusy()) {
                     follower.followPath(scorePickup2, true);
-                    setPathState(7);
+                    setPathState(9);
                 }
                 break;
             // Score artifact set #2
@@ -240,6 +242,7 @@ public class AutoCloseRed extends LinearOpMode {
                     hardwareController.conditionalFeed();
                 } else {
                     hardwareController.transfer.setPower(0.0);
+                    setPathState(10);
                 }
                 break;
 
@@ -248,21 +251,21 @@ public class AutoCloseRed extends LinearOpMode {
             case 10:
                 if (!follower.isBusy()) {
                     follower.followPath(readyPickup3, true);
-                    setPathState(8);
+                    setPathState(11);
                 }
                 break;
             // Artifact set #1 artifact intake
             case 11:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup3, true);
-                    setPathState(9);
+                    setPathState(12);
                 }
                 break;
             // Artifact set #1 scoring
             case 12:
                 if (!follower.isBusy()) {
                     follower.followPath(scorePickup3, true);
-                    setPathState(-1);
+                    setPathState(13);
                 }
                 break;
             // Score artifact set #3
@@ -271,6 +274,7 @@ public class AutoCloseRed extends LinearOpMode {
                     hardwareController.conditionalFeed();
                 } else {
                     hardwareController.transfer.setPower(0.0);
+                    setPathState(-1);
                 }
                 break;
         }
