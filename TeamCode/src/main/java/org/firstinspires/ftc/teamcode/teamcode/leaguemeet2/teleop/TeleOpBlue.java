@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.teamcode.leaguemeet2;
+package org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.teleop;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
@@ -44,7 +44,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
-import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.LimelightController;
 
 import java.util.List;
 import java.util.function.Supplier;
