@@ -42,7 +42,7 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.LimelightContro
  * This OpMode runs a manual omni-directional drivetrain
  */
 
-@Autonomous(name="League Meet Turret Test Red (Auto)", group="League Meet 2")
+@Autonomous(name="League Meet Turret Test Blue (Auto)", group="League Meet 2")
 public class AutoLeagueMeet2TurretBlue extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
