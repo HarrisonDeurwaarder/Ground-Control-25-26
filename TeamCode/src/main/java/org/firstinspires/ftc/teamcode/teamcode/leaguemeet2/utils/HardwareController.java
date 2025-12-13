@@ -29,7 +29,7 @@ public class HardwareController {
     public double hoodPosition = 0.5;
     public static final int TICKS_PER_REVOLUTION = 1470; // Ticks from motor per rotation
     public static final double TICKS_PER_DEGREE = 4.083;
-    public static final int TURRET_TICK_LIMIT = 350;
+    public static final int TURRET_TICK_LIMIT = 500;
     public static final double FLYWHEEL_TPR = 28.0; // TPS
 
 
@@ -88,9 +88,10 @@ public class HardwareController {
 
         // Set turret yaw motor to use encoder
         turretYaw.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        turretYaw.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretYaw.setTargetPosition(0);
         turretYaw.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        turretYaw.setPower(0.4);
+        turretYaw.setPower(0.5);
     }
 
     public void setDrivetrainMode(DcMotor.RunMode mode) {
@@ -137,7 +138,7 @@ public class HardwareController {
         if (flywheelInRange) {
             transfer.setPower(TRANSFER_POWER);
         } else {
-            transfer.setPower(0.0);
+            transfer.setPower(TRANSFER_POWER);
         }
         // Return result for external use
         return flywheelInRange;
@@ -167,12 +168,13 @@ public class HardwareController {
      * @return if the position has been reached (in error range)
     */
     public void updateTurretTarget(double deltaAngle) {
-        if (Math.abs(deltaAngle) < 3.0) {return;}
+        if (Math.abs(deltaAngle) < 1.0) {return;}
         int deltaTicks = (int) (deltaAngle * TICKS_PER_DEGREE);
         int currentPosition = turretYaw.getCurrentPosition();
         int tempPos = currentPosition + deltaTicks;
         targetPosition = Math.max(Math.min(tempPos, TURRET_TICK_LIMIT), -TURRET_TICK_LIMIT);
         turretYaw.setTargetPosition(targetPosition);
+
     }
     public void resetTurret() {
         turretYaw.setTargetPosition(0);

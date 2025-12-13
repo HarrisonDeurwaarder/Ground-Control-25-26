@@ -110,14 +110,14 @@ public class TeleOpBlue extends LinearOpMode {
                     -gamepad1.left_stick_y,
                     -gamepad1.left_stick_x,
                     -gamepad1.right_stick_x,
-                    false // field-centric
+                    true // field-centric
             );
                 // Precision driving mode
             else follower.setTeleOpDrive(
                     -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
                     -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
                     -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
-                    false // field-centric
+                    true // field-centric
             );
 
             /* NON-DRIVING CONTROLS */

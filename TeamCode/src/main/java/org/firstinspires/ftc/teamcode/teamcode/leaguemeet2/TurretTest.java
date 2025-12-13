@@ -100,7 +100,7 @@ public class TurretTest extends LinearOpMode{
                 List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
                 for (LLResultTypes.FiducialResult fiducial : fiducials) {
                     int id = fiducial.getFiducialId(); // The ID number of the fiducial
-                    if(id == 24) {
+                    if(id == 23) {
                         double x = fiducial.getTargetXDegrees(); // Where it is (left-right)
                         updateTurretTarget(x);
 
