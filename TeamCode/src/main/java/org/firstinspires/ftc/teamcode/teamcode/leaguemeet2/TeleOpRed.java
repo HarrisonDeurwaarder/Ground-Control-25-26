@@ -35,7 +35,9 @@ import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
+import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -44,6 +46,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.LimelightController;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 @Configurable
@@ -51,7 +54,8 @@ import java.util.function.Supplier;
 public class TeleOpRed extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
-    private LimelightController limelightController;
+    private Limelight3A limelight;
+    private LLResult result;
     private HardwareController hardwareController;
 
     private Follower follower;
@@ -78,6 +82,11 @@ public class TeleOpRed extends LinearOpMode {
         follower.update();
         telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
 
+
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        // Set poll rate
+        limelight.setPollRateHz(100);
+        limelight.start();
         /*
         pathChain = () -> follower.pathBuilder()
                 .addPath(new Path(new BezierLine(follower::getPose, new Pose(45, 98))))
@@ -177,11 +186,20 @@ public class TeleOpRed extends LinearOpMode {
 
 
             // Turret auto-aiming
-            LLResultTypes.FiducialResult fiducial = limelightController.updateResult(24);
-            if(fiducial != null) {
-                double distance = limelightController.getTargetDist(fiducial.getTargetArea());
-                hardwareController.updateTurretTarget(fiducial.getTargetXDegrees());
-                hardwareController.updateFlywheel(distance);
+            result = limelight.getLatestResult();
+            if (result != null && result.isValid()) {
+                List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+                for (LLResultTypes.FiducialResult fiducial : fiducials) {
+                    int id = fiducial.getFiducialId(); // The ID number of the fiducial
+                    if(id == 24) {
+                        double tA = fiducial.getTargetArea();
+                        double distance = getTargetDist(tA);
+                        hardwareController.updateTurretTarget(fiducial.getTargetXDegrees());
+                        hardwareController.updateFlywheel(distance);
+                    } else {
+                        hardwareController.resetTurret();
+                    }
+                }
             }
 
             updateTelemetry();
@@ -207,5 +225,10 @@ public class TeleOpRed extends LinearOpMode {
         telemetry.addLine("RB - Flywheel");
 
         telemetry.update();
+    }
+
+    public double getTargetDist(double targetArea) {
+        double scale = 14.76;
+        return scale/Math.sqrt(targetArea);
     }
 }

@@ -25,8 +25,7 @@ public class HardwareController {
     // Turret constants
     public int turretPosition = 0;
     public int targetPosition = 0;
-    public double targetSpeed = 1.0; // Target flywheel speed RPS
-    public double flywheel_tps = toTPS(targetSpeed); // TPS
+    public double targetSpeed = 10.0; // Target flywheel speed RPS
     public double hoodPosition = 0.5;
     public static final int TICKS_PER_REVOLUTION = 1470; // Ticks from motor per rotation
     public static final double TICKS_PER_DEGREE = 4.083;
@@ -60,7 +59,7 @@ public class HardwareController {
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         transfer = hardwareMap.get(DcMotorEx.class, "transfer");
         turretFlywheel = hardwareMap.get(DcMotorEx.class, "turretFlywheel");
-        turretYaw = hardwareMap.get(DcMotorEx.class, "turretFlywheel");
+        turretYaw = hardwareMap.get(DcMotorEx.class, "turretYaw");
 
         // Map turret hood servo
         turretHood = hardwareMap.get(Servo.class, "turretHood");
@@ -89,7 +88,9 @@ public class HardwareController {
 
         // Set turret yaw motor to use encoder
         turretYaw.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        turretYaw.setTargetPosition(0);
         turretYaw.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        turretYaw.setPower(0.4);
     }
 
     public void setDrivetrainMode(DcMotor.RunMode mode) {
@@ -116,7 +117,7 @@ public class HardwareController {
     */
     public void toggleFlywheel(boolean isOn) {
         turretFlywheel.setVelocity(
-                isOn ? flywheel_tps : 0.0
+                isOn ? targetSpeed * FLYWHEEL_TPR : 0.0
         );
     }
 
@@ -171,9 +172,18 @@ public class HardwareController {
         int currentPosition = turretYaw.getCurrentPosition();
         int tempPos = currentPosition + deltaTicks;
         targetPosition = Math.max(Math.min(tempPos, TURRET_TICK_LIMIT), -TURRET_TICK_LIMIT);
+        turretYaw.setTargetPosition(targetPosition);
+    }
+    public void resetTurret() {
+        turretYaw.setTargetPosition(0);
+        targetSpeed = 35.0;
+        turretHood.setPosition(0.5);
     }
 
     public void updateFlywheel(double distance) {
+        if (distance < 0) {
+            return;
+        }
         targetSpeed = 0.11 * distance + 34.0;
         hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
         turretHood.setPosition(hoodPosition);
