@@ -27,21 +27,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.teamcode.leaguemeet2;
+package org.firstinspires.ftc.teamcode.teamcode.tests;
 
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.LimelightController;
+import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
 /*
  * This OpMode runs a manual omni-directional drivetrain
  */
 
-@TeleOp(name="League Meet 2A (TeleOp)", group="League Meet 2")
-public class TeleOpLeagueMeet2A extends LinearOpMode {
+@Autonomous(name="Turret Test (Red)", group="Tests")
+public class TurretTestRed extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
@@ -50,33 +51,22 @@ public class TeleOpLeagueMeet2A extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
-        // Wait for the game to start (driver presses START)
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
-        hardwareController = new HardwareController(hardwareMap);
-
-        // Wait until driver presses "start"
         waitForStart();
         runtime.reset();
 
+        // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-
-            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double y = gamepad1.left_stick_y;
-            double x = -gamepad1.left_stick_x;
-            double rx = gamepad1.right_stick_x;
-
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Active Time", "%.1f seconds\n", runtime.seconds());
-
-            // Keybind telemetry
-            telemetry.addData("RT", "Intake");
-            telemetry.addData("LT", "Outtake");
-            telemetry.addData("RB", "Launch");
-            telemetry.addData("LB", "Flywheel Toggle");
-            telemetry.addData("A", "Precision Movement");
-            telemetry.update();
+            // Do limelight thingy then do turret thingy
+            LLResultTypes.FiducialResult goalOffset = limelightController.getGoalOffset("RED");
+            // if the red goal can't be found (update later to include for any goal)
+            if (goalOffset == null) {
+                hardwareController.searchForGoal();
+            }
+            // else, if the red goal is found/in frame
+            else {
+                // if the robot turns towards the goal and doesn't turn the whole way,
+                // then the problem is this function call
+                hardwareController.alignTurretToGoal(goalOffset);
+            }
         }
     }}
