@@ -186,7 +186,7 @@ public class HardwareController {
         if (distance < 0) {
             return;
         }
-        targetSpeed = 0.11 * distance + 34.0;
+        targetSpeed = 0.11 * distance + 30.0;
         hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
         turretHood.setPosition(hoodPosition);
     }
