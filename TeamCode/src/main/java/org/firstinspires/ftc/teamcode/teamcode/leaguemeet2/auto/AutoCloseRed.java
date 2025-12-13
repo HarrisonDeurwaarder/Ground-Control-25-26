@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.teamcode.leaguemeet2;
+package org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.auto;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
@@ -36,7 +36,6 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -56,7 +55,7 @@ public class AutoCloseRed extends LinearOpMode {
 
     private final Pose startPose =       new Pose(49.534, 61.089, 217.7 * (Math.PI / 180));
     private final Pose scorePose =       new Pose(7.107, 21.663, 225 * (Math.PI / 180));
-    private final Pose prePickup1Pose =  new Pose(0.0, 0.0, 0.0);
+    private final Pose prePickup1Pose =  new Pose(25.0, 12.0, 0.0);
     private final Pose postPickup1Pose = new Pose(35.0, 12.0, 0.0);
     private final Pose prePickup2Pose =  new Pose(25.0, -12.0, 0.0);
     private final Pose postPickup2Pose = new Pose(35.0, -12.0, 0.0);
@@ -173,22 +172,22 @@ public class AutoCloseRed extends LinearOpMode {
                 break;
             // Score preload
             case 1:
-                if (pathTimer.getElapsedTime() < FEED_DURATION) {
-                    hardwareController.conditionalFeed();
-                } else {
-                    hardwareController.transfer.setPower(0.0);
-                    setPathState(2);
+                if (!follower.isBusy()) {
+                    if (pathTimer.getElapsedTime() < FEED_DURATION) {
+                        hardwareController.conditionalFeed();
+                    } else {
+                        hardwareController.transfer.setPower(0.0);
+                        setPathState(2);
+                    }
                 }
                 break;
 
 
             // Artifact set #1 pre-grab
             case 2:
-                if (!follower.isBusy()) {
-                    // Score first
-                    follower.followPath(readyPickup1, true);
-                    setPathState(3);
-                }
+                // Score first
+                follower.followPath(readyPickup1, true);
+                setPathState(3);
                 break;
             // Artifact set #1 artifact intake
             case 3:
@@ -206,21 +205,21 @@ public class AutoCloseRed extends LinearOpMode {
                 break;
             // Score artifact set #1
             case 5:
-                if (pathTimer.getElapsedTime() < FEED_DURATION) {
-                    hardwareController.conditionalFeed();
-                } else {
-                    hardwareController.transfer.setPower(0.0);
-                    setPathState(6);
+                if (!follower.isBusy()) {
+                    if (pathTimer.getElapsedTime() < FEED_DURATION) {
+                        hardwareController.conditionalFeed();
+                    } else {
+                        hardwareController.transfer.setPower(0.0);
+                        setPathState(6);
+                    }
                 }
                 break;
 
 
             // Artifact set #2 pre-grab
             case 6:
-                if (!follower.isBusy()) {
-                    follower.followPath(readyPickup2, true);
-                    setPathState(7);
-                }
+                follower.followPath(readyPickup2, true);
+                setPathState(7);
                 break;
             // Artifact set #2 artifact intake
             case 7:
@@ -238,11 +237,13 @@ public class AutoCloseRed extends LinearOpMode {
                 break;
             // Score artifact set #2
             case 9:
-                if (pathTimer.getElapsedTime() < FEED_DURATION) {
-                    hardwareController.conditionalFeed();
-                } else {
-                    hardwareController.transfer.setPower(0.0);
-                    setPathState(10);
+                if (!follower.isBusy()) {
+                    if (pathTimer.getElapsedTime() < FEED_DURATION) {
+                        hardwareController.conditionalFeed();
+                    } else {
+                        hardwareController.transfer.setPower(0.0);
+                        setPathState(10);
+                    }
                 }
                 break;
 
@@ -270,11 +271,13 @@ public class AutoCloseRed extends LinearOpMode {
                 break;
             // Score artifact set #3
             case 13:
-                if (pathTimer.getElapsedTime() < FEED_DURATION) {
-                    hardwareController.conditionalFeed();
-                } else {
-                    hardwareController.transfer.setPower(0.0);
-                    setPathState(-1);
+                if (!follower.isBusy()) {
+                    if (pathTimer.getElapsedTime() < FEED_DURATION) {
+                        hardwareController.conditionalFeed();
+                    } else {
+                        hardwareController.transfer.setPower(0.0);
+                        setPathState(-1);
+                    }
                 }
                 break;
         }
