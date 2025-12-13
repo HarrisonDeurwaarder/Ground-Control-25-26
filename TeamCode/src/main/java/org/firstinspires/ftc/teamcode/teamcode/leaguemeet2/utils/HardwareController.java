@@ -27,6 +27,8 @@ public class HardwareController {
     public static final double PRECISE_DRIVE_RPS = 0.5;
 
     public static final double GOBILDA_TPR = 537.6;
+    public static final double TICKS_PER_RADIAN = 233.96; // Ticks from motor per turret radian
+    public static final double TICKS_PER_REVOLUTION = 1470; // Ticks from motor per rotation
     public static final double WHEEL_DIAMETER = 4.0; // Inches
     public static final double GEAR_RATIO = 10.0 / 15.0;
     public static final int TURRET_REVOLUTION_TOLERANCE_TICKS = (int) ((TURRET_REVOLUTION_TOLERANCE * GOBILDA_TPR) / (Math.PI * 2));
@@ -112,7 +114,7 @@ public class HardwareController {
             // Set desired position
             double yawOffsetRads = targetPose.getOrientation().getYaw(AngleUnit.RADIANS);
             updateTurretYawTarget(
-                    (int) ((yawOffsetRads * GOBILDA_TPR) / (Math.PI * 2)) // Convert radians to ticks
+                    (int) (yawOffsetRads * TICKS_PER_RADIAN) // Convert radians to ticks
             );
             // Position has not yet been reached
             return false;
@@ -144,13 +146,13 @@ public class HardwareController {
 
         // Roll back if it exceeds the error range
         // In positive direction (PI + TOLERANCE rads)
-        if (newTarget > (GOBILDA_TPR / 2) + TURRET_REVOLUTION_TOLERANCE_TICKS) {
-            newTarget %= (int) (GOBILDA_TPR);
+        if (newTarget > (TICKS_PER_REVOLUTION / 2) + TURRET_REVOLUTION_TOLERANCE_TICKS) {
+            newTarget %= (int) (TICKS_PER_REVOLUTION);
         // In negative direction (-PI - TOLERANCE rads)
-        } else if (newTarget < -((GOBILDA_TPR / 2) + TURRET_REVOLUTION_TOLERANCE_TICKS)) {
-            newTarget %= (int) (GOBILDA_TPR);
+        } else if (newTarget < -((TICKS_PER_REVOLUTION / 2) + TURRET_REVOLUTION_TOLERANCE_TICKS)) {
+            newTarget %= (int) (TICKS_PER_REVOLUTION);
             // Keep negative direction
-            newTarget -= (int) (GOBILDA_TPR);
+            newTarget -= (int) (TICKS_PER_REVOLUTION);
         }
         turretYaw.setTargetPosition(newTarget);
     }

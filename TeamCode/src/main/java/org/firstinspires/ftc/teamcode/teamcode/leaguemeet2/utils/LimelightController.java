@@ -48,7 +48,7 @@ public class LimelightController {
     }
 
     @Nullable // so the function can return null
-    public LLResultTypes.FiducialResult getGoalOffset(String team) throws NullPointerException, IllegalArgumentException {
+    public LLResultTypes.FiducialResult getGoalOffset(String team) throws IllegalArgumentException {
         // Determine the ID of the tag for the given team
         int goalID;
         if (team.equals("BLUE")) {
