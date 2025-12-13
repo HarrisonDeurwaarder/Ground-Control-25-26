@@ -12,21 +12,21 @@ import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
 public class HardwareController {
     // Set constants
-    public static final double INTAKE_RPS = 2.0;
-    public static final double TRANSPORT_RPS = 2.0;
-    public static final double FLYWHEEL_RPS = 4.25;
+    public static final double INTAKE_POWER = 0.5;
+    public static final double TRANSFER_POWER = 0.5;
 
-    public static final double TRIGGER_THRESHOLD = 0.05;
-    public static final double FW_VEL_ERROR = 0.2;
+    public static final double FLYWHEEL_RPS = 2.3; // RPS
+    public static final double FLYWHEEL_TPS = toTPS(FLYWHEEL_RPS); // TPS
+    public static final double FW_VEL_ERROR = 0.15; // RPS
 
     public static final double TURRET_ALIGNMENT_ERROR = 0.05; // Meters
-    public static final double TURRET_REVOLUTION_TOLERANCE = Math.PI / 12;; // Radians
+    public static final double TURRET_REVOLUTION_TOLERANCE = Math.PI / 12; // Radians
     public static final int SEARCH_INCREMENT = 10; // Ticks
 
     public static final double NORMAL_DRIVE_RPS = 5.0;
     public static final double PRECISE_DRIVE_RPS = 0.5;
 
-    public static final double GOBILDA_TPR = 537.6;
+    public static final double GOBILDA_TPR = 537.6; // TPS
     public static final double WHEEL_DIAMETER = 4.0; // Inches
     public static final double GEAR_RATIO = 10.0 / 15.0;
     public static final int TURRET_REVOLUTION_TOLERANCE_TICKS = (int) ((TURRET_REVOLUTION_TOLERANCE * GOBILDA_TPR) / (Math.PI * 2));
@@ -78,7 +78,6 @@ public class HardwareController {
 
         // Set turret yaw motor to use encoder
         turretYaw.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        turretYaw.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
     }
 
     public void setDrivetrainMode(DcMotor.RunMode mode) {
@@ -99,12 +98,62 @@ public class HardwareController {
     }
 
     /**
+     * Toggles the flywheel between no power and the target velocity
+     *
+     * @param isOn if the flywheel should be on
+    */
+    public void toggleFlywheel(boolean isOn) {
+        turretFlywheel.setVelocity(
+                isOn ? FLYWHEEL_TPS : 0.0
+        );
+    }
+
+    /**
+     * Gets the current flywheel velocity
+     *
+     * @return flywheel velocity in rps
+    */
+    public double getFlywheelVelocity() {
+        return toRPS(
+                turretFlywheel.getVelocity()
+        );
+    }
+
+    public boolean conditionalFeed() {
+        boolean flywheelInRange = getFlywheelVelocity() < FLYWHEEL_RPS + FW_VEL_ERROR && getFlywheelVelocity() > FLYWHEEL_RPS - FW_VEL_ERROR;
+        // Feed only if flywheel is in acceptable velocity range
+        if (flywheelInRange) {
+            transfer.setPower(TRANSFER_POWER);
+        } else {
+            transfer.setPower(0.0);
+        }
+        // Return result for external use
+        return flywheelInRange;
+    }
+
+    /**
+     * Converts a velocity in rotations-per-second to ticks-per-second
+     *
+     * @param rps rotations per second
+     * @return ticks per second
+    */
+    public static double toTPS(double rps) { return rps * GOBILDA_TPR; }
+
+    /**
+     * Converts a velocity in ticks-per-second to rotations-per-second
+     *
+     * @param tps ticks per second
+     * @return rotations per second
+     */
+    public static double toRPS(double tps) { return tps / GOBILDA_TPR; }
+
+    /**
      * Unless it is already aligned, continuously sends the proper velocities to align turret
      * Assumes that the goal is in frame
      *
      * @param finderOutput fiducial result of the goal detection
      * @return if the position has been reached (in error range)
-    **/
+    */
     public boolean alignTurretToGoal(LLResultTypes.FiducialResult finderOutput) {
         // If turret is already properly aligned, skip logic
         Pose3D targetPose = finderOutput.getTargetPoseCameraSpace();
@@ -123,7 +172,7 @@ public class HardwareController {
 
     /**
      * Searching logic when the goal is not in frame
-    **/
+    */
     public void searchForGoal() {
         // Change the sign of the search increment based on the current velocity
         // If position overflows, positive values will not continue compounding
@@ -136,7 +185,7 @@ public class HardwareController {
      * Adds a given tick increment to the turret yaw motor; stays in a single 2*PI radian arc (+ 2*TOLERANCE)
      *
      * @param tickIncrement amount to add to the target position
-    **/
+    */
     private void updateTurretYawTarget(int tickIncrement) {
         // Calculate the new target position
         // Using current position as opposed to target position to increment proves more useful for turret alignment
@@ -160,7 +209,7 @@ public class HardwareController {
      *
      * @param pos offset of camera to tag in euclidean space
      * @return if the position is in range
-    **/
+    */
     private static boolean turretInAcceptableRange(Position pos) {
         // Verify that the position is within the allowed range
         return pos.y <= TURRET_ALIGNMENT_ERROR && pos.y >= -TURRET_ALIGNMENT_ERROR;
