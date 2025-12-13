@@ -63,9 +63,8 @@ public class TeleOpBlue extends LinearOpMode {
     private TelemetryManager telemetryManager;
 
     private boolean slowMode = false;
-    private boolean flywheelOn = false;
     private boolean debugTelemetry = false;
-    private DcMotorSimple.Direction intakeMode = DcMotorSimple.Direction.FORWARD;
+    private boolean autoAiming = true;
 
     private double SLOW_MODE_MULTIPLIER = 0.25;
     private double TRIGGER_THRESHOLD = 0.05;
@@ -97,6 +96,8 @@ public class TeleOpBlue extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
+        // Enable flywheel to start
+        hardwareController.toggleFlywheel(true);
         follower.startTeleOpDrive(true);
 
         // Functional loop of OpMode
@@ -106,14 +107,14 @@ public class TeleOpBlue extends LinearOpMode {
 
             // Normal driving mode
             if (!slowMode) follower.setTeleOpDrive(
-                    -gamepad1.left_stick_y,
+                    gamepad1.left_stick_y,
                     -gamepad1.left_stick_x,
                     -gamepad1.right_stick_x,
                     true // field-centric
             );
                 // Precision driving mode
             else follower.setTeleOpDrive(
-                    -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
+                    gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
                     -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
                     -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
                     true // field-centric
@@ -124,35 +125,42 @@ public class TeleOpBlue extends LinearOpMode {
             // Toggle slow mode
             if (gamepad1.aWasPressed()) slowMode = !slowMode;
 
+            // Toggle turret auto aiming
+            if (gamepad1.xWasPressed()) autoAiming = !autoAiming;
+
             // Toggle debug telemetry
             if (gamepad1.bWasPressed()) debugTelemetry = !debugTelemetry;
 
-            // Toggle flywheel
-            if (gamepad1.rightBumperWasPressed()) {
-                flywheelOn = !flywheelOn;
-                // Set power accordingly
-                hardwareController.toggleFlywheel(flywheelOn);
-            }
-
-            // Toggle the intake direction
-            if (gamepad1.leftBumperWasPressed()) {
-                intakeMode = (intakeMode.equals(DcMotorSimple.Direction.REVERSE)) ? DcMotorSimple.Direction.FORWARD : DcMotorSimple.Direction.REVERSE;
-                // Set direction accordingly
-                hardwareController.intake.setDirection(intakeMode);
-            }
-
-            // Power the intake
-            // When trigger is held, intake
+            // Outtake
             if (gamepad1.left_trigger >= TRIGGER_THRESHOLD) {
                 // Switch transfer mode to reverse if needed
                 if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
                     hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
-                // Switch intake mode if needed
-                if (!hardwareController.intake.getDirection().equals(intakeMode)) {
-                    hardwareController.intake.setDirection(intakeMode);
+                // Cycle to outtake if not done
+                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
-                // Then power intake and
+                // Then power intake and transfer
+                hardwareController.intake.setPower(
+                        HardwareController.INTAKE_POWER
+                );
+                hardwareController.transfer.setPower(
+                        HardwareController.TRANSFER_POWER
+                );
+            }
+
+            // Power the intake
+            if (gamepad1.right_trigger >= TRIGGER_THRESHOLD) {
+                // Switch transfer mode to reverse if needed
+                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+                }
+                // Switch intake mode if needed
+                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
+                }
+                // Then power intake and transfer
                 hardwareController.intake.setPower(
                         HardwareController.INTAKE_POWER
                 );
@@ -162,8 +170,7 @@ public class TeleOpBlue extends LinearOpMode {
             }
 
             // Feed the artifacts
-            // When trigger is held and flywheel velocity is acceptable, feed
-            if (gamepad1.right_trigger >= TRIGGER_THRESHOLD) {
+            if (gamepad1.right_bumper) {
                 // Switch transfer mode to reverse if needed
                 if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
                     hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -173,32 +180,43 @@ public class TeleOpBlue extends LinearOpMode {
                     hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
                 // Then feed and intake
-                boolean inRange = hardwareController.conditionalFeed();
-                if (inRange) hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
+                hardwareController.transfer.setPower(
+                        HardwareController.TRANSFER_POWER
+                );
+                hardwareController.intake.setPower(
+                        HardwareController.INTAKE_POWER
+                );
             }
 
             // Ensure motors are properly disabled when not in use
             if (gamepad1.right_trigger < TRIGGER_THRESHOLD && gamepad1.left_trigger < TRIGGER_THRESHOLD) {
-                hardwareController.transfer.setPower(0.0);
                 hardwareController.intake.setPower(0.0);
+                // Only disable transfer when RB is not pressed
+                if (gamepad1.right_bumper) {
+                    hardwareController.transfer.setPower(0.0);
+                }
             }
 
-
             // Turret auto-aiming
-            result = limelight.getLatestResult();
-            if (result != null && result.isValid()) {
-                List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
-                for (LLResultTypes.FiducialResult fiducial : fiducials) {
-                    int id = fiducial.getFiducialId(); // The ID number of the fiducial
-                    if(id == 20) {
-                        double tA = fiducial.getTargetArea();
-                        double distance = getTargetDist(tA);
-                        hardwareController.updateTurretTarget(fiducial.getTargetXDegrees());
-                        hardwareController.updateFlywheel(distance);
-                    } else {
-                        hardwareController.resetTurret();
+            if (autoAiming) {
+                result = limelight.getLatestResult();
+                // Proceed if any fiducials have been detected
+                if (result != null && result.isValid()) {
+                    // Iterate fiducials
+                    List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+                    for (LLResultTypes.FiducialResult fiducial : fiducials) {
+                        int id = fiducial.getFiducialId(); // The ID number of the fiducial
+                        if (id == 20) { // ID = 20 corresponds to the blue goal
+                            // Get values for computation
+                            double tA = fiducial.getTargetArea();
+                            double distance = getTargetDist(tA);
+                            // Compute and update flywheel position
+                            hardwareController.updateTurretTarget(fiducial.getTargetXDegrees());
+                            hardwareController.updateFlywheel(distance);
+                        } else {
+                            hardwareController.resetTurret();
+                        }
                     }
-
                 }
             }
 
@@ -209,13 +227,20 @@ public class TeleOpBlue extends LinearOpMode {
     public void updateTelemetry() {
         // Debug telemetry
         if (debugTelemetry) {
-            telemetry.addData("POSITION", follower.getPose());
-            telemetry.addData("VELOCITY", follower.getVelocity());
-            telemetry.addData("FLYWHEEL VELOCITY", hardwareController.getFlywheelVelocity());
+            telemetry.addData("Position", "(%.3f, %.3f, %.3f)", follower.getPose().getX(), follower.getPose().getY(), follower.getPose().getHeading() * (180 / Math.PI));
+            telemetry.addData("Velocity", "(%.3f, %.3f, %.3f)", follower.getVelocity().getXComponent(), follower.getVelocity().getYComponent(), follower.getAngularVelocity() * (180 / Math.PI));
+            telemetry.addData("Flywheel Velocity", hardwareController.getFlywheelVelocity());
+            telemetry.addLine();
         }
+
+        // Statuses
+        telemetry.addData("Auto Aiming", autoAiming);
+        telemetry.addData("Precision Mode", slowMode);
+        telemetry.addLine();
 
         // Controls
         telemetry.addLine("A - Precision Mode");
+        telemetry.addLine("X - Auto Aiming");
         telemetry.addLine("B - Show Debug Telemetry\n");
 
         telemetry.addLine("LT - Intake Power");
