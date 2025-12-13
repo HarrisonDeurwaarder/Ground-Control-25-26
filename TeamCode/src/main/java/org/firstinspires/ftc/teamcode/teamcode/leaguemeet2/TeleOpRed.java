@@ -33,13 +33,10 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.HeadingInterpolator;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -50,8 +47,8 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.LimelightContro
 import java.util.function.Supplier;
 
 @Configurable
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="LM2 TeleOp", group="League Meet 2")
-public class TeleOp extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="LM2 TeleOp Red", group="League Meet 2")
+public class TeleOpRed extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
     private LimelightController limelightController;
@@ -176,6 +173,15 @@ public class TeleOp extends LinearOpMode {
             if (gamepad1.right_trigger < TRIGGER_THRESHOLD && gamepad1.left_trigger < TRIGGER_THRESHOLD) {
                 hardwareController.transfer.setPower(0.0);
                 hardwareController.intake.setPower(0.0);
+            }
+
+
+            // Turret auto-aiming
+            LLResultTypes.FiducialResult fiducial = limelightController.updateResult(24);
+            if(fiducial != null) {
+                double distance = limelightController.getTargetDist(fiducial.getTargetArea());
+                hardwareController.updateTurretTarget(fiducial.getTargetXDegrees());
+                hardwareController.updateFlywheel(distance);
             }
 
             updateTelemetry();

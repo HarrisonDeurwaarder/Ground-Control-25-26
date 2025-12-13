@@ -186,11 +186,7 @@ public class TurretTest extends LinearOpMode{
         int tempPos = currentPosition + deltaTicks;
         targetPosition = Math.max(Math.min(tempPos, TURRET_TICK_LIMIT), -TURRET_TICK_LIMIT);
     }
-    public void updateTurretVelocity() {
-        int currentPosition = turretYaw.getCurrentPosition();
-        double velocity = ((double) (targetPosition - currentPosition)) / 2.0;
-        turretYaw.setVelocity(velocity);
-    }
+
 
     public double getTargetDist(double targetArea) {
         double scale = 14.76;

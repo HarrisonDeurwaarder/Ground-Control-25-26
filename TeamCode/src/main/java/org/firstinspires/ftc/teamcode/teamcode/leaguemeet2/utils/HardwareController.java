@@ -15,13 +15,24 @@ public class HardwareController {
     public static final double INTAKE_POWER = 0.5;
     public static final double TRANSFER_POWER = 0.5;
 
-    public static final double FLYWHEEL_RPS = 2.3; // RPS
-    public static final double FLYWHEEL_TPS = toTPS(FLYWHEEL_RPS); // TPS
+    //public static final double FLYWHEEL_RPS = 2.3; // RPS
     public static final double FW_VEL_ERROR = 0.15; // RPS
 
     public static final double TURRET_ALIGNMENT_ERROR = 0.05; // Meters
     public static final double TURRET_REVOLUTION_TOLERANCE = Math.PI / 12; // Radians
     public static final int SEARCH_INCREMENT = 10; // Ticks
+
+    // Turret constants
+    public int turretPosition = 0;
+    public int targetPosition = 0;
+    public double targetSpeed = 1.0; // Target flywheel speed RPS
+    public double flywheel_tps = toTPS(targetSpeed); // TPS
+    public double hoodPosition = 0.5;
+    public static final int TICKS_PER_REVOLUTION = 1470; // Ticks from motor per rotation
+    public static final double TICKS_PER_DEGREE = 4.083;
+    public static final int TURRET_TICK_LIMIT = 350;
+    public static final double FLYWHEEL_TPR = 28.0; // TPS
+
 
     public static final double NORMAL_DRIVE_RPS = 5.0;
     public static final double PRECISE_DRIVE_RPS = 0.5;
@@ -105,7 +116,7 @@ public class HardwareController {
     */
     public void toggleFlywheel(boolean isOn) {
         turretFlywheel.setVelocity(
-                isOn ? FLYWHEEL_TPS : 0.0
+                isOn ? flywheel_tps : 0.0
         );
     }
 
@@ -119,9 +130,8 @@ public class HardwareController {
                 turretFlywheel.getVelocity()
         );
     }
-
     public boolean conditionalFeed() {
-        boolean flywheelInRange = getFlywheelVelocity() < FLYWHEEL_RPS + FW_VEL_ERROR && getFlywheelVelocity() > FLYWHEEL_RPS - FW_VEL_ERROR;
+        boolean flywheelInRange = getFlywheelVelocity() < targetSpeed + FW_VEL_ERROR && getFlywheelVelocity() > targetSpeed - FW_VEL_ERROR;
         // Feed only if flywheel is in acceptable velocity range
         if (flywheelInRange) {
             transfer.setPower(TRANSFER_POWER);
@@ -138,7 +148,7 @@ public class HardwareController {
      * @param rps rotations per second
      * @return ticks per second
     */
-    public static double toTPS(double rps) { return rps * GOBILDA_TPR; }
+    public static double toTPS(double rps) { return rps * FLYWHEEL_TPR; }
 
     /**
      * Converts a velocity in ticks-per-second to rotations-per-second
@@ -146,7 +156,7 @@ public class HardwareController {
      * @param tps ticks per second
      * @return rotations per second
      */
-    public static double toRPS(double tps) { return tps / GOBILDA_TPR; }
+    public static double toRPS(double tps) { return tps / FLYWHEEL_TPR; }
 
     /**
      * Unless it is already aligned, continuously sends the proper velocities to align turret
@@ -155,64 +165,23 @@ public class HardwareController {
      * @param finderOutput fiducial result of the goal detection
      * @return if the position has been reached (in error range)
     */
-    public boolean alignTurretToGoal(LLResultTypes.FiducialResult finderOutput) {
-        // If turret is already properly aligned, skip logic
-        Pose3D targetPose = finderOutput.getTargetPoseCameraSpace();
-        if (!turretInAcceptableRange(targetPose.getPosition())) {
-            // Set desired position
-            double yawOffsetRads = targetPose.getOrientation().getYaw(AngleUnit.RADIANS);
-            updateTurretYawTarget(
-                    (int) ((yawOffsetRads * GOBILDA_TPR) / (Math.PI * 2)) // Convert radians to ticks
-            );
-            // Position has not yet been reached
-            return false;
-        }
-        // Position has been reached
-        return true;
+    public void updateTurretTarget(double deltaAngle) {
+        if (Math.abs(deltaAngle) < 3.0) {return;}
+        int deltaTicks = (int) (deltaAngle * TICKS_PER_DEGREE);
+        int currentPosition = turretYaw.getCurrentPosition();
+        int tempPos = currentPosition + deltaTicks;
+        targetPosition = Math.max(Math.min(tempPos, TURRET_TICK_LIMIT), -TURRET_TICK_LIMIT);
     }
 
-    /**
-     * Searching logic when the goal is not in frame
-    */
-    public void searchForGoal() {
-        // Change the sign of the search increment based on the current velocity
-        // If position overflows, positive values will not continue compounding
-        updateTurretYawTarget(
-                (turretYaw.getVelocity() > 0 ? SEARCH_INCREMENT : -SEARCH_INCREMENT)
-        );
+    public void updateFlywheel(double distance) {
+        targetSpeed = 0.11 * distance + 34.0;
+        hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
+        turretHood.setPosition(hoodPosition);
     }
-
-    /**
-     * Adds a given tick increment to the turret yaw motor; stays in a single 2*PI radian arc (+ 2*TOLERANCE)
-     *
-     * @param tickIncrement amount to add to the target position
-    */
-    private void updateTurretYawTarget(int tickIncrement) {
-        // Calculate the new target position
-        // Using current position as opposed to target position to increment proves more useful for turret alignment
-        int newTarget = turretYaw.getCurrentPosition() + tickIncrement;
-
-        // Roll back if it exceeds the error range
-        // In positive direction (PI + TOLERANCE rads)
-        if (newTarget > (GOBILDA_TPR / 2) + TURRET_REVOLUTION_TOLERANCE_TICKS) {
-            newTarget %= (int) (GOBILDA_TPR);
-        // In negative direction (-PI - TOLERANCE rads)
-        } else if (newTarget < -((GOBILDA_TPR / 2) + TURRET_REVOLUTION_TOLERANCE_TICKS)) {
-            newTarget %= (int) (GOBILDA_TPR);
-            // Keep negative direction
-            newTarget -= (int) (GOBILDA_TPR);
-        }
-        turretYaw.setTargetPosition(newTarget);
-    }
-
     /**
      * Checks if the position offset is within the error range
      *
      * @param pos offset of camera to tag in euclidean space
      * @return if the position is in range
     */
-    private static boolean turretInAcceptableRange(Position pos) {
-        // Verify that the position is within the allowed range
-        return pos.y <= TURRET_ALIGNMENT_ERROR && pos.y >= -TURRET_ALIGNMENT_ERROR;
-    }
 }

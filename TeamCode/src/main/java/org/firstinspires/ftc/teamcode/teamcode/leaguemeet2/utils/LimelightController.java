@@ -6,14 +6,16 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import androidx.annotation.Nullable;
 
+import java.util.List;
+
 public class LimelightController {
     // Define constants
     private static final int POLL_RATE = 100; // Hz
-    private static final int OBELISK_ID1 = 0;
-    private static final int OBELISK_ID2 = 0;
-    private static final int OBELISK_ID3 = 0;
-    private static final int BLUE_GOAL_ID = 0;
-    private static final int RED_GOAL_ID = 0;
+    private static final int OBELISK_ID1 = 21; // GPP
+    private static final int OBELISK_ID2 = 22; // PGP
+    private static final int OBELISK_ID3 = 23; // PPG
+    private static final int BLUE_GOAL_ID = 20;
+    private static final int RED_GOAL_ID = 24;
 
     // Declare variables
     private HardwareMap hardwareMap;
@@ -28,46 +30,25 @@ public class LimelightController {
         limelight.start();
     }
 
-    public void updateResult() {
-        // Query and save the latest update
+    public LLResultTypes.FiducialResult updateResult(int goalID) {
         result = limelight.getLatestResult();
-    }
-
-    public int updatePattern() throws NullPointerException {
-        // Loop through all detections
-        for (LLResultTypes.FiducialResult fiducial : result.getFiducialResults()) {
-            // If the obelisk is in frame, return that ID
-            int id = fiducial.getFiducialId();
-            if (id == OBELISK_ID1 || id == OBELISK_ID2 || id == OBELISK_ID3) {
-                // Return detected ID if it is in the set of obelisk IDs
-                return id;
+        if (result != null && result.isValid()) {
+            List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+            for (LLResultTypes.FiducialResult fiducial : fiducials) {
+                int id = fiducial.getFiducialId(); // The ID number of the fiducial
+                if(id == goalID) {
+                    return fiducial;
+                }
             }
         }
-        // Else, indicate that no ID was found
-        return -1;
-    }
-
-    @Nullable // so the function can return null
-    public LLResultTypes.FiducialResult getGoalOffset(String team) throws IllegalArgumentException {
-        // Determine the ID of the tag for the given team
-        int goalID;
-        if (team.equals("BLUE")) {
-            goalID = BLUE_GOAL_ID;
-        } else if (team.equals("RED")) {
-            goalID = RED_GOAL_ID;
-        } else {
-            throw new IllegalArgumentException("Team is invalid");
-        }
-
-        // Loop through all detections
-        for (LLResultTypes.FiducialResult fiducial : result.getFiducialResults()) {
-            // If the goal is in frame
-            if (fiducial.getFiducialId() == goalID) {
-                return fiducial;
-            }
-        }
-
-        // Else, return null to indicate that no goal fiducial was detected
         return null;
     }
+
+    public double getTargetDist(double targetArea) {
+        double scale = 14.76;
+        return scale/Math.sqrt(targetArea);
+    }
+
+
+
 }
