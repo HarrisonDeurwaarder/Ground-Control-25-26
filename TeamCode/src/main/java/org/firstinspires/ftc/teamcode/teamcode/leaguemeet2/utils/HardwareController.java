@@ -78,6 +78,7 @@ public class HardwareController {
 
         // Set turret yaw motor to use encoder
         turretYaw.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        turretYaw.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
     }
 
     public void setDrivetrainMode(DcMotor.RunMode mode) {
