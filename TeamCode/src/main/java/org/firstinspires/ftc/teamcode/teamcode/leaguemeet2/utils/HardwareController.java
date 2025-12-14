@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
 public class HardwareController {
     // Set constants
-    public static final double INTAKE_POWER = 0.5;
+    public static final double INTAKE_POWER = 0.8;
     public static final double TRANSFER_POWER = 0.5;
 
     //public static final double FLYWHEEL_RPS = 2.3; // RPS
@@ -25,7 +25,7 @@ public class HardwareController {
     // Turret constants
     public int turretPosition = 0;
     public int targetPosition = 0;
-    public double targetSpeed = 10.0; // Target flywheel speed RPS
+    public double targetSpeed = 33.0; // Target flywheel speed RPS
     public double hoodPosition = 0.5;
     public static final int TICKS_PER_REVOLUTION = 1470; // Ticks from motor per rotation
     public static final double TICKS_PER_DEGREE = 4.083;
@@ -141,7 +141,7 @@ public class HardwareController {
             transfer.setPower(TRANSFER_POWER);
         }
         // Return result for external use
-        return flywheelInRange;
+        return true;
     }
 
     /**
@@ -168,7 +168,6 @@ public class HardwareController {
      * @return if the position has been reached (in error range)
     */
     public void updateTurretTarget(double deltaAngle) {
-        if (Math.abs(deltaAngle) < 1.0) {return;}
         int deltaTicks = (int) (deltaAngle * TICKS_PER_DEGREE);
         int currentPosition = turretYaw.getCurrentPosition();
         int tempPos = currentPosition + deltaTicks;
@@ -178,15 +177,12 @@ public class HardwareController {
     }
     public void resetTurret() {
         turretYaw.setTargetPosition(0);
-        targetSpeed = 35.0;
+        targetSpeed = 33.0;
         turretHood.setPosition(0.5);
     }
 
     public void updateFlywheel(double distance) {
-        if (distance < 0) {
-            return;
-        }
-        targetSpeed = 0.11 * distance + 30.0;
+        targetSpeed = 0.11 * distance + 34.0;
         hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
         turretHood.setPosition(hoodPosition);
     }

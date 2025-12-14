@@ -219,6 +219,7 @@ public class TeleOpBlue extends LinearOpMode {
                     }
                 }
             }
+            hardwareController.toggleFlywheel(true);
 
             updateTelemetry();
         }
