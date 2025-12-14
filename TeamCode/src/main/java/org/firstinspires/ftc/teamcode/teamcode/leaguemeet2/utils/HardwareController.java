@@ -91,7 +91,7 @@ public class HardwareController {
         turretYaw.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretYaw.setTargetPosition(0);
         turretYaw.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        turretYaw.setPower(0.5);
+        turretYaw.setPower(0.8);
     }
 
     public void setDrivetrainMode(DcMotor.RunMode mode) {
