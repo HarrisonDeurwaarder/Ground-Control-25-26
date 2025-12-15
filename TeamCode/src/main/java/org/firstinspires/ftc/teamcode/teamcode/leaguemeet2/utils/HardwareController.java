@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
@@ -31,6 +32,15 @@ public class HardwareController {
     public static final double TICKS_PER_DEGREE = 4.083;
     public static final int TURRET_TICK_LIMIT = 500;
     public static final double FLYWHEEL_TPR = 28.0; // TPS
+
+    // Turret velocity PID variables
+    public double turretVelocityError = 0.0;
+    public double turretPreviousError = 0.0;
+    public double turretTotalError = 0.0;
+    public double targetVelocity = 0.0;
+    public double Kp = 0.0;
+    public double Kd = 0.0;
+    public double Ki = 0.0;
 
 
     public static final double NORMAL_DRIVE_RPS = 5.0;
@@ -164,8 +174,7 @@ public class HardwareController {
      * Unless it is already aligned, continuously sends the proper velocities to align turret
      * Assumes that the goal is in frame
      *
-     * @param finderOutput fiducial result of the goal detection
-     * @return if the position has been reached (in error range)
+     * @param deltaAngle angle error in degrees between turret and april tag
     */
     public void updateTurretTarget(double deltaAngle) {
         int deltaTicks = (int) (deltaAngle * TICKS_PER_DEGREE);
@@ -175,21 +184,55 @@ public class HardwareController {
         turretYaw.setTargetPosition(targetPosition);
 
     }
+
+    /**
+     * Resets turret position, hood angle, and flywheel speed to default
+     * values
+     */
     public void resetTurret() {
         turretYaw.setTargetPosition(0);
         targetSpeed = 33.0;
         turretHood.setPosition(0.5);
     }
 
+    /**
+     * Updates flywheel velocity and hood angle based on regression
+     * using calculated distance between turret and april tag
+     *
+     * @param distance distance in cm between limelight and april tag
+     */
     public void updateFlywheel(double distance) {
         targetSpeed = 0.11 * distance + 34.0;
         hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
         turretHood.setPosition(hoodPosition);
     }
+
     /**
-     * Checks if the position offset is within the error range
+     * PID controller for turret velocity
      *
-     * @param pos offset of camera to tag in euclidean space
-     * @return if the position is in range
-    */
+     * @param deltaTime time since last run cycle
+     * @return power output power for flywheel motor
+     */
+    public double PID_Controller(double deltaTime) {
+        turretVelocityError = targetVelocity - (turretFlywheel.getVelocity() / FLYWHEEL_TPR); // P-value
+        double turretDeltaError = (turretVelocityError - turretPreviousError) / deltaTime; // D-value
+        turretTotalError += (turretVelocityError * deltaTime); // I-value
+
+        turretPreviousError = turretVelocityError;
+
+        double power = (Kp * turretVelocityError) + (Kd * turretDeltaError) + (Ki * turretTotalError);
+        power = Math.max(Math.min(power, 1.0), -1.0); // Limit power from -1.0 - 1.0
+        return power;
+    }
+
+    /**
+     * Set flywheel velocity and reset PID controller
+     *
+     * @param velocity target velocity for flywheel in ticks/s
+     */
+    public void setFlywheelVelocity(double velocity) {
+        targetVelocity = velocity;
+        turretTotalError = 0.0;
+        turretPreviousError = 0.0;
+    }
 }
