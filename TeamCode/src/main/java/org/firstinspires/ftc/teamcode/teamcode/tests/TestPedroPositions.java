@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.auto;
+package org.firstinspires.ftc.teamcode.teamcode.tests;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
@@ -39,26 +39,26 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
-@Autonomous(name="LM2 Auto (Close, Red)", group="League Meet 2")
-public class AutoCloseRed extends LinearOpMode {
+@Autonomous(name="Pedro Position Test", group="Tests")
+public class TestPedroPositions extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     private Follower follower;
+    private TelemetryManager telemetryM;
     private Timer pathTimer, actionTimer, opmodeTimer;
     private HardwareController hardwareController;
-    private TelemetryManager telemetryM;
     private int pathState;
 
     private static final double FEED_DURATION = 5.0;
 
     private final Pose startPose =       new Pose(49.534, 61.089, 217.7 * (Math.PI / 180));
-    private final Pose scorePose =       new Pose(7.107, 21.663, 225 * (Math.PI / 180)); // Default scoring pose (euclidean coordinates will be supplanted)
+    private final Pose scorePose =       new Pose(7.107, 21.663, 225 * (Math.PI / 180));
     private final Pose prePickup1Pose =  new Pose(25.0, 12.0, 0.0);
     private final Pose postPickup1Pose = new Pose(35.0, 12.0, 0.0);
     private final Pose prePickup2Pose =  new Pose(25.0, -12.0, 0.0);
@@ -89,8 +89,13 @@ public class AutoCloseRed extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
-        // Start mechanism motors upon start
-        hardwareController.resetTurret();
+        // Intake and flywheel motors are always enabled
+        hardwareController.intake.setPower(
+                HardwareController.INTAKE_POWER
+        );
+        hardwareController.intake.setDirection(
+                DcMotorSimple.Direction.FORWARD
+        );
 
         // Quit auto if stop is requested
         if (isStopRequested()) return;
@@ -100,6 +105,12 @@ public class AutoCloseRed extends LinearOpMode {
             // Loop movements of robot
             follower.update();
             autoPathUpdate();
+
+            // Update path state
+            if (gamepad1.bWasPressed()) {
+                pathState += 1;
+                pathTimer.resetTimer();
+            }
 
             // Log telemetry
             updateTelemetry();
@@ -177,7 +188,6 @@ public class AutoCloseRed extends LinearOpMode {
             // Score preload position
             case 0:
                 follower.followPath(scorePreload);
-                setPathState(1);
                 break;
             // Score preload
             case 1:
@@ -186,7 +196,6 @@ public class AutoCloseRed extends LinearOpMode {
                         hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
                     } else {
                         hardwareController.transfer.setPower(0.0);
-                        setPathState(2);
                     }
                 }
                 break;
@@ -196,20 +205,17 @@ public class AutoCloseRed extends LinearOpMode {
             case 2:
                 // Score first
                 follower.followPath(readyPickup1, true);
-                setPathState(3);
                 break;
             // Artifact set #1 artifact intake
             case 3:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup1, true);
-                    setPathState(4);
                 }
                 break;
             // Artifact set #1 scoring
             case 4:
                 if (!follower.isBusy()) {
                     follower.followPath(scorePickup1, true);
-                    setPathState(5);
                 }
                 break;
             // Score artifact set #1
@@ -219,7 +225,6 @@ public class AutoCloseRed extends LinearOpMode {
                         hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
                     } else {
                         hardwareController.transfer.setPower(0.0);
-                        setPathState(6);
                     }
                 }
                 break;
@@ -228,20 +233,17 @@ public class AutoCloseRed extends LinearOpMode {
             // Artifact set #2 pre-grab
             case 6:
                 follower.followPath(readyPickup2, true);
-                setPathState(7);
                 break;
             // Artifact set #2 artifact intake
             case 7:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup2, true);
-                    setPathState(8);
                 }
                 break;
             // Artifact set #2 scoring
             case 8:
                 if (!follower.isBusy()) {
                     follower.followPath(scorePickup2, true);
-                    setPathState(9);
                 }
                 break;
             // Score artifact set #2
@@ -251,31 +253,27 @@ public class AutoCloseRed extends LinearOpMode {
                         hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
                     } else {
                         hardwareController.transfer.setPower(0.0);
-                        setPathState(10);
                     }
                 }
                 break;
 
 
-            // Artifact set #1 pre-grab
+            // Artifact set #3 pre-grab
             case 10:
                 if (!follower.isBusy()) {
                     follower.followPath(readyPickup3, true);
-                    setPathState(11);
                 }
                 break;
-            // Artifact set #1 artifact intake
+            // Artifact set #3 artifact intake
             case 11:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup3, true);
-                    setPathState(12);
                 }
                 break;
-            // Artifact set #1 scoring
+            // Artifact set #3 scoring
             case 12:
                 if (!follower.isBusy()) {
                     follower.followPath(scorePickup3, true);
-                    setPathState(13);
                 }
                 break;
             // Score artifact set #3
@@ -285,7 +283,6 @@ public class AutoCloseRed extends LinearOpMode {
                         hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
                     } else {
                         hardwareController.transfer.setPower(0.0);
-                        setPathState(-1);
                     }
                 }
                 break;
@@ -296,16 +293,12 @@ public class AutoCloseRed extends LinearOpMode {
         // Write telemetry
         telemetryM.debug("Path State", pathState);
         telemetryM.debug("Path Timer", pathTimer.getElapsedTime());
+        telemetryM.addLine("");
 
-        telemetryM.debug("Position (In)", follower.getPose());
-        telemetryM.debug("Velocity (In/Sec)", follower.getVelocity());
-        telemetryM.debug("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity(AngleUnit.DEGREES));
+        telemetryM.debug("Position", follower.getPose());
+        telemetryM.debug("Linear Velocity", follower.getVelocity());
+        telemetryM.debug("Angular Velocity", follower.getAngularVelocity());
 
-        telemetry.update();
-    }
-
-    private void setPathState(int pathState) {
-        this.pathState = pathState;
-        pathTimer.resetTimer();
+        telemetryM.update();
     }
 }

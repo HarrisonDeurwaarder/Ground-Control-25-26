@@ -23,7 +23,7 @@ Strategy: Start turret looking forward (encoder position 0)
 Limits: (-90 degrees, +90 degrees) or (-735 ticks, +735 ticks)
  */
 @TeleOp(name="Turret Test", group="League Meet 2")
-public class TurretTest extends LinearOpMode{
+public class TestTurret extends LinearOpMode{
     public static final double TICKS_PER_RADIAN = 233.96; // Ticks from motor per turret radian
     public static final int TICKS_PER_REVOLUTION = 1470; // Ticks from motor per rotation
     public static final double TICKS_PER_DEGREE = 4.083;

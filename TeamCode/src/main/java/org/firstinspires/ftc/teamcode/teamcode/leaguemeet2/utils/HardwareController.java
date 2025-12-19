@@ -1,54 +1,53 @@
 package org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils;
 
+import com.acmerobotics.roadrunner.Vector2d;
+import com.pedropathing.geometry.Pose;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import java.util.List;
 
 public class HardwareController {
     // Set constants
     public static final double INTAKE_POWER = 0.5;
     public static final double TRANSFER_POWER = 0.5;
 
-    //public static final double FLYWHEEL_RPS = 2.3; // RPS
+    public static final double DEFAULT_FLYWHEEL_RPS = 2.3; // RPS
     public static final double FW_VEL_ERROR = 0.15; // RPS
 
-    public static final double TURRET_ALIGNMENT_ERROR = 0.05; // Meters
-    public static final double TURRET_REVOLUTION_TOLERANCE = Math.PI / 12; // Radians
-    public static final int SEARCH_INCREMENT = 10; // Ticks
-
     // Turret constants
-    public int turretPosition = 0;
     public int targetPosition = 0;
     public double targetSpeed = 10.0; // Target flywheel speed RPS
     public double hoodPosition = 0.5;
-    public static final int TICKS_PER_REVOLUTION = 1470; // Ticks from motor per rotation
-    public static final double TICKS_PER_DEGREE = 4.083;
-    public static final int TURRET_TICK_LIMIT = 500;
-    public static final double FLYWHEEL_TPR = 28.0; // TPS
 
+    public static final double TICKS_PER_DEGREE = 4.083; // Ticks per degree
+    public static final int TURRET_TICK_LIMIT = 500; // Ticks
+    public static final double FLYWHEEL_TPR = 28.0; // TPR
 
+    // Drive constants
     public static final double NORMAL_DRIVE_RPS = 5.0;
     public static final double PRECISE_DRIVE_RPS = 0.5;
 
-    public static final double GOBILDA_TPR = 537.6; // TPS
-    public static final double WHEEL_DIAMETER = 4.0; // Inches
-    public static final double GEAR_RATIO = 10.0 / 15.0;
-    public static final int TURRET_REVOLUTION_TOLERANCE_TICKS = (int) ((TURRET_REVOLUTION_TOLERANCE * GOBILDA_TPR) / (Math.PI * 2));
-
     // Declare variables
-
     public DcMotorEx leftFront, leftBack, rightFront, rightBack;
     public DcMotorEx intake, transfer, turretFlywheel, turretYaw;
+    public Pose startingPose;
     public Servo turretHood;
-    private float drivetrainVelocityScale;
+    public Limelight3A limelight;
 
-    public HardwareController(HardwareMap hardwareMap) {
+    // Default booleans
+    public boolean isRedTeam = true;
+
+    /**
+     * Map devices; set all devices to default direction
+     *
+     * @param hardwareMap HardwareMap object
+    */
+    public HardwareController(HardwareMap hardwareMap, Pose startingPose) {
         // Map drivetrain motors
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -64,12 +63,24 @@ public class HardwareController {
         // Map turret hood servo
         turretHood = hardwareMap.get(Servo.class, "turretHood");
 
-        // Reset flywheel yaw motor
-        turretYaw.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        // Map limelight
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        // Set poll rate
+        limelight.setPollRateHz(100);
+        limelight.start();
+
+        // Save pose for turret localization
+        this.startingPose = startingPose;
 
         setAllToDefault();
     }
 
+    /**
+     * Set all default directions of devices
+     * Left drivetrain motors run reverse
+     * Right drivetrain motors run forward
+     * Default target turret rotation position (angles) to zero
+    */
     private void setAllToDefault() {
         // Set drivetrain motor directions
         leftFront.setDirection(DcMotorEx.Direction.REVERSE);
@@ -89,111 +100,136 @@ public class HardwareController {
         // Set turret yaw motor to use encoder
         turretYaw.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         turretYaw.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        // Set default target position
         turretYaw.setTargetPosition(0);
         turretYaw.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         turretYaw.setPower(0.5);
     }
 
-    public void setDrivetrainMode(DcMotor.RunMode mode) {
-        leftFront.setMode(mode);
-        leftBack.setMode(mode);
-        rightFront.setMode(mode);
-        rightBack.setMode(mode);
-    }
-
-    public void setAllMode(DcMotor.RunMode mode) {
-        // Set mode to drivetrain
-        setDrivetrainMode(mode);
-        // Set mode to all mechanisms
-        intake.setMode(mode);
-        transfer.setMode(mode);
-        turretFlywheel.setMode(mode);
-        turretYaw.setMode(mode);
-    }
-
     /**
-     * Toggles the flywheel between no power and the target velocity
-     *
-     * @param isOn if the flywheel should be on
-    */
-    public void toggleFlywheel(boolean isOn) {
-        turretFlywheel.setVelocity(
-                isOn ? targetSpeed * FLYWHEEL_TPR : 0.0
-        );
-    }
-
-    /**
-     * Gets the current flywheel velocity
-     *
-     * @return flywheel velocity in rps
-    */
-    public double getFlywheelVelocity() {
-        return toRPS(
-                turretFlywheel.getVelocity()
-        );
-    }
-    public boolean conditionalFeed() {
-        boolean flywheelInRange = getFlywheelVelocity() < targetSpeed + FW_VEL_ERROR && getFlywheelVelocity() > targetSpeed - FW_VEL_ERROR;
-        // Feed only if flywheel is in acceptable velocity range
-        if (flywheelInRange) {
-            transfer.setPower(TRANSFER_POWER);
-        } else {
-            transfer.setPower(TRANSFER_POWER);
-        }
-        // Return result for external use
-        return flywheelInRange;
-    }
-
-    /**
-     * Converts a velocity in rotations-per-second to ticks-per-second
-     *
-     * @param rps rotations per second
-     * @return ticks per second
-    */
-    public static double toTPS(double rps) { return rps * FLYWHEEL_TPR; }
-
-    /**
-     * Converts a velocity in ticks-per-second to rotations-per-second
-     *
-     * @param tps ticks per second
-     * @return rotations per second
+     * Reset turret rotation and hood position
      */
-    public static double toRPS(double tps) { return tps / FLYWHEEL_TPR; }
-
-    /**
-     * Unless it is already aligned, continuously sends the proper velocities to align turret
-     * Assumes that the goal is in frame
-     *
-     * @param finderOutput fiducial result of the goal detection
-     * @return if the position has been reached (in error range)
-    */
-    public void updateTurretTarget(double deltaAngle) {
-        if (Math.abs(deltaAngle) < 1.0) {return;}
-        int deltaTicks = (int) (deltaAngle * TICKS_PER_DEGREE);
-        int currentPosition = turretYaw.getCurrentPosition();
-        int tempPos = currentPosition + deltaTicks;
-        targetPosition = Math.max(Math.min(tempPos, TURRET_TICK_LIMIT), -TURRET_TICK_LIMIT);
-        turretYaw.setTargetPosition(targetPosition);
-
-    }
     public void resetTurret() {
+        // Reset all turret actuators to default position
         turretYaw.setTargetPosition(0);
         targetSpeed = 35.0;
         turretHood.setPosition(0.5);
     }
 
-    public void updateFlywheel(double distance) {
+    /**
+     * Turret auto-aiming logic
+     *
+     * @param headingDegrees robot heading
+    */
+    public void autoAimTurret(double headingDegrees) {
+        // Get fiducials
+        List<LLResultTypes.FiducialResult> fiducials = limelight.getLatestResult().getFiducialResults();
+        // Get team goal id
+        int tID = isRedTeam ? 24 : 20;
+
+        LLResultTypes.FiducialResult goalFiducial = null;
+        boolean isGoalFound = false;
+        // Loop fiducials
+        for (LLResultTypes.FiducialResult fiducial : fiducials) {
+            // If ID matches the goal
+            if (fiducial.getFiducialId() == tID) {
+                // Mark as found and break out
+                isGoalFound = true;
+                goalFiducial = fiducial;
+                break;
+            }
+        }
+        // If fiducial has been found, then lock on
+        if (isGoalFound) {
+            lockOnToGoal(goalFiducial);
+        // Else, align to heading
+        } else {
+            alignTurretToHeading(headingDegrees);
+        }
+    }
+
+    /**
+     * Get the nearest valid (close) shooting location
+     * Assumes the center of the field to be the origin
+     *
+     * @param location euclidean part of pose
+     * @return closest valid shooting pose (euclidean part)
+    */
+    public Vector2d getShootingPose(Vector2d location) {
+        int direction = (int) (location.x / Math.abs(location.x));
+        // Solve the linear system of equations
+        double x = direction * (location.x + location.y) / 2;
+        double y = -x;
+        // Return the position
+        return new Vector2d(x, y);
+    }
+
+    public static double toTPS(double rps) { return rps * FLYWHEEL_TPR; }
+
+    public void setTeam(String teamName) { isRedTeam = teamName.equals("RED"); }
+
+    /**
+     * Align to heading if turret is known not to be in frame
+     *
+     * @param headingDegrees robot heading
+    */
+    public void alignTurretToHeading(double headingDegrees) {
+        // Current target position of the turret rotation (degrees)
+        double position = turretYaw.getTargetPosition() / TICKS_PER_DEGREE;
+        // Heading offset (degrees)
+        double headingFromStart = headingDegrees - startingPose.getHeading();
+
+        updateTurretTarget(headingFromStart - position);
+    }
+
+    /**
+     * Lock on to the goal if tag is in frame
+     *
+     * @param fiducial fiducial output of the limelight
+    */
+    public void lockOnToGoal(LLResultTypes.FiducialResult fiducial) {
+        // Compute distance to goal
+        double tA = fiducial.getTargetArea();
+        double distance = 14.76 / Math.sqrt(tA);
+
+        // Update the turret actuators
+        updateTurretTarget(fiducial.getTargetXDegrees());
+        updateFlywheelByDistance(distance);
+    }
+
+    /**
+     * Send the turret rotation to a certain angle (degrees)
+     *
+     * @param deltaAngle delta angle (degrees)
+    */
+    public void updateTurretTarget(double deltaAngle) {
+        // Refuse commands to exceed safe rotation bounds
+        if (Math.abs(deltaAngle) < 1.0) { return; }
+        // Compute target position
+        int deltaTicks = (int) (deltaAngle * TICKS_PER_DEGREE);
+        int currentPosition = turretYaw.getCurrentPosition();
+        int tempPos = currentPosition + deltaTicks;
+
+        // Ensure new position is within the safe bounds
+        targetPosition = Math.max(Math.min(tempPos, TURRET_TICK_LIMIT), -TURRET_TICK_LIMIT);
+        turretYaw.setTargetPosition(targetPosition);
+    }
+
+    /**
+     * Update turret position
+     *
+     * @param distance distance from the limelight to the goal (cm)
+    */
+    public void updateFlywheelByDistance(double distance) {
+        // Distance must be non-negative
         if (distance < 0) {
             return;
         }
+        // Compute target speed and hood angle using regression values
         targetSpeed = 0.11 * distance + 30.0;
         hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
+        // Send values
+        turretFlywheel.setVelocity(targetSpeed);
         turretHood.setPosition(hoodPosition);
     }
-    /**
-     * Checks if the position offset is within the error range
-     *
-     * @param pos offset of camera to tag in euclidean space
-     * @return if the position is in range
-    */
 }
