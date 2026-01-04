@@ -21,8 +21,17 @@ public class HardwareController {
 
     // Turret constants
     public int targetPosition = 0;
-    public double targetSpeed = 10.0; // Target flywheel speed RPS
+    public double targetSpeed = 33.0; // Target flywheel speed RPS
     public double hoodPosition = 0.5;
+
+    // Turret velocity PID variables
+    public double turretVelocityError = 0.0;
+    public double turretPreviousError = 0.0;
+    public double turretTotalError = 0.0;
+    public double targetVelocity = 0.0;
+    public double Kp = 0.0;
+    public double Kd = 0.0;
+    public double Ki = 0.0;
 
     public static final double TICKS_PER_DEGREE = 4.083; // Ticks per degree
     public static final int TURRET_TICK_LIMIT = 500; // Ticks
@@ -231,5 +240,34 @@ public class HardwareController {
         // Send values
         turretFlywheel.setVelocity(targetSpeed);
         turretHood.setPosition(hoodPosition);
+    }
+
+    /**
+     * PID controller for turret velocity
+     *
+     * @param deltaTime time since last run cycle
+     * @return power output power for flywheel motor
+     */
+    public double PID_Controller(double deltaTime) {
+        turretVelocityError = targetVelocity - (turretFlywheel.getVelocity() / FLYWHEEL_TPR); // P-value
+        double turretDeltaError = (turretVelocityError - turretPreviousError) / deltaTime; // D-value
+        turretTotalError += (turretVelocityError * deltaTime); // I-value
+
+        turretPreviousError = turretVelocityError;
+
+        double power = (Kp * turretVelocityError) + (Kd * turretDeltaError) + (Ki * turretTotalError);
+        power = Math.max(Math.min(power, 1.0), -1.0); // Limit power from -1.0 - 1.0
+        return power;
+    }
+
+    /**
+     * Set flywheel velocity and reset PID controller
+     *
+     * @param velocity target velocity for flywheel in ticks/s
+     */
+    public void setFlywheelVelocity(double velocity) {
+        targetVelocity = velocity;
+        turretTotalError = 0.0;
+        turretPreviousError = 0.0;
     }
 }
