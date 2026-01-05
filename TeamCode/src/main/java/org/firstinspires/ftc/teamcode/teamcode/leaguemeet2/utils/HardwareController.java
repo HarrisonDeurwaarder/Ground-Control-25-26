@@ -6,6 +6,7 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -16,7 +17,7 @@ public class HardwareController {
     public static final double INTAKE_POWER = 0.5;
     public static final double TRANSFER_POWER = 0.5;
 
-    public static final double DEFAULT_FLYWHEEL_RPS = 2.3; // RPS
+    public static final double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
     public static final double FW_VEL_ERROR = 0.15; // RPS
 
     // Turret constants
@@ -98,7 +99,7 @@ public class HardwareController {
         rightBack.setDirection(DcMotorEx.Direction.FORWARD);
 
         // Set mechanism motor directions
-        intake.setDirection(DcMotorEx.Direction.REVERSE);
+        intake.setDirection(DcMotorEx.Direction.FORWARD);
         transfer.setDirection(DcMotorEx.Direction.FORWARD);
         turretFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
         turretYaw.setDirection(DcMotorEx.Direction.REVERSE);
@@ -106,6 +107,7 @@ public class HardwareController {
         // Set servo direction
         turretHood.setDirection(Servo.Direction.FORWARD);
 
+        turretFlywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Set turret yaw motor to use encoder
         turretYaw.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         turretYaw.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -128,9 +130,9 @@ public class HardwareController {
     /**
      * Turret auto-aiming logic
      *
-     * @param headingDegrees robot heading
+     * @param pose robot pose
     */
-    public void autoAimTurret(double headingDegrees) {
+    public void autoAimTurret(Pose pose) {
         // Get fiducials
         List<LLResultTypes.FiducialResult> fiducials = limelight.getLatestResult().getFiducialResults();
         // Get team goal id
@@ -153,7 +155,7 @@ public class HardwareController {
             lockOnToGoal(goalFiducial);
         // Else, align to heading
         } else {
-            alignTurretToHeading(headingDegrees);
+            alignTurretToHeading(pose);
         }
     }
 
@@ -178,17 +180,18 @@ public class HardwareController {
     public void setTeam(String teamName) { isRedTeam = teamName.equals("RED"); }
 
     /**
-     * Align to heading if turret is known not to be in frame
+     * Align to heading if goal is known not to be in frame
      *
-     * @param headingDegrees robot heading
+     * @param pose robot pose
     */
-    public void alignTurretToHeading(double headingDegrees) {
+    public void alignTurretToHeading(Pose pose) {
         // Current target position of the turret rotation (degrees)
         double position = turretYaw.getTargetPosition() / TICKS_PER_DEGREE;
-        // Heading offset (degrees)
-        double headingFromStart = headingDegrees - startingPose.getHeading();
+        // Goal offset from robot
+        // Accounts for correct goal location
+        Vector2d goalDifference = new Vector2d(pose.getX() - (isRedTeam ? 88 : -88), pose.getY() - 88);
 
-        updateTurretTarget(headingFromStart - position);
+        updateTurretTarget(goalDifference.angleCast().real + startingPose.getHeading() + Math.PI - position);
     }
 
     /**

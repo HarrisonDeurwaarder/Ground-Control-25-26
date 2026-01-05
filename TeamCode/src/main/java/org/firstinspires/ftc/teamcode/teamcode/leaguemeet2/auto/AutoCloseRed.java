@@ -39,6 +39,7 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -55,9 +56,9 @@ public class AutoCloseRed extends LinearOpMode {
     private TelemetryManager telemetryM;
     private int pathState;
 
-    private static final double FEED_DURATION = 5.0;
+    private static final int FEED_DURATION = 5000;
 
-    private final Pose startPose =       new Pose(49.534, 61.089, 217.7 * (Math.PI / 180));
+    private final Pose startPose =       new Pose(49.534, 61.089, 37.7 * (Math.PI / 180));
     private final Pose scorePose =       new Pose(7.107, 21.663, 225 * (Math.PI / 180)); // Default scoring pose (euclidean coordinates will be supplanted)
     private final Pose prePickup1Pose =  new Pose(25.0, 12.0, 0.0);
     private final Pose postPickup1Pose = new Pose(35.0, 12.0, 0.0);
@@ -91,6 +92,8 @@ public class AutoCloseRed extends LinearOpMode {
 
         // Start mechanism motors upon start
         hardwareController.resetTurret();
+        hardwareController.turretFlywheel.setVelocity(HardwareController.toTPS(HardwareController.DEFAULT_FLYWHEEL_RPS));
+        hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
 
         // Quit auto if stop is requested
         if (isStopRequested()) return;
@@ -285,6 +288,8 @@ public class AutoCloseRed extends LinearOpMode {
                         hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
                     } else {
                         hardwareController.transfer.setPower(0.0);
+                        hardwareController.turretFlywheel.setPower(0.0);
+                        hardwareController.intake.setPower(0.0);
                         setPathState(-1);
                     }
                 }

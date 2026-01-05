@@ -183,7 +183,7 @@ public class TeleOpDebugger extends LinearOpMode {
                 hardwareController.intake.setPower(0.0);
             }
 
-            hardwareController.autoAimTurret(follower.getHeading() * (180 / Math.PI));
+            hardwareController.autoAimTurret(follower.getPose());
             updateTelemetry();
         }
     }
