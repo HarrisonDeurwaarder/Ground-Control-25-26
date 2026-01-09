@@ -47,7 +47,4 @@ public class LimelightController {
         double scale = 14.76;
         return scale/Math.sqrt(targetArea);
     }
-
-
-
 }

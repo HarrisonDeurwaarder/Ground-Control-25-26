@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils;
 
 import com.acmerobotics.roadrunner.Vector2d;
+import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Vector;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -12,9 +14,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.List;
 
+@Configurable
 public class HardwareController {
     // Set constants
-    public static final double INTAKE_POWER = 0.5;
+    public static final double INTAKE_POWER = 0.8;
     public static final double TRANSFER_POWER = 0.5;
 
     public static final double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
@@ -34,8 +37,8 @@ public class HardwareController {
     public double Kd = 0.0;
     public double Ki = 0.0;
 
-    public static final double TICKS_PER_DEGREE = 4.083; // Ticks per degree
-    public static final int TURRET_TICK_LIMIT = 500; // Ticks
+    public static final double TICKS_PER_DEGREE = 6.806; // Ticks per degree
+    public static final int TURRET_TICK_LIMIT = 100; // Ticks
     public static final double FLYWHEEL_TPR = 28.0; // TPR
 
     // Drive constants
@@ -48,6 +51,10 @@ public class HardwareController {
     public Pose startingPose;
     public Servo turretHood;
     public Limelight3A limelight;
+
+    public int turretAngle = 180;
+    public int turretTicks = 0;
+    public boolean tagDetected = false;
 
     // Default booleans
     public boolean isRedTeam = true;
@@ -151,6 +158,7 @@ public class HardwareController {
             }
         }
         // If fiducial has been found, then lock on
+        tagDetected = isGoalFound;
         if (isGoalFound) {
             lockOnToGoal(goalFiducial);
         // Else, align to heading
@@ -180,18 +188,33 @@ public class HardwareController {
     public void setTeam(String teamName) { isRedTeam = teamName.equals("RED"); }
 
     /**
+     * Returns the angle of a vector from the x-axis in degrees. Values are bounded to positive angles
+    */
+    private int getTheta(Vector vector) {
+        double theta = Math.atan(vector.getYComponent() / vector.getXComponent());
+        // Convert theta to degrees
+        theta = Math.toDegrees(theta);
+        return (int) theta;
+    }
+
+    /**
      * Align to heading if goal is known not to be in frame
      *
      * @param pose robot pose
     */
-    public void alignTurretToHeading(Pose pose) {
-        // Current target position of the turret rotation (degrees)
-        double position = turretYaw.getTargetPosition() / TICKS_PER_DEGREE;
+    private void alignTurretToHeading(Pose pose) {
         // Goal offset from robot
         // Accounts for correct goal location
-        Vector2d goalDifference = new Vector2d(pose.getX() - (isRedTeam ? 88 : -88), pose.getY() - 88);
+        Vector goalPosition = new Vector(new Pose(60.0, 60.0));
+        Vector robotPosition = new Vector(pose);
+        Vector goalFromRobot = goalPosition.minus(robotPosition);
+        // Robot heading offset
+        int headingOffset = getTheta(goalFromRobot) - 90;
+        turretAngle = headingOffset - (int)(Math.toDegrees(pose.getHeading()));
 
-        updateTurretTarget(goalDifference.angleCast().real + startingPose.getHeading() + Math.PI - position);
+        //turretYaw.setTargetPosition((int) (headingOffset * TICKS_PER_DEGREE));
+
+        updateTurretTarget(5);
     }
 
     /**
@@ -199,32 +222,36 @@ public class HardwareController {
      *
      * @param fiducial fiducial output of the limelight
     */
-    public void lockOnToGoal(LLResultTypes.FiducialResult fiducial) {
+    private void lockOnToGoal(LLResultTypes.FiducialResult fiducial) {
         // Compute distance to goal
         double tA = fiducial.getTargetArea();
         double distance = 14.76 / Math.sqrt(tA);
 
         // Update the turret actuators
         updateTurretTarget(fiducial.getTargetXDegrees());
-        updateFlywheelByDistance(distance);
+        updateFlywheelByDistance(turretYaw.getCurrentPosition() / TICKS_PER_DEGREE + distance);
     }
 
     /**
-     * Send the turret rotation to a certain angle (degrees)
+     * Send the turret rotation to a certain angle
      *
-     * @param deltaAngle delta angle (degrees)
+     * @param angle angle (degrees)
     */
-    public void updateTurretTarget(double deltaAngle) {
-        // Refuse commands to exceed safe rotation bounds
-        if (Math.abs(deltaAngle) < 1.0) { return; }
+    public void updateTurretTarget(double angle) {
+        int ticks180 = (int) (180 * TICKS_PER_DEGREE);
         // Compute target position
-        int deltaTicks = (int) (deltaAngle * TICKS_PER_DEGREE);
-        int currentPosition = turretYaw.getCurrentPosition();
-        int tempPos = currentPosition + deltaTicks;
+        int ticks = (int) (angle * TICKS_PER_DEGREE);
 
-        // Ensure new position is within the safe bounds
-        targetPosition = Math.max(Math.min(tempPos, TURRET_TICK_LIMIT), -TURRET_TICK_LIMIT);
-        turretYaw.setTargetPosition(targetPosition);
+        // Modify tick count to stay in bounds
+        if (ticks < -TURRET_TICK_LIMIT) {
+            ticks %= ticks180;
+        } else if (ticks > TURRET_TICK_LIMIT) {
+            ticks %= ticks180;
+            ticks -= ticks180;
+        }
+        // Final cut to ensure bounds are met
+        turretTicks = Math.max(-TURRET_TICK_LIMIT, Math.min(ticks, TURRET_TICK_LIMIT));
+        turretYaw.setTargetPosition(turretTicks);
     }
 
     /**
