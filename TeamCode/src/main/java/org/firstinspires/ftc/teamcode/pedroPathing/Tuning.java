@@ -457,6 +457,7 @@ class LateralVelocityTuner extends OpMode {
         telemetryM.debug("Make sure you have enough room, since the robot has inertia after cutting power.");
         telemetryM.debug("After running the distance, the robot will cut power from the drivetrain and display the strafe velocity.");
         telemetryM.debug("Press B on Gamepad 1 to stop.");
+        telemetryM.debug("pose", follower.getPose());
         telemetryM.update(telemetry);
         follower.update();
         drawOnlyCurrent();

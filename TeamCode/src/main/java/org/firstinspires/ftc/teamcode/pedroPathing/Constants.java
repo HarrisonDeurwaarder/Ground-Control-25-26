@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.pedropathing.control.FilteredPIDFCoefficients;
+import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
@@ -19,8 +21,17 @@ public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(13.325)
             // Deceleration rates
-            .forwardZeroPowerAcceleration(-28.72)
-            .lateralZeroPowerAcceleration(-66.83);
+            .forwardZeroPowerAcceleration(-30.0)
+            .lateralZeroPowerAcceleration(-70.0)
+            // Enable secondary PID
+            .useSecondaryTranslationalPIDF(false)
+            .useSecondaryHeadingPIDF(false)
+            .useSecondaryDrivePIDF(false)
+            // PIDs
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0.0, 0.01, 0.03))
+            .headingPIDFCoefficients(new PIDFCoefficients(1.2, 0.0, 0.02, 0.03))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.1, 0.0, 0.01, 0.6, 0.0));
+
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
@@ -35,8 +46,8 @@ public class Constants {
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             // Max velocities
-            .xVelocity(29.84)
-            .yVelocity(48.93);
+            .xVelocity(65.0)
+            .yVelocity(50.0);
 
     public static OTOSConstants localizerConstants = new OTOSConstants()
             .hardwareMapName("sensor_otos")
