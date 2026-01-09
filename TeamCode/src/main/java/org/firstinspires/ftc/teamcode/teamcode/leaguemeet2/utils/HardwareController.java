@@ -38,9 +38,10 @@ public class HardwareController {
     public double turretPreviousError = 0.0;
     public double turretTotalError = 0.0;
     public double targetVelocity = 0.0;
-    public double Kp = 0.0;
+    public double Kp = 0.8;
     public double Kd = 0.0;
-    public double Ki = 0.0;
+    public double Ki = 0.01;
+    public double[] turretMovingError = new double[10];
 
 
     public static final double NORMAL_DRIVE_RPS = 5.0;
@@ -101,7 +102,10 @@ public class HardwareController {
         turretYaw.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretYaw.setTargetPosition(0);
         turretYaw.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        turretYaw.setPower(0.8);
+        turretYaw.setPower(0.5);
+
+        turretFlywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        turretFlywheel.setPower(0.0);
     }
 
     public void setDrivetrainMode(DcMotor.RunMode mode) {
@@ -126,6 +130,7 @@ public class HardwareController {
      *
      * @param isOn if the flywheel should be on
     */
+
     public void toggleFlywheel(boolean isOn) {
         turretFlywheel.setVelocity(
                 isOn ? targetSpeed * FLYWHEEL_TPR : 0.0
@@ -202,9 +207,10 @@ public class HardwareController {
      * @param distance distance in cm between limelight and april tag
      */
     public void updateFlywheel(double distance) {
-        targetSpeed = 0.11 * distance + 34.0;
-        hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
+        targetSpeed = 0.11 * distance + 33.5;
+        hoodPosition = Math.max(Math.min(0.52 - (0.0016 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
         turretHood.setPosition(hoodPosition);
+        setFlywheelVelocity(targetSpeed);
     }
 
     /**
@@ -216,12 +222,19 @@ public class HardwareController {
     public double PID_Controller(double deltaTime) {
         turretVelocityError = targetVelocity - (turretFlywheel.getVelocity() / FLYWHEEL_TPR); // P-value
         double turretDeltaError = (turretVelocityError - turretPreviousError) / deltaTime; // D-value
-        turretTotalError += (turretVelocityError * deltaTime); // I-value
+        //turretTotalError += (turretVelocityError * deltaTime); // I-value
+
+        // Calculate moving integral error
+        System.arraycopy(turretMovingError, 0, turretMovingError, 1, turretMovingError.length - 1);
+        turretMovingError[0] = turretVelocityError;
+        turretTotalError = 0.0;
+        for (double error : turretMovingError) {turretTotalError += error;}
 
         turretPreviousError = turretVelocityError;
 
         double power = (Kp * turretVelocityError) + (Kd * turretDeltaError) + (Ki * turretTotalError);
         power = Math.max(Math.min(power, 1.0), -1.0); // Limit power from -1.0 - 1.0
+        turretFlywheel.setPower(power);
         return power;
     }
 
@@ -232,7 +245,7 @@ public class HardwareController {
      */
     public void setFlywheelVelocity(double velocity) {
         targetVelocity = velocity;
-        turretTotalError = 0.0;
+        //turretTotalError = 0.0;
         turretPreviousError = 0.0;
     }
 }

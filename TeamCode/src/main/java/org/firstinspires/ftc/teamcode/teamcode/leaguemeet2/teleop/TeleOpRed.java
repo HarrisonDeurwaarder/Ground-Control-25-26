@@ -57,6 +57,8 @@ public class TeleOpRed extends LinearOpMode {
     private LLResult result;
     private HardwareController hardwareController;
 
+    // PID runtime variables
+    double prevTime = 0.0;
     private Follower follower;
     public static Pose startingPose;
     private Supplier<PathChain> pathChain;
@@ -97,7 +99,7 @@ public class TeleOpRed extends LinearOpMode {
         runtime.reset();
 
         // Enable flywheel to start
-        hardwareController.toggleFlywheel(true);
+        //hardwareController.toggleFlywheel(true);
         follower.startTeleOpDrive(true);
 
         // Functional loop of OpMode
@@ -214,13 +216,22 @@ public class TeleOpRed extends LinearOpMode {
                             hardwareController.updateTurretTarget(fiducial.getTargetXDegrees());
                             hardwareController.updateFlywheel(distance);
                         } else {
-                            hardwareController.resetTurret();
+                            //hardwareController.resetTurret();
                         }
                     }
                 }
             }
-            hardwareController.toggleFlywheel(true);
 
+            // PID Velocity Control
+            double deltaTime = runtime.time() - prevTime;
+            prevTime = runtime.time();
+            hardwareController.PID_Controller(deltaTime);
+            telemetry.addData("Power: ", hardwareController.PID_Controller(deltaTime));
+            telemetry.addData("Delta Time: ", deltaTime);
+            telemetry.addData("Target Velocity: ", hardwareController.targetVelocity);
+            telemetry.addData("Current Velocity: ", hardwareController.turretFlywheel.getVelocity()/28.0);
+
+            // Update telemetry output
             updateTelemetry();
         }
     }
