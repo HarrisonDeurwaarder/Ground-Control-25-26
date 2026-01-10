@@ -46,8 +46,8 @@ public class Constants {
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             // Max velocities
-            .xVelocity(40.0)
-            .yVelocity(40.0);
+            .xVelocity(80.0)
+            .yVelocity(80.0);
 
     public static OTOSConstants localizerConstants = new OTOSConstants()
             .hardwareMapName("sensor_otos")

@@ -141,8 +141,8 @@ public class TeleOpRedFar extends LinearOpMode {
             // When trigger is held and flywheel velocity is acceptable, feed
             if (gamepad1.right_trigger >= TRIGGER_THRESHOLD) {
                 // Switch transfer mode to reverse if needed
-                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
                 // Switch intake mode to [intake] if needed
                 if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
@@ -157,8 +157,8 @@ public class TeleOpRedFar extends LinearOpMode {
             // When trigger is held, intake
             else if (gamepad1.left_trigger >= TRIGGER_THRESHOLD) {
                 // Switch transfer mode to reverse if needed
-                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
                 // Switch intake mode to reverse if needed
                 if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
@@ -173,8 +173,8 @@ public class TeleOpRedFar extends LinearOpMode {
             // When trigger is held, intake
             else if (gamepad1.left_bumper) {
                 // Switch transfer mode to reverse if needed
-                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
                 // Switch intake mode to reverse if needed
                 if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
