@@ -34,22 +34,20 @@ import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.FuturePose;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
-@Autonomous(name="LM2 Auto (Close, Red)", group="League Meet 2")
-public class AutoCloseRed extends LinearOpMode {
+@Autonomous(name="LM2 Auto Debugger", group="League Meet 2")
+public class AutoDebugger extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     private Follower follower;
@@ -326,6 +324,8 @@ public class AutoCloseRed extends LinearOpMode {
                     hardwareController.transfer.setPower(0.0);
                     hardwareController.turretFlywheel.setPower(0.0);
                     hardwareController.intake.setPower(0.0);
+                    // Reset turret
+                    hardwareController.resetTurret();
 
                     setPathState(-1);
                 }

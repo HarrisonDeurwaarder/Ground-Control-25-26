@@ -38,12 +38,8 @@ public class HardwareController {
     public double Ki = 0.0;
 
     public static final double TICKS_PER_DEGREE = 6.806; // Ticks per degree
-    public static final int TURRET_TICK_LIMIT = 100; // Ticks
+    public static final int TURRET_TICK_LIMIT = 1200; // Ticks
     public static final double FLYWHEEL_TPR = 28.0; // TPR
-
-    // Drive constants
-    public static final double NORMAL_DRIVE_RPS = 5.0;
-    public static final double PRECISE_DRIVE_RPS = 0.5;
 
     // Declare variables
     public DcMotorEx leftFront, leftBack, rightFront, rightBack;
@@ -209,12 +205,12 @@ public class HardwareController {
         Vector robotPosition = new Vector(pose);
         Vector goalFromRobot = goalPosition.minus(robotPosition);
         // Robot heading offset
-        int headingOffset = getTheta(goalFromRobot) - 90;
+        int headingOffset = getTheta(goalFromRobot) + 135;
         turretAngle = headingOffset - (int)(Math.toDegrees(pose.getHeading()));
 
         //turretYaw.setTargetPosition((int) (headingOffset * TICKS_PER_DEGREE));
 
-        updateTurretTarget(5);
+        updateTurretTarget(turretAngle);
     }
 
     /**
