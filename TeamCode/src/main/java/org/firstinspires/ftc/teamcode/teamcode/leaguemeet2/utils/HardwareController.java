@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import java.security.KeyStore;
 import java.util.List;
 
 @Configurable
@@ -33,9 +34,11 @@ public class HardwareController {
     public double turretPreviousError = 0.0;
     public double turretTotalError = 0.0;
     public double targetVelocity = 0.0;
-    public double Kp = 0.0;
+    public double Kp = 0.5;
     public double Kd = 0.0;
     public double Ki = 0.0;
+    public double distance = 0.0;
+    public boolean autoAiming = true;
 
     public static final double TICKS_PER_DEGREE = 6.806; // Ticks per degree
     public static final int TURRET_TICK_LIMIT = 1200; // Ticks
@@ -54,6 +57,8 @@ public class HardwareController {
 
     // Default booleans
     public boolean isRedTeam = true;
+    public LLResultTypes.FiducialResult goalFiducial = null;
+
 
     /**
      * Map devices; set all devices to default direction
@@ -111,6 +116,7 @@ public class HardwareController {
         turretHood.setDirection(Servo.Direction.FORWARD);
 
         turretFlywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        turretFlywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         // Set turret yaw motor to use encoder
         turretYaw.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         turretYaw.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -125,7 +131,7 @@ public class HardwareController {
      */
     public void resetTurret() {
         // Reset all turret actuators to default position
-        turretYaw.setTargetPosition(0);
+        updateTurretTarget(0);
         targetSpeed = 35.0;
         turretHood.setPosition(0.5);
     }
@@ -141,7 +147,6 @@ public class HardwareController {
         // Get team goal id
         int tID = isRedTeam ? 24 : 20;
 
-        LLResultTypes.FiducialResult goalFiducial = null;
         boolean isGoalFound = false;
         // Loop fiducials
         for (LLResultTypes.FiducialResult fiducial : fiducials) {
@@ -155,12 +160,17 @@ public class HardwareController {
         }
         // If fiducial has been found, then lock on
         tagDetected = isGoalFound;
-        if (isGoalFound) {
+        if (goalFiducial != null) {
             lockOnToGoal(goalFiducial);
-        // Else, align to heading
-        } else {
+        }
+        // Always align to heading
+        if (autoAiming) {
             alignTurretToHeading(pose);
         }
+        else {
+            turretYaw.setTargetPosition((int) (-90.0 * TICKS_PER_DEGREE));
+        }
+
     }
 
     /**
@@ -187,7 +197,7 @@ public class HardwareController {
      * Returns the angle of a vector from the x-axis in degrees. Values are bounded to positive angles
     */
     private int getTheta(Vector vector) {
-        double theta = Math.atan(vector.getYComponent() / vector.getXComponent());
+        double theta = Math.atan2(vector.getYComponent(), vector.getXComponent());
         // Convert theta to degrees
         theta = Math.toDegrees(theta);
         return (int) theta;
@@ -201,11 +211,11 @@ public class HardwareController {
     private void alignTurretToHeading(Pose pose) {
         // Goal offset from robot
         // Accounts for correct goal location
-        Vector goalPosition = new Vector(new Pose(60.0, 60.0));
+        Vector goalPosition = new Vector((isRedTeam) ? new Pose(60.0, 60.0) : new Pose(-60.0, 70.0));
         Vector robotPosition = new Vector(pose);
         Vector goalFromRobot = goalPosition.minus(robotPosition);
         // Robot heading offset
-        int headingOffset = getTheta(goalFromRobot) + 45;
+        int headingOffset = getTheta(goalFromRobot) - 90;
         turretAngle = headingOffset - (int)(Math.toDegrees(pose.getHeading()));
 
         //turretYaw.setTargetPosition((int) (headingOffset * TICKS_PER_DEGREE));
@@ -221,11 +231,11 @@ public class HardwareController {
     private void lockOnToGoal(LLResultTypes.FiducialResult fiducial) {
         // Compute distance to goal
         double tA = fiducial.getTargetArea();
-        double distance = 14.76 / Math.sqrt(tA);
+        distance = 14.76 / Math.sqrt(tA);
 
         // Update the turret actuators
-        updateTurretTarget(fiducial.getTargetXDegrees());
-        updateFlywheelByDistance(turretYaw.getCurrentPosition() / TICKS_PER_DEGREE + distance);
+        // updateTurretTarget(fiducial.getTargetXDegrees());
+        updateFlywheelByDistance();
     }
 
     /**
@@ -234,17 +244,21 @@ public class HardwareController {
      * @param angle angle (degrees)
     */
     public void updateTurretTarget(double angle) {
+        int ticks360 = (int) (360 * TICKS_PER_DEGREE);
         int ticks180 = (int) (180 * TICKS_PER_DEGREE);
         // Compute target position
         int ticks = (int) (angle * TICKS_PER_DEGREE);
 
         // Modify tick count to stay in bounds
+
         if (ticks < -TURRET_TICK_LIMIT) {
-            ticks %= ticks180;
+            ticks = ticks180 - (-ticks % ticks180);
         } else if (ticks > TURRET_TICK_LIMIT) {
             ticks %= ticks180;
             ticks -= ticks180;
         }
+
+        //ticks = (ticks + ticks180) % ticks180 - ticks180;
         // Final cut to ensure bounds are met
         turretTicks = Math.max(-TURRET_TICK_LIMIT, Math.min(ticks, TURRET_TICK_LIMIT));
         turretYaw.setTargetPosition(turretTicks);
@@ -253,18 +267,17 @@ public class HardwareController {
     /**
      * Update turret position
      *
-     * @param distance distance from the limelight to the goal (cm)
     */
-    public void updateFlywheelByDistance(double distance) {
+    public void updateFlywheelByDistance() {
         // Distance must be non-negative
         if (distance < 0) {
             return;
         }
         // Compute target speed and hood angle using regression values
-        targetSpeed = 0.11 * distance + 30.0;
-        hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
+        targetSpeed = 0.11 * distance + 31.5;
+        hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.50), 0.3);
         // Send values
-        turretFlywheel.setVelocity(PID_Controller());
+        turretFlywheel.setPower(PID_Controller());
         //turretFlywheel.setVelocity(targetSpeed);
         turretHood.setPosition(hoodPosition);
     }

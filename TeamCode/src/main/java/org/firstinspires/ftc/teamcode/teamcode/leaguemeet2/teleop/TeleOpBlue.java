@@ -33,7 +33,6 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.CoordinateSystem;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -54,14 +53,14 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareControl
 */
 
 @Configurable
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="LM2 TeleOp Debugger", group="League Meet 2")
-public class TeleOpDebugger extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="LM2 TeleOp Blue", group="League Meet 2")
+public class TeleOpBlue extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
     private HardwareController hardwareController;
 
     private Follower follower;
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    public static Pose startingPose = new Pose(-50.0, 15.0, Math.toRadians(-90.0));
     private TelemetryManager telemetryM;
 
     private boolean isTeamRed = true;
@@ -77,7 +76,7 @@ public class TeleOpDebugger extends LinearOpMode {
     public void runOpMode() {
         // Instanciate controllers
         hardwareController = new HardwareController(hardwareMap, new Pose());
-
+        hardwareController.isRedTeam = false;
         // Pedro objects
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
@@ -107,15 +106,15 @@ public class TeleOpDebugger extends LinearOpMode {
 
             // Normal driving mode
             if (!slowMode) follower.setTeleOpDrive(
-                    -gamepad1.left_stick_y,
-                    -gamepad1.left_stick_x,
+                    gamepad1.left_stick_y,
+                    gamepad1.left_stick_x,
                     -gamepad1.right_stick_x,
                     isRobotCentric
             );
             // Precision driving mode
             else follower.setTeleOpDrive(
-                    -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                    -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
+                    gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
+                    gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
                     -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
                     isRobotCentric
             );
@@ -142,8 +141,8 @@ public class TeleOpDebugger extends LinearOpMode {
             // When trigger is held and flywheel velocity is acceptable, feed
             if (gamepad1.right_trigger >= TRIGGER_THRESHOLD) {
                 // Switch transfer mode to reverse if needed
-                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
                 // Switch intake mode to [intake] if needed
                 if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
@@ -158,8 +157,8 @@ public class TeleOpDebugger extends LinearOpMode {
             // When trigger is held, intake
             else if (gamepad1.left_trigger >= TRIGGER_THRESHOLD) {
                 // Switch transfer mode to reverse if needed
-                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
                 // Switch intake mode to reverse if needed
                 if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
@@ -174,8 +173,8 @@ public class TeleOpDebugger extends LinearOpMode {
             // When trigger is held, intake
             else if (gamepad1.left_bumper) {
                 // Switch transfer mode to reverse if needed
-                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
                 // Switch intake mode to reverse if needed
                 if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {

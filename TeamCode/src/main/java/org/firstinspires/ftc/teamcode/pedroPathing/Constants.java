@@ -19,7 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 public class Constants {
 
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(13.325)
+            .mass(20.0)
             // Deceleration rates
             .forwardZeroPowerAcceleration(-30.0)
             .lateralZeroPowerAcceleration(-70.0)
@@ -34,7 +34,7 @@ public class Constants {
 
 
     public static MecanumConstants driveConstants = new MecanumConstants()
-            .maxPower(1)
+            .maxPower(0.8)
             // Drivetrain names
             .rightFrontMotorName("rightFront")
             .rightRearMotorName("rightBack")
@@ -46,8 +46,8 @@ public class Constants {
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             // Max velocities
-            .xVelocity(65.0)
-            .yVelocity(50.0);
+            .xVelocity(40.0)
+            .yVelocity(40.0);
 
     public static OTOSConstants localizerConstants = new OTOSConstants()
             .hardwareMapName("sensor_otos")
