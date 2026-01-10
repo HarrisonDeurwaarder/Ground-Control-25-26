@@ -46,8 +46,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
-@Autonomous(name="LM2 Auto Blue", group="League Meet 2")
-public class AutoBlue extends LinearOpMode {
+@Autonomous(name="LM2 Auto (Red, Near)", group="League Meet 2")
+public class AutoRedNear extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     private Follower follower;
@@ -59,16 +59,16 @@ public class AutoBlue extends LinearOpMode {
     private static final double FEED_DURATION   = 3.5;
     private static final double INTAKE_DURATION = 2.0;
 
-    private final Pose startPose =       new Pose(-44.0, 48.0, Math.toRadians(142.3));
-    private final Pose scorePose =       new Pose(-10.0, 24.0, Math.PI);
-    private final Pose prePickup1Pose =  new Pose(-6.0, 12.0, Math.PI);
-    private final Pose postPickup1Pose = new Pose(-36.0, 12.0, Math.PI);
-    private final Pose prePickup2Pose =  new Pose(-6.0, -12.0, Math.PI);
-    private final Pose postPickup2Pose = new Pose(-43.0, -12.0, Math.PI);
-    private final Pose intermediatePickup2Pose = new Pose(-20.0, -10.0, Math.PI);
-    private final Pose prePickup3Pose =  new Pose(-6.0, -36.0, Math.PI);
-    private final Pose postPickup3Pose = new Pose(-43.0, -36.0, Math.PI);
-    private final Pose endAutoPose     = new Pose(-42.0, 0.0, Math.toRadians(-90.0));
+    private final Pose startPose =       new Pose(48.0, 48.0, Math.toRadians(37.7));
+    private final Pose scorePose =       new Pose(22.0, 24.0, 0.0);
+    private final Pose prePickup1Pose =  new Pose(18.0, 12.0, 0.0);
+    private final Pose postPickup1Pose = new Pose(48.0, 12.0, 0.0);
+    private final Pose prePickup2Pose =  new Pose(18.0, -12.0, 0.0);
+    private final Pose postPickup2Pose = new Pose(55.0, -12.0, 0.0);
+    private final Pose intermediatePickup2Pose = new Pose(36.0, -10.0, 0.0);
+    private final Pose prePickup3Pose =  new Pose(18.0, -36.0, 0.0);
+    private final Pose postPickup3Pose = new Pose(55.0, -36.0, 0.0);
+    private final Pose endAutoPose     = new Pose(50.0, 0.0, Math.toRadians(-90.0));
 
     private Path scorePreload;
     private PathChain readyPickup1, grabPickup1, scorePickup1, readyPickup2, grabPickup2, scorePickup2, readyPickup3, grabPickup3, scorePickup3, endAuto;
@@ -81,7 +81,6 @@ public class AutoBlue extends LinearOpMode {
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
 
-
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
         follower = Constants.createFollower(hardwareMap);
@@ -90,7 +89,6 @@ public class AutoBlue extends LinearOpMode {
 
         // Hardware controller for mechanism access
         hardwareController = new HardwareController(hardwareMap, startPose);
-        hardwareController.isRedTeam = false;
 
         waitForStart();
         runtime.reset();
@@ -111,8 +109,7 @@ public class AutoBlue extends LinearOpMode {
 
             if (pathState != -1) {
                 hardwareController.autoAimTurret(follower.getPose());
-            }
-            // Log telemetry
+            }            // Log telemetry
             updateTelemetry();
         }
 
@@ -348,7 +345,7 @@ public class AutoBlue extends LinearOpMode {
         if (poseX >= 0.0) {
             x = 0.5 * (poseX + poseY);
             y = x;
-            // Positive X
+        // Positive X
         } else {
             x = 0.5 * (poseX - poseY);
             y = -x;
