@@ -61,7 +61,7 @@ public class TeleOpDebugger extends LinearOpMode {
     private HardwareController hardwareController;
 
     private Follower follower;
-    public static Pose startingPose = new Pose(50.0, 0.0, Math.toRadians(-90.0));
+    public static Pose startingPose = new Pose(50.0, 0.0, Math.toRadians(90.0));
     private TelemetryManager telemetryM;
 
     private boolean isTeamRed = true;

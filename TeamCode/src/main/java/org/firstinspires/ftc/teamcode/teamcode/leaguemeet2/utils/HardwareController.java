@@ -205,7 +205,7 @@ public class HardwareController {
         Vector robotPosition = new Vector(pose);
         Vector goalFromRobot = goalPosition.minus(robotPosition);
         // Robot heading offset
-        int headingOffset = getTheta(goalFromRobot) + 135;
+        int headingOffset = getTheta(goalFromRobot) + 45;
         turretAngle = headingOffset - (int)(Math.toDegrees(pose.getHeading()));
 
         //turretYaw.setTargetPosition((int) (headingOffset * TICKS_PER_DEGREE));
@@ -264,7 +264,8 @@ public class HardwareController {
         targetSpeed = 0.11 * distance + 30.0;
         hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
         // Send values
-        turretFlywheel.setVelocity(targetSpeed);
+        turretFlywheel.setVelocity(PID_Controller());
+        //turretFlywheel.setVelocity(targetSpeed);
         turretHood.setPosition(hoodPosition);
     }
 
@@ -274,14 +275,10 @@ public class HardwareController {
      * @param deltaTime time since last run cycle
      * @return power output power for flywheel motor
      */
-    public double PID_Controller(double deltaTime) {
-        turretVelocityError = targetVelocity - (turretFlywheel.getVelocity() / FLYWHEEL_TPR); // P-value
-        double turretDeltaError = (turretVelocityError - turretPreviousError) / deltaTime; // D-value
-        turretTotalError += (turretVelocityError * deltaTime); // I-value
+    public double PID_Controller() {
+        turretVelocityError = targetSpeed - (turretFlywheel.getVelocity() / FLYWHEEL_TPR); // P-value
 
-        turretPreviousError = turretVelocityError;
-
-        double power = (Kp * turretVelocityError) + (Kd * turretDeltaError) + (Ki * turretTotalError);
+        double power = (Kp * turretVelocityError);
         power = Math.max(Math.min(power, 1.0), -1.0); // Limit power from -1.0 - 1.0
         return power;
     }
