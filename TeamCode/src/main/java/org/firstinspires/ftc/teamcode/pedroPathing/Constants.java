@@ -34,7 +34,7 @@ public class Constants {
 
 
     public static MecanumConstants driveConstants = new MecanumConstants()
-            .maxPower(0.8)
+            .maxPower(1.0)
             // Drivetrain names
             .rightFrontMotorName("rightFront")
             .rightRearMotorName("rightBack")
@@ -46,8 +46,8 @@ public class Constants {
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             // Max velocities
-            .xVelocity(80.0)
-            .yVelocity(80.0);
+            .xVelocity(100.0)
+            .yVelocity(100.0);
 
     public static OTOSConstants localizerConstants = new OTOSConstants()
             .hardwareMapName("sensor_otos")
