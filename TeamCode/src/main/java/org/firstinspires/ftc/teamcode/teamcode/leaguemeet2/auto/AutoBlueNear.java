@@ -43,7 +43,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.pedroPathing.ConstantsAlpha;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
 @Autonomous(name="LM2 Auto (Blue, Near)", group="League Meet 2")
@@ -84,7 +84,7 @@ public class AutoBlueNear extends LinearOpMode {
 
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
-        follower = Constants.createFollower(hardwareMap);
+        follower = ConstantsAlpha.createFollower(hardwareMap);
         buildPaths();
         follower.setStartingPose(startPose);
 

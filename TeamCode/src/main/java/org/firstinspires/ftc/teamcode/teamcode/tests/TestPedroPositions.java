@@ -42,7 +42,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.pedroPathing.ConstantsAlpha;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
 @Autonomous(name="Pedro Position Test", group="Tests")
@@ -79,7 +79,7 @@ public class TestPedroPositions extends LinearOpMode {
 
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
-        follower = Constants.createFollower(hardwareMap);
+        follower = ConstantsAlpha.createFollower(hardwareMap);
         buildPaths();
         follower.setStartingPose(startPose);
 

@@ -14,9 +14,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-public class Constants {
+public class ConstantsAlpha {
 
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(20.0)

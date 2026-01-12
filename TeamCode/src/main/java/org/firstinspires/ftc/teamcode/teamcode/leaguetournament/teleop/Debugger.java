@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.teleop;
+package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.teleop;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
@@ -40,34 +40,24 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.ConstantsAlpha;
-import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
-
-/*
- * COMP READY TELEOP PROCEDURE
- *
- * 1. Remove flywheel toggle conditional / control telemetry
- * 2. Remove team selection block
- * 3. Remove robot centric selection block
- * 4. Replace prestart loop with waitForStart()
- * 5. Remove configurable
-*/
+import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
 @Configurable
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="LM2 TeleOp (Red, Near)", group="League Meet 2")
-public class TeleOpRedNear extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp Debugger", group="League Tournament")
+public class Debugger extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
     private HardwareController hardwareController;
 
     private Follower follower;
-    public static Pose startingPose = new Pose(50.0, 7.0, Math.toRadians(-90.0));
+    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
     private TelemetryManager telemetryM;
 
-    private boolean isTeamRed = true;
     private boolean isRobotCentric = false;
 
     private boolean slowMode = false;
     private boolean flywheelOn = false;
+    private boolean autoAimTurret = true;
 
     private double SLOW_MODE_MULTIPLIER = 0.25;
     private double TRIGGER_THRESHOLD = 0.05;
@@ -75,31 +65,24 @@ public class TeleOpRedNear extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Instanciate controllers
-        hardwareController = new HardwareController(hardwareMap, new Pose());
+        hardwareController = new HardwareController(hardwareMap);
 
-        // Pedro objects
+        // Configure follower
         follower = ConstantsAlpha.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
         follower.update();
 
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
-        // Set team while waiting for start
-        while (!isStarted()) {
-            // Only allow team switching/control frame prior to start
-            if (gamepad1.xWasPressed()) isTeamRed = !isTeamRed;
-            if (gamepad1.bWasPressed()) isRobotCentric = !isRobotCentric;
-            // Update telemetry
-            telemetry.addData("Team selected (X): ", isTeamRed ? "RED" : "BLUE");
-            telemetry.addData("Control frame selected (X): ", isRobotCentric ? "ROBOT" : "FIELD");
-            telemetryM.update();
-        }
-        // Upon start
         runtime.reset();
 
         follower.startTeleOpDrive(true);
 
-        // Functional loop of OpMode
+
+        /* ###############################
+                        START
+           ############################### */
+
         while (opModeIsActive()) {
 
             follower.update();
@@ -124,20 +107,24 @@ public class TeleOpRedNear extends LinearOpMode {
             // Toggle slow mode
             if (gamepad1.aWasPressed()) slowMode = !slowMode;
 
+            // Toggle robot-centered
+            if (gamepad1.bWasPressed()) isRobotCentric = !isRobotCentric;
+
             // Toggle auto-aiming
-            if (gamepad1.xWasPressed()) hardwareController.autoAiming = !hardwareController.autoAiming;
+            if (gamepad1.xWasPressed()) autoAimTurret = !autoAimTurret;
 
             // Toggle flywheel
-            if (gamepad1.rightBumperWasPressed()) {
+            if (gamepad1.yWasPressed()) {
                 flywheelOn = !flywheelOn;
-                // Set power accordingly
-                hardwareController.turretFlywheel.setVelocity(
-                        (flywheelOn) ? HardwareController.toTPS(HardwareController.DEFAULT_FLYWHEEL_RPS) : 0.0
-                );
+                // If flywheel is NOT on, disable
+                // HardwareController will handle it if it's enabled
+                if (!flywheelOn) {
+                    hardwareController.turretFlywheel.setPower(0.0);
+                }
             }
 
 
-            // Feed the artifacts
+            // FEEDING CONDITIONAL
             // When trigger is held and flywheel velocity is acceptable, feed
             if (gamepad1.right_trigger >= TRIGGER_THRESHOLD) {
                 // Switch transfer mode to reverse if needed
@@ -153,7 +140,7 @@ public class TeleOpRedNear extends LinearOpMode {
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
             }
 
-            // Power the intake
+            // INTAKE CONDITIONAL
             // When trigger is held, intake
             else if (gamepad1.left_trigger >= TRIGGER_THRESHOLD) {
                 // Switch transfer mode to reverse if needed
@@ -169,7 +156,7 @@ public class TeleOpRedNear extends LinearOpMode {
                 hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
             }
 
-            // Power the outtake
+            // OUTTAKE CONDITIONAL
             // When trigger is held, intake
             else if (gamepad1.left_bumper) {
                 // Switch transfer mode to reverse if needed
@@ -191,13 +178,19 @@ public class TeleOpRedNear extends LinearOpMode {
                 hardwareController.transfer.setPower(0.0);
             }
 
-            hardwareController.autoAimTurret(follower.getPose());
+            hardwareController.updateTurret(
+                    follower.getPose(),
+                    new Pose(60.0, 60.0),
+                    autoAimTurret,
+                    flywheelOn
+            );
+
             updateTelemetry();
         }
     }
 
     public void updateTelemetry() {
-        // Locational (On Panels)
+        // Debug telemetry (On panels)
         telemetryM.addData("Position (In)", follower.getPose());
         telemetryM.addData("Velocity (In/Sec)", follower.getVelocity());
         telemetryM.addData("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity(AngleUnit.DEGREES));
@@ -207,17 +200,19 @@ public class TeleOpRedNear extends LinearOpMode {
         telemetryM.addData("Tag in Frame", hardwareController.tagDetected);
 
         telemetryM.addData("Distance: ", hardwareController.distance);
+        telemetryM.update();
 
-                // Controls (On driver hub telemetry)
-        telemetry.addLine("A - Precision Mode\n");
+        // Controls (On driver hub telemetry)
+        telemetry.addLine("A - Precision Mode");
+        telemetry.addLine("B - Movement Center");
+        telemetry.addLine("X - Auto Aim Turret");
+        telemetry.addLine("Y - Enable Flywheel\n");
 
-        telemetry.addLine("LT - Intake Power");
-        telemetry.addLine("LB - Intake Direction\n");
+        telemetry.addLine("LT - Intake");
+        telemetry.addLine("LB - Outtake\n");
 
         telemetry.addLine("RT - Feed");
-        telemetry.addLine("RB - Flywheel");
 
-        telemetryM.update();
         telemetry.update();
     }
 }

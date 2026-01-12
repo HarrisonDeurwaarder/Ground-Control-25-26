@@ -39,7 +39,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.pedroPathing.ConstantsAlpha;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
 /*
@@ -78,7 +78,7 @@ public class TeleOpBlueNear extends LinearOpMode {
         hardwareController = new HardwareController(hardwareMap, new Pose());
         hardwareController.isRedTeam = false;
         // Pedro objects
-        follower = Constants.createFollower(hardwareMap);
+        follower = ConstantsAlpha.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
         follower.update();
 
