@@ -26,7 +26,7 @@ public class HardwareController {
     public double hoodPosition = 0.5;
 
     // Flywheel PIDF
-    public static final double p = 0.0;
+    public static final double p = 0.5;
     public static final double i = 0.0;
     public static final double d = 0.0;
     public static final double f = 0.0;
@@ -38,8 +38,8 @@ public class HardwareController {
     public static final double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
     public static final double FLYWHEEL_TPR = 28.0; // TPR
 
-    public static final double OPEN_ANGLE   = 0.4;
-    public static final double CLOSED_ANGLE = 0.3;
+    public static final double OPEN_ANGLE   = 0.71;
+    public static final double CLOSED_ANGLE = 0.61;
 
     // Declare actuators
     public DcMotorEx leftFront, leftBack, rightFront, rightBack;
