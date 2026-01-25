@@ -30,54 +30,60 @@
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.teleop;
 
 import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.configurables.annotations.IgnoreConfigurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.pedroPathing.ConstantsAlpha;
+import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
 @Configurable
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp Debugger", group="League Tournament")
 public class Debugger extends LinearOpMode {
 
-    private ElapsedTime runtime = new ElapsedTime();
-    private HardwareController hardwareController;
-
+    @IgnoreConfigurable
+    private Timer opmodeTimer;
+    @IgnoreConfigurable
     private Follower follower;
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    @IgnoreConfigurable
+    private HardwareController hardwareController;
+    @IgnoreConfigurable
     private TelemetryManager telemetryM;
 
-    private boolean isRobotCentric = false;
+    public static final Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
 
+    private boolean isRobotCentric = false;
     private boolean slowMode = false;
     private boolean flywheelOn = false;
     private boolean autoAimTurret = true;
 
-    private double SLOW_MODE_MULTIPLIER = 0.25;
-    private double TRIGGER_THRESHOLD = 0.05;
+    private static final double SLOW_MODE_MULTIPLIER = 0.2;
 
     @Override
     public void runOpMode() {
+
+        opmodeTimer = new Timer();
+        opmodeTimer.resetTimer();
+
         // Instanciate controllers
         hardwareController = new HardwareController(hardwareMap);
 
         // Configure follower
-        follower = ConstantsAlpha.createFollower(hardwareMap);
-        follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
+        follower = ConstantsEpsilon.createFollower(hardwareMap);
+        follower.setStartingPose(startingPose);
         follower.update();
 
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
-        runtime.reset();
-
         follower.startTeleOpDrive(true);
 
+        waitForStart();
 
         /* ###############################
                         START
@@ -89,16 +95,16 @@ public class Debugger extends LinearOpMode {
 
             // Normal driving mode
             if (!slowMode) follower.setTeleOpDrive(
-                    -gamepad1.left_stick_y,
-                    -gamepad1.left_stick_x,
-                    -gamepad1.right_stick_x,
+                    gamepad1.left_stick_y,
+                    gamepad1.left_stick_x,
+                    gamepad1.right_stick_x,
                     isRobotCentric
             );
             // Precision driving mode
             else follower.setTeleOpDrive(
-                    -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                    -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
-                    -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
+                    gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
+                    gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
+                    gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
                     isRobotCentric
             );
 
@@ -123,35 +129,33 @@ public class Debugger extends LinearOpMode {
                 }
             }
 
+            // Switch gate to closed only if robot is not feeding
+            if (gamepad1.right_trigger < 0.05) hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
 
             // FEEDING CONDITIONAL
             // When trigger is held and flywheel velocity is acceptable, feed
-            if (gamepad1.right_trigger >= TRIGGER_THRESHOLD) {
-                // Switch transfer mode to reverse if needed
-                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
-                }
+            if (gamepad1.right_trigger >= 0.05) {
+                // Switch gate to open
+                hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                 // Switch intake mode to [intake] if needed
                 if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
                     hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
                 // Then feed and intake
-                hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
+                hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
             }
 
             // INTAKE CONDITIONAL
             // When trigger is held, intake
-            else if (gamepad1.left_trigger >= TRIGGER_THRESHOLD) {
-                // Switch transfer mode to reverse if needed
-                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
-                }
+            else if (gamepad1.left_trigger >= 0.05) {
                 // Switch intake mode to reverse if needed
                 if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
                     hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
-                // Then power intake and transfer
+                // Then power intake and gate
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
                 hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
             }
@@ -159,15 +163,12 @@ public class Debugger extends LinearOpMode {
             // OUTTAKE CONDITIONAL
             // When trigger is held, intake
             else if (gamepad1.left_bumper) {
-                // Switch transfer mode to reverse if needed
-                if (hardwareController.transfer.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
-                }
                 // Switch intake mode to reverse if needed
                 if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
                     hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
-                // Then power intake and transfer
+                // Then power intake and gate
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
                 hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
             }

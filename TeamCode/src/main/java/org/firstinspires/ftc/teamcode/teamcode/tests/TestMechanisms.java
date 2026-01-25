@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.tests;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -40,6 +41,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * ONLY powers these mechanisms, no driving is done
  */
 
+@Disabled
 @TeleOp(name="Mechanism Test", group="Tests")
 //@Disabled
 public class TestMechanisms extends com.qualcomm.robotcore.eventloop.opmode.LinearOpMode {

@@ -35,27 +35,24 @@ import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
+import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
 @Configurable
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Odometry Pose Test", group="Test")
-public class OdometryPoseTest extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel PIDF Tuner", group="Test")
+public class FlywheelPIDFTuning extends LinearOpMode {
 
-    private Follower follower;
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(0.0));
     private TelemetryManager telemetryM;
+    private HardwareController hardwareController;
 
     @Override
     public void runOpMode() {
 
-        follower = ConstantsEpsilon.createFollower(hardwareMap);
-        follower.setStartingPose(startingPose);
-        follower.update();
-
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
-
-        follower.startTeleOpDrive(true);
+        hardwareController = new HardwareController(hardwareMap);
 
         waitForStart();
 
@@ -63,23 +60,14 @@ public class OdometryPoseTest extends LinearOpMode {
                         START
            ############################### */
 
+        // Set initial target speed
+        hardwareController.turretFlywheel.setVelocity(0);
         // Functional loop of OpMode
         while (opModeIsActive()) {
 
-            follower.update();
-
-            // Precision driving mode
-            follower.setTeleOpDrive(
-                    -gamepad1.left_stick_y,
-                    -gamepad1.left_stick_x,
-                    -gamepad1.right_stick_x,
-                    false
-            );
-
+            double error = -hardwareController.turretFlywheel.getVelocity(AngleUnit.DEGREES); // Target speed is zero
             // Panels telemetry
-            telemetryM.addData("X", Math.round(10.0 * follower.getPose().getX()) / 10.0);
-            telemetryM.addData("Y", Math.round(10.0 * follower.getPose().getY()) / 10.0);
-            telemetryM.addData("θ", Math.round(10.0 * follower.getPose().getHeading()) / 10.0);
+            telemetryM.addData("Error (degrees/sec)", Math.round(10.0 * error) / 10.0);
             telemetryM.update();
         }
     }

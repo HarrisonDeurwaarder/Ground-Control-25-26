@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * This OpMode runs a manual omni-directional drivetrain
  */
 
+@Disabled
 @TeleOp(name="League Meet 0 (TeleOp)", group="League Meet 0")
 public class TeleOpLeagueMeet0 extends LinearOpMode {
 

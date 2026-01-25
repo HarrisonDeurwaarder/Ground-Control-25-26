@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament;
 
-import com.acmerobotics.roadrunner.Vector2d;
 import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.configurables.annotations.IgnoreConfigurable;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -17,39 +17,51 @@ import java.util.List;
 public class HardwareController {
     // Power constants
     public static final double INTAKE_POWER = 0.8;
-    public static final double TRANSFER_POWER = 0.5;
+    public static final double TRANSFER_POWER = 0.8;
 
-    // Non-adaptive turret constants
+    // Adaptive turret constants
+    @IgnoreConfigurable
     public double targetSpeed = 33.0; // Target flywheel speed RPS
+    @IgnoreConfigurable
     public double hoodPosition = 0.5;
 
-    // Turret velocity PID variables
-    public double turretVelocityError = 0.0;
-    public double turretPreviousError = 0.0;
-    public double turretTotalError = 0.0;
-    public double targetVelocity = 0.0;
-    public double Kp = 0.5;
-    public double Kd = 0.0;
-    public double Ki = 0.0;
-    public double distance = 0.0;
+    // Flywheel PIDF
+    public static final double p = 0.5;
+    public static final double i = 0.0;
+    public static final double d = 0.0;
+    public static final double f = 0.0;
 
+    @IgnoreConfigurable
     public static final double TICKS_PER_DEGREE = 6.806; // Ticks per degree
+    @IgnoreConfigurable
     public static final int TURRET_TICK_LIMIT = 1200; // Ticks
+    public static final double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
     public static final double FLYWHEEL_TPR = 28.0; // TPR
+
+    public static final double OPEN_ANGLE   = 0.71;
+    public static final double CLOSED_ANGLE = 0.61;
 
     // Declare actuators
     public DcMotorEx leftFront, leftBack, rightFront, rightBack;
     public DcMotorEx intake, transfer, turretFlywheel, turretRotation;
-    public Servo turretHood;
+    public Servo turretHood, gate;
     public Limelight3A limelight;
+    @IgnoreConfigurable
 
-    // Telemetry valiables
+    public double distance = 0.0;
+
+    // Telemetry variables
+    @IgnoreConfigurable
     public int turretAngle = 180;
+    @IgnoreConfigurable
     public int turretTicks = 0;
+    @IgnoreConfigurable
     public boolean tagDetected = false;
 
 
+    @IgnoreConfigurable
     public boolean isRedTeam = true;
+    @IgnoreConfigurable
     public LLResultTypes.FiducialResult goalFiducial = null;
 
 
@@ -69,10 +81,11 @@ public class HardwareController {
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         transfer = hardwareMap.get(DcMotorEx.class, "transfer");
         turretFlywheel = hardwareMap.get(DcMotorEx.class, "turretFlywheel");
-        turretRotation = hardwareMap.get(DcMotorEx.class, "turretYaw");
+        turretRotation = hardwareMap.get(DcMotorEx.class, "turretRotation");
 
-        // Map turret hood servo
+        // Map servos
         turretHood = hardwareMap.get(Servo.class, "turretHood");
+        gate = hardwareMap.get(Servo.class, "turretGate");
 
         // Map limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -102,12 +115,17 @@ public class HardwareController {
         turretFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
         turretRotation.setDirection(DcMotorEx.Direction.REVERSE);
 
-        // Set servo direction
+        // Set servo directions
         turretHood.setDirection(Servo.Direction.FORWARD);
+        gate.setDirection(Servo.Direction.FORWARD);
+        gate.setPosition(0.6);
 
         turretFlywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretFlywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // Set turret yaw motor to use encoder
+        // Set turret PIDF
+        turretFlywheel.setVelocityPIDFCoefficients(p, i, d, f);
+
+        // Set turret rotation motor to use encoder
         turretRotation.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         turretRotation.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Set default target position
@@ -192,16 +210,6 @@ public class HardwareController {
     public static double toTPS(double rps) { return rps * FLYWHEEL_TPR; }
 
     /**
-     * Returns the angle of a vector from the positive x-axis in degrees
-    */
-    private int getTheta(Vector vector) {
-        double theta = Math.atan2(vector.getYComponent(), vector.getXComponent());
-        // Convert theta to degrees
-        theta = Math.toDegrees(theta);
-        return (int) theta;
-    }
-
-    /**
      * Align the turret by heading
      *
      * @param robotPose robot pose
@@ -213,7 +221,8 @@ public class HardwareController {
         Vector robotPosition = new Vector(robotPose);
         Vector goalFromRobot = goalPosition.minus(robotPosition);
         // Robot heading offset
-        int headingOffset = getTheta(goalFromRobot) - 90;
+        int headingShifted = (int) (Math.toDegrees(Math.atan2(goalFromRobot.getYComponent(), goalFromRobot.getXComponent())));
+        int headingOffset = headingShifted - 90;
         turretAngle = headingOffset - (int)(Math.toDegrees(robotPose.getHeading()));
 
         updateTurretTarget(turretAngle);
@@ -237,22 +246,7 @@ public class HardwareController {
         targetSpeed = 0.11 * distance + 31.5;
         hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.50), 0.3);
         // Send values
-        turretFlywheel.setPower(pidController());
-        //turretFlywheel.setVelocity(targetSpeed);
+        turretFlywheel.setVelocity(targetSpeed);
         turretHood.setPosition(hoodPosition);
-    }
-
-    /**
-     * PID controller for turret velocity
-     *
-     * @param deltaTime time since last run cycle
-     * @return power output power for flywheel motor
-     */
-    private double pidController() {
-        turretVelocityError = targetSpeed - (turretFlywheel.getVelocity() / FLYWHEEL_TPR); // P-value
-
-        double power = (Kp * turretVelocityError);
-        power = Math.max(Math.min(power, 1.0), -1.0); // Limit power from -1.0 - 1.0
-        return power;
     }
 }
