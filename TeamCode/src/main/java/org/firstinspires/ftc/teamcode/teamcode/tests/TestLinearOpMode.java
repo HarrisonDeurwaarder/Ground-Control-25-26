@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.tests;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -61,6 +62,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
+@Disabled
 @TeleOp(name="Linear Test", group="Tests")
 //@Disabled
 public class TestLinearOpMode extends com.qualcomm.robotcore.eventloop.opmode.LinearOpMode {

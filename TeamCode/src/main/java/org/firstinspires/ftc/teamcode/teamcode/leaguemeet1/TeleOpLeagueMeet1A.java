@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -42,6 +43,7 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.MotorDriverPID;
  * This OpMode runs a manual omni-directional drivetrain
  */
 
+@Disabled
 @TeleOp(name="League Meet 1A (TeleOp)", group="League Meet 1")
 public class TeleOpLeagueMeet1A extends LinearOpMode {
 

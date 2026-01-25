@@ -29,7 +29,10 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguemeet1;
 
+import androidx.core.view.WindowInsetsAnimationCompat;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -42,6 +45,7 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet1.utils.MotorDriverPID;
  * This OpMode runs a manual omni-directional drivetrain
  */
 
+@Disabled
 @Autonomous(name="League Meet 1 (3BAuto)", group="League Meet 1")
 public class Auto3BLeagueMeet1 extends LinearOpMode {
 

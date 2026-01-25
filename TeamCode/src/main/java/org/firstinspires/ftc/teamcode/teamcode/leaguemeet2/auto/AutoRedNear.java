@@ -39,13 +39,15 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.pedroPathing.ConstantsAlpha;
+import org.firstinspires.ftc.teamcode.pedroPathing.delta.ConstantsDelta;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
+@Disabled
 @Autonomous(name="LM2 Auto (Red, Near)", group="League Meet 2")
 public class AutoRedNear extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
@@ -83,7 +85,7 @@ public class AutoRedNear extends LinearOpMode {
 
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
-        follower = ConstantsAlpha.createFollower(hardwareMap);
+        follower = ConstantsDelta.createFollower(hardwareMap);
         buildPaths();
         follower.setStartingPose(startPose);
 

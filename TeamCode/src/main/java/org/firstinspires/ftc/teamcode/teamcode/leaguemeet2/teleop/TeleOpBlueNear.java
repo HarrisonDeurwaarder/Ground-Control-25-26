@@ -34,12 +34,13 @@ import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.pedroPathing.ConstantsAlpha;
+import org.firstinspires.ftc.teamcode.pedroPathing.delta.ConstantsDelta;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
 /*
@@ -52,6 +53,7 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareControl
  * 5. Remove configurable
 */
 
+@Disabled
 @Configurable
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="LM2 TeleOp (Blue, Near)", group="League Meet 2")
 public class TeleOpBlueNear extends LinearOpMode {
@@ -78,7 +80,7 @@ public class TeleOpBlueNear extends LinearOpMode {
         hardwareController = new HardwareController(hardwareMap, new Pose());
         hardwareController.isRedTeam = false;
         // Pedro objects
-        follower = ConstantsAlpha.createFollower(hardwareMap);
+        follower = ConstantsDelta.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
         follower.update();
 

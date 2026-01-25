@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.teamcode.tests;
 
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -8,7 +9,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="PID Tester", group="League Meet 2")
+@Disabled
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="PID Tester", group="Tests")
 
 public class PIDController extends LinearOpMode {
 

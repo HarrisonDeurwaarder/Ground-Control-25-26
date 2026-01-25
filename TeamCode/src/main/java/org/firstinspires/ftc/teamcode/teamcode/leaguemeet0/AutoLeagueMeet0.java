@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode.teamcode.leaguemeet0;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -38,6 +39,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * This OpMode runs a drivetrain forward for one second
  */
 
+@Disabled
 @Autonomous(name="League Meet 0 (Auto)", group="League Meet 0")
 public class AutoLeagueMeet0 extends LinearOpMode {
 

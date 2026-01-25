@@ -36,26 +36,28 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.pedroPathing.ConstantsAlpha;
+import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 
 @Configurable
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Odometry Pose Test", group="Test")
 public class OdometryPoseTest extends LinearOpMode {
 
     private Follower follower;
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(0.0));
     private TelemetryManager telemetryM;
 
     @Override
     public void runOpMode() {
 
-        follower = ConstantsAlpha.createFollower(hardwareMap);
+        follower = ConstantsEpsilon.createFollower(hardwareMap);
         follower.setStartingPose(startingPose);
         follower.update();
 
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
         follower.startTeleOpDrive(true);
+
+        waitForStart();
 
         /* ###############################
                         START
