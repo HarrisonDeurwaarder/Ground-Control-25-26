@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.List;
@@ -54,7 +55,7 @@ public class TestTurret extends LinearOpMode{
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         transfer = hardwareMap.get(DcMotorEx.class, "transfer");
         turretFlywheel = hardwareMap.get(DcMotorEx.class, "turretFlywheel");
-        turretYaw = hardwareMap.get(DcMotorEx.class, "turretYaw");
+        turretYaw = hardwareMap.get(DcMotorEx.class, "turretRotation");
 
         // Map turret hood servo
         turretHood = hardwareMap.get(Servo.class, "turretHood");
@@ -69,8 +70,8 @@ public class TestTurret extends LinearOpMode{
 
 
         // Set mechanism motor directions
-        intake.setDirection(DcMotorEx.Direction.FORWARD);
-        transfer.setDirection(DcMotorEx.Direction.FORWARD);
+        intake.setDirection(DcMotorEx.Direction.REVERSE);
+        transfer.setDirection(DcMotorEx.Direction.REVERSE);
         turretFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
         turretYaw.setDirection(DcMotorEx.Direction.REVERSE);
 
@@ -113,23 +114,23 @@ public class TestTurret extends LinearOpMode{
             }
 
             // Motion testing:
-            if (gamepad1.a != a_btn_state && !a_btn_state) {
-                targetPosition += 100;
-                //hoodPosition += 0.05;
+            if (gamepad1.aWasPressed()) {
+                //targetPosition += 100;
+                hoodPosition += 0.01;
             }
-            if (gamepad1.b != b_btn_state && !b_btn_state) {
-                targetPosition -= 100;
-                //hoodPosition -= 0.05;
+            if (gamepad1.bWasPressed()) {
+                //targetPosition -= 100;
+                hoodPosition -= 0.01;
             }
-            if (gamepad1.x != x_btn_state && !x_btn_state) {
+            if (gamepad1.xWasPressed()) {
                 targetSpeed += 1.0;
             }
-            if (gamepad1.y != y_btn_state && !y_btn_state) {
+            if (gamepad1.yWasPressed()) {
                 targetSpeed -= 1.0;
             }
             if (gamepad1.right_trigger >= 0.5) {
-                intake.setPower(0.6);
-                transfer.setPower(0.4);
+                intake.setPower(1.0);
+                transfer.setPower(1.0);
             } else {
                 intake.setPower(0.0);
                 transfer.setPower(0.0);
@@ -140,8 +141,8 @@ public class TestTurret extends LinearOpMode{
             if (gamepad1.right_bumper != r_bumper_state && !r_bumper_state) {turret_state = !turret_state;}
             if (turret_state) {turretFlywheel.setVelocity(targetSpeed*28.0);} else {turretFlywheel.setVelocity(0.0);}
 
-            targetSpeed = 0.11 * distance + 34.0;
-            hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
+            //targetSpeed = 0.11 * distance + 34.0;
+            //hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.5), 0.3);
 
             // Set hood target angle
             turretHood.setPosition(hoodPosition);
