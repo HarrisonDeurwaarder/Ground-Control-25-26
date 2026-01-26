@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.teamcode.tests;
+package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.test;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
@@ -46,7 +46,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.delta.ConstantsDelta;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
 @Autonomous(name="Pedro Position Test", group="Tests")
-public class TestPedroPositions extends LinearOpMode {
+public class PedroPositionsTest extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     private Follower follower;
@@ -293,7 +293,6 @@ public class TestPedroPositions extends LinearOpMode {
         // Write telemetry
         telemetryM.debug("Path State", pathState);
         telemetryM.debug("Path Timer", pathTimer.getElapsedTime());
-        telemetryM.addLine("");
 
         telemetryM.debug("Position", follower.getPose());
         telemetryM.debug("Linear Velocity", follower.getVelocity());

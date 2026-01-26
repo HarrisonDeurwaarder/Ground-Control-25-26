@@ -29,26 +29,18 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.test;
 
-import android.provider.Settings;
-
 import com.bylazar.configurables.annotations.Configurable;
-import com.bylazar.configurables.annotations.IgnoreConfigurable;
 import com.bylazar.graph.GraphManager;
 import com.bylazar.graph.PanelsGraph;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
-import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
 @Configurable
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel PIDF Tuner", group="Test")
-public class FlywheelPIDFTuning extends LinearOpMode {
+public class FlywheelPDTuning extends LinearOpMode {
 
     private TelemetryManager telemetryM;
     private GraphManager graphM;
@@ -88,8 +80,8 @@ public class FlywheelPIDFTuning extends LinearOpMode {
             graphM.addData("Target Speed", targetSpeed);
             graphM.addData("Current Speed", hardwareController.turretFlywheel.getVelocity());
 
-            graphM.update();
             telemetryM.update();
+            graphM.update();
         }
     }
 }
