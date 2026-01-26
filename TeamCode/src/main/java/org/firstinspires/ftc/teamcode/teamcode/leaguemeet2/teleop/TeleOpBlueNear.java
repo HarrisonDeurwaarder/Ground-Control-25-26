@@ -54,7 +54,6 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareControl
 */
 
 @Disabled
-@Configurable
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="LM2 TeleOp (Blue, Near)", group="League Meet 2")
 public class TeleOpBlueNear extends LinearOpMode {
 

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.teamcode.leaguetournament;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.IgnoreConfigurable;
+import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -19,36 +20,42 @@ public class HardwareController {
     public static final double INTAKE_POWER = 0.8;
     public static final double TRANSFER_POWER = 0.8;
 
-    // Adaptive turret constants
+    // Adaptive turret variables
     @IgnoreConfigurable
     public double targetSpeed = 33.0; // Target flywheel speed RPS
     @IgnoreConfigurable
     public double hoodPosition = 0.5;
 
-    // Flywheel PIDF
-    public static final double p = 0.5;
-    public static final double i = 0.0;
-    public static final double d = 0.0;
-    public static final double f = 0.0;
+    @IgnoreConfigurable
+    public double distance = 0.0;
+    @IgnoreConfigurable
+    public double turretVelocityError = 0.0;
+    @IgnoreConfigurable
+    public double lastRecordedTime = 0.0;
+    @IgnoreConfigurable
+    public LLResultTypes.FiducialResult goalFiducial = null;
 
+    // Flywheel PD
+    public static double Kp = 0.5;
+    public static double Kd = 0.0;
+
+    // Miscellaneous constants
     @IgnoreConfigurable
     public static final double TICKS_PER_DEGREE = 6.806; // Ticks per degree
     @IgnoreConfigurable
     public static final int TURRET_TICK_LIMIT = 1200; // Ticks
-    public static final double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
-    public static final double FLYWHEEL_TPR = 28.0; // TPR
 
-    public static final double OPEN_ANGLE   = 0.71;
-    public static final double CLOSED_ANGLE = 0.61;
+    public static double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
+    public static double ARTIFACT_AIRTIME = 0.5; // Seconds
+
+    public static double OPEN_ANGLE   = 0.71;
+    public static double CLOSED_ANGLE = 0.61;
 
     // Declare actuators
     public DcMotorEx leftFront, leftBack, rightFront, rightBack;
     public DcMotorEx intake, transfer, turretFlywheel, turretRotation;
     public Servo turretHood, gate;
     public Limelight3A limelight;
-    @IgnoreConfigurable
-
-    public double distance = 0.0;
 
     // Telemetry variables
     @IgnoreConfigurable
@@ -58,12 +65,15 @@ public class HardwareController {
     @IgnoreConfigurable
     public boolean tagDetected = false;
 
-
+    // Control flow flags
     @IgnoreConfigurable
     public boolean isRedTeam = true;
     @IgnoreConfigurable
-    public LLResultTypes.FiducialResult goalFiducial = null;
-
+    public boolean enableAutoAiming = true;
+    @IgnoreConfigurable
+    public boolean enableFlywheel = true;
+    @IgnoreConfigurable
+    public boolean enableArtifactVelocityCorrection = true;
 
     /**
      * Map devices; set all devices to default direction
@@ -121,9 +131,9 @@ public class HardwareController {
         gate.setPosition(0.6);
 
         turretFlywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        turretFlywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        turretFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         // Set turret PIDF
-        turretFlywheel.setVelocityPIDFCoefficients(p, i, d, f);
+        //turretFlywheel.setVelocityPIDFCoefficients(p, i, d, f);
 
         // Set turret rotation motor to use encoder
         turretRotation.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -147,12 +157,10 @@ public class HardwareController {
     /**
      * Turret auto-aiming logic
      *
-     * @param robotPose robot pose
+     * @param follower robot follower object
      * @param goalPose goal pose
-     * @param autoAiming whether turret auto-lock should be done
-     * @param adjustFlywheel whether the flywheel should be updated according to the goal fiducial
     */
-    public void updateTurret(Pose robotPose, Pose goalPose, boolean autoAiming, boolean adjustFlywheel) {
+    public void updateTurret(Follower follower, Pose goalPose, double timestamp) {
         // Get fiducials
         List<LLResultTypes.FiducialResult> fiducials = limelight.getLatestResult().getFiducialResults();
         // Get team goal id
@@ -169,19 +177,40 @@ public class HardwareController {
                 break;
             }
         }
-        // If fiducial has been found, then lock on
-        tagDetected = isGoalFound;
-        if (goalFiducial != null) {
-            updateFlywheelByFiducialDistance(goalFiducial);
-        }
 
-        // Align turret
-        if (autoAiming) {
-            alignTurretToHeading(robotPose, goalPose);
+        /*
+        CONDITIONAL TURRET UPDATES
+        */
+
+        // Translate the goal pose in accordance with expected velocity if enabled
+        if (enableArtifactVelocityCorrection) goalPose = new Pose(
+                    goalPose.getX() - ARTIFACT_AIRTIME * follower.getVelocity().getXComponent(),
+                    goalPose.getY() - ARTIFACT_AIRTIME * follower.getVelocity().getYComponent()
+            );
+
+        // Align turret if enabled
+        if (enableAutoAiming) {
+            alignTurretToHeading(follower.getPose(), goalPose);
         }
+        // Else set to default position
         else {
             turretRotation.setTargetPosition((int) (-90.0 * TICKS_PER_DEGREE));
         }
+
+        // Control flywheel if enabled
+        if (enableFlywheel) {
+            // If fiducial has been found, then lock on
+            tagDetected = isGoalFound;
+            if (goalFiducial != null) {
+                updateFlywheelByFiducialDistance(goalFiducial);
+            }
+        // Else set to zero velocity
+        } else {
+            targetSpeed = 0.0;
+        }
+        // Set the flywheel power
+        PDController(timestamp - lastRecordedTime);
+        lastRecordedTime = timestamp;
     }
 
     /**
@@ -206,8 +235,6 @@ public class HardwareController {
         turretTicks = Math.max(-TURRET_TICK_LIMIT, Math.min(ticks, TURRET_TICK_LIMIT));
         turretRotation.setTargetPosition(turretTicks);
     }
-
-    public static double toTPS(double rps) { return rps * FLYWHEEL_TPR; }
 
     /**
      * Align the turret by heading
@@ -238,15 +265,28 @@ public class HardwareController {
         double tA = fiducial.getTargetArea();
         distance = 14.76 / Math.sqrt(tA);
 
-        // Distance must be non-negative
-        if (distance < 0) {
-            return;
-        }
         // Compute target speed and hood angle using regression values
         targetSpeed = 0.11 * distance + 31.5;
         hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.50), 0.3);
         // Send values
         turretFlywheel.setVelocity(targetSpeed);
         turretHood.setPosition(hoodPosition);
+    }
+
+    /**
+     * PD controller for turret velocity
+     *
+     * @param deltaTime time since last run cycle
+     */
+    public void PDController(double deltaTime) {
+        // Save previous error for derivative term
+        double previousError = turretVelocityError;
+        turretVelocityError = targetSpeed - (turretFlywheel.getVelocity() / (TICKS_PER_DEGREE * 360)); // P-value
+
+        // Compute power
+        double power = (Kp * turretVelocityError + Kd * (turretVelocityError - previousError) / deltaTime);
+        // Clip power
+        power = Math.max(Math.min(power, 1.0), -1.0);
+        turretFlywheel.setPower(power);
     }
 }

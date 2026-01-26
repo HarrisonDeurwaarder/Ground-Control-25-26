@@ -56,14 +56,16 @@ public class Debugger extends LinearOpMode {
     @IgnoreConfigurable
     private TelemetryManager telemetryM;
 
-    public static final Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    // Poses
+    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    public static Pose goalPose     = new Pose(60.0, 60.0);
 
+    // Boolean flags
     private boolean isRobotCentric = false;
     private boolean slowMode = false;
-    private boolean flywheelOn = false;
-    private boolean autoAimTurret = true;
 
-    private static final double SLOW_MODE_MULTIPLIER = 0.2;
+    // Constants
+    private static double SLOW_MODE_MULTIPLIER = 0.2;
 
     @Override
     public void runOpMode() {
@@ -117,17 +119,10 @@ public class Debugger extends LinearOpMode {
             if (gamepad1.bWasPressed()) isRobotCentric = !isRobotCentric;
 
             // Toggle auto-aiming
-            if (gamepad1.xWasPressed()) autoAimTurret = !autoAimTurret;
+            if (gamepad1.xWasPressed()) hardwareController.enableAutoAiming = !hardwareController.enableAutoAiming;
 
             // Toggle flywheel
-            if (gamepad1.yWasPressed()) {
-                flywheelOn = !flywheelOn;
-                // If flywheel is NOT on, disable
-                // HardwareController will handle it if it's enabled
-                if (!flywheelOn) {
-                    hardwareController.turretFlywheel.setPower(0.0);
-                }
-            }
+            if (gamepad1.yWasPressed()) hardwareController.enableFlywheel = !hardwareController.enableFlywheel;
 
             // Switch gate to closed only if robot is not feeding
             if (gamepad1.right_trigger < 0.05) hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
@@ -178,13 +173,8 @@ public class Debugger extends LinearOpMode {
                 hardwareController.intake.setPower(0.0);
                 hardwareController.transfer.setPower(0.0);
             }
-
-            hardwareController.updateTurret(
-                    follower.getPose(),
-                    new Pose(60.0, 60.0),
-                    autoAimTurret,
-                    flywheelOn
-            );
+            // Perform turret updates
+            hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTime());
 
             updateTelemetry();
         }
@@ -200,7 +190,7 @@ public class Debugger extends LinearOpMode {
         telemetryM.addData("Turret Ticks", hardwareController.turretTicks);
         telemetryM.addData("Tag in Frame", hardwareController.tagDetected);
 
-        telemetryM.addData("Distance: ", hardwareController.distance);
+        telemetryM.addData("Distance", hardwareController.distance);
         telemetryM.update();
 
         // Controls (On driver hub telemetry)

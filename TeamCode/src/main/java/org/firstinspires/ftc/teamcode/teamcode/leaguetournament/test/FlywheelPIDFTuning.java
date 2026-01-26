@@ -29,7 +29,12 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.test;
 
+import android.provider.Settings;
+
 import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.configurables.annotations.IgnoreConfigurable;
+import com.bylazar.graph.GraphManager;
+import com.bylazar.graph.PanelsGraph;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
@@ -46,12 +51,20 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareControll
 public class FlywheelPIDFTuning extends LinearOpMode {
 
     private TelemetryManager telemetryM;
+    private GraphManager graphM;
     private HardwareController hardwareController;
+
+    public static double targetSpeed = 28 * 30; // ticks/sec
+    public static double p = 3.0;
+    public static double i = 3.0;
+    public static double d = 3.0;
+    public static double f = 3.0;
 
     @Override
     public void runOpMode() {
 
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+        graphM = PanelsGraph.INSTANCE.getManager();
         hardwareController = new HardwareController(hardwareMap);
 
         waitForStart();
@@ -60,14 +73,22 @@ public class FlywheelPIDFTuning extends LinearOpMode {
                         START
            ############################### */
 
-        // Set initial target speed
-        hardwareController.turretFlywheel.setVelocity(0);
         // Functional loop of OpMode
         while (opModeIsActive()) {
-
-            double error = -hardwareController.turretFlywheel.getVelocity(AngleUnit.DEGREES); // Target speed is zero
+            // Set target speed
+            hardwareController.turretFlywheel.setVelocityPIDFCoefficients(p, i, d, f);
+            hardwareController.turretFlywheel.setVelocity(targetSpeed);
+            double error = targetSpeed - hardwareController.turretFlywheel.getVelocity();
             // Panels telemetry
-            telemetryM.addData("Error (degrees/sec)", Math.round(10.0 * error) / 10.0);
+            telemetryM.addData("Target Speed (RPS)", targetSpeed / 28);
+            telemetryM.addData("Current Speed (RPS)", hardwareController.turretFlywheel.getVelocity() / 28);
+            telemetryM.addData("Error", Math.round(10 * error) / 280);
+            telemetryM.addData("Power", Math.round(10 * hardwareController.turretFlywheel.getPower()) / 10);
+
+            graphM.addData("Target Speed", targetSpeed);
+            graphM.addData("Current Speed", hardwareController.turretFlywheel.getVelocity());
+
+            graphM.update();
             telemetryM.update();
         }
     }

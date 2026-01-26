@@ -43,8 +43,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 public class OdometryPoseTest extends LinearOpMode {
 
     private Follower follower;
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(0.0));
     private TelemetryManager telemetryM;
+    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(0.0));
 
     @Override
     public void runOpMode() {
