@@ -20,9 +20,21 @@ public class HardwareController {
     public static final double INTAKE_POWER = 0.8;
     public static final double TRANSFER_POWER = 0.8;
 
+    // Miscellaneous constants
+    @IgnoreConfigurable
+    public static final double TICKS_PER_DEGREE = 6.806; // Ticks per degree
+    @IgnoreConfigurable
+    public static final int TURRET_TICK_LIMIT = 1200; // Ticks
+
+    public static double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
+    public static double ARTIFACT_AIRTIME = 0.5; // Seconds
+
+    public static double OPEN_ANGLE   = 0.71;
+    public static double CLOSED_ANGLE = 0.61;
+
     // Adaptive turret variables
     @IgnoreConfigurable
-    public double targetSpeed = 33.0; // Target flywheel speed RPS
+    public double targetSpeed = DEFAULT_FLYWHEEL_RPS;
     @IgnoreConfigurable
     public double hoodPosition = 0.5;
 
@@ -38,18 +50,6 @@ public class HardwareController {
     // Flywheel PD
     public static double Kp = 0.5;
     public static double Kd = 0.0;
-
-    // Miscellaneous constants
-    @IgnoreConfigurable
-    public static final double TICKS_PER_DEGREE = 6.806; // Ticks per degree
-    @IgnoreConfigurable
-    public static final int TURRET_TICK_LIMIT = 1200; // Ticks
-
-    public static double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
-    public static double ARTIFACT_AIRTIME = 0.5; // Seconds
-
-    public static double OPEN_ANGLE   = 0.71;
-    public static double CLOSED_ANGLE = 0.61;
 
     // Declare actuators
     public DcMotorEx leftFront, leftBack, rightFront, rightBack;
@@ -132,8 +132,6 @@ public class HardwareController {
 
         turretFlywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        // Set turret PIDF
-        //turretFlywheel.setVelocityPIDFCoefficients(p, i, d, f);
 
         // Set turret rotation motor to use encoder
         turretRotation.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -196,11 +194,11 @@ public class HardwareController {
         else {
             turretRotation.setTargetPosition((int) (-90.0 * TICKS_PER_DEGREE));
         }
+        tagDetected = isGoalFound;
 
         // Control flywheel if enabled
         if (enableFlywheel) {
             // If fiducial has been found, then lock on
-            tagDetected = isGoalFound;
             if (goalFiducial != null) {
                 updateFlywheelByFiducialDistance(goalFiducial);
             }

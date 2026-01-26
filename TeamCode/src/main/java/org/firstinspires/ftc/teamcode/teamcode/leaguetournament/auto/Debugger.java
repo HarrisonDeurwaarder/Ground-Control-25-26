@@ -61,23 +61,24 @@ public class Debugger extends LinearOpMode {
     private static final double FEED_DURATION      = 3.0;
     private static final double RAMP_CAMP_DURATION = 3.0;
 
-    private final Pose startPose =               new Pose(0.0, 0.0, Math.toRadians(90.0));
-    private final Pose scorePose =               new Pose(24.0, 24.0, 0.0);
+    private static Pose goalPose =                new Pose(60.0, 60.0);
+    private static Pose startPose =               new Pose(0.0, 0.0, Math.toRadians(90.0));
+    private static Pose scorePose =               new Pose(24.0, 24.0, 0.0);
 
-    private final Pose prePickup1Pose =          new Pose(20.0, 12.0, 0.0);
-    private final Pose postPickup1Pose =         new Pose(50.0, 12.0, 0.0);
+    private static Pose prePickup1Pose =          new Pose(20.0, 12.0, 0.0);
+    private static Pose postPickup1Pose =         new Pose(50.0, 12.0, 0.0);
 
-    private final Pose prePickup2Pose =          new Pose(20.0, -12.0, 0.0);
-    private final Pose postPickup2Pose =         new Pose(57.0, -12.0, 0.0);
-    private final Pose intermediatePickup2Pose = new Pose(38.0, -10.0, 0.0);
+    private static Pose prePickup2Pose =          new Pose(20.0, -12.0, 0.0);
+    private static Pose postPickup2Pose =         new Pose(57.0, -12.0, 0.0);
+    private static Pose intermediatePickup2Pose = new Pose(38.0, -10.0, 0.0);
 
-    private final Pose prePickup3Pose =          new Pose(20.0, -36.0, 0.0);
-    private final Pose postPickup3Pose =         new Pose(57.0, -36.0, 0.0);
+    private static Pose prePickup3Pose =          new Pose(20.0, -36.0, 0.0);
+    private static Pose postPickup3Pose =         new Pose(57.0, -36.0, 0.0);
 
-    private final Pose preRampPose =             new Pose(0.0, 0.0, 0.0);
-    private final Pose rampCampPose =            new Pose(0.0, 0.0, 0.0);
+    private static Pose preRampPose =             new Pose(0.0, 0.0, 0.0);
+    private static Pose rampCampPose =            new Pose(0.0, 0.0, 0.0);
 
-    private final Pose endAutoPose =             new Pose(50.0, 0.0, Math.toRadians(-90.0));
+    private static Pose endAutoPose =             new Pose(50.0, 0.0, Math.toRadians(-90.0));
 
     private Path scorePreload;
     private PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3, grabRamp, scoreRamp, endAuto;
@@ -97,10 +98,7 @@ public class Debugger extends LinearOpMode {
 
         // Hardware controller for mechanism access
         hardwareController = new HardwareController(hardwareMap);
-
-        // Start mechanism motors upon start
         hardwareController.resetTurret();
-        hardwareController.turretFlywheel.setVelocity(HardwareController.toTPS(HardwareController.DEFAULT_FLYWHEEL_RPS));
 
         waitForStart();
 
@@ -116,6 +114,9 @@ public class Debugger extends LinearOpMode {
             follower.update();
             autoPathUpdate();
 
+            // Perform turret updates
+            hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
+
             // Log telemetry
             updateTelemetry();
 
@@ -125,6 +126,7 @@ public class Debugger extends LinearOpMode {
                 hardwareController.intake.setPower(0.0);
                 hardwareController.transfer.setPower(0.0);
                 follower.breakFollowing();
+
                 // Reset turret
                 hardwareController.turretFlywheel.setPower(0.0);
                 hardwareController.updateTurretTarget(0.0);

@@ -174,7 +174,7 @@ public class Debugger extends LinearOpMode {
                 hardwareController.transfer.setPower(0.0);
             }
             // Perform turret updates
-            hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTime());
+            hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
 
             updateTelemetry();
         }
@@ -184,7 +184,7 @@ public class Debugger extends LinearOpMode {
         // Debug telemetry (On panels)
         telemetryM.addData("Position (In)", follower.getPose());
         telemetryM.addData("Velocity (In/Sec)", follower.getVelocity());
-        telemetryM.addData("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity(AngleUnit.DEGREES));
+        telemetryM.addData("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / HardwareController.TICKS_PER_DEGREE);
 
         telemetryM.addData("Turret Angle", hardwareController.turretAngle);
         telemetryM.addData("Turret Ticks", hardwareController.turretTicks);
