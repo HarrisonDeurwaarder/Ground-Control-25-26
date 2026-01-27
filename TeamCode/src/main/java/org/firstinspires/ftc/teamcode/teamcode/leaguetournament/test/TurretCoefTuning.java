@@ -43,7 +43,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
 @Configurable
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp Debugger", group="League Tournament")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Turret Coefficient Tuner", group="Tests")
 public class TurretCoefTuning extends LinearOpMode {
     @IgnoreConfigurable
     private Timer opmodeTimer;
