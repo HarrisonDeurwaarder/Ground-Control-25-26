@@ -56,7 +56,7 @@ public class TurretCoefTuning extends LinearOpMode {
 
     private static double hoodZero = 0.19;
     private double timeState = 0.0;
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(0.0));
+    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
     public static Pose goalPose = new Pose(60.0, 60.0);
 
     // Tuning variables
@@ -94,8 +94,8 @@ public class TurretCoefTuning extends LinearOpMode {
 
             follower.update();
             follower.setTeleOpDrive(
+                    gamepad1.left_stick_x,
                     -gamepad1.left_stick_y,
-                    -gamepad1.left_stick_x,
                     -gamepad1.right_stick_x,
                     false
             );

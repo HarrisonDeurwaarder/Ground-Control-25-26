@@ -49,7 +49,7 @@ public class HardwareController {
     public LLResultTypes.FiducialResult goalFiducial = null;
 
     // Flywheel PD
-    public static double Kp = 0.025;
+    public static double Kp = 0.5;
     public static double Kd = 0.0;
 
     // Declare actuators

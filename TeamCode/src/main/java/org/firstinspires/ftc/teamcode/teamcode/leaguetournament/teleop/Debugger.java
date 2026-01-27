@@ -57,7 +57,7 @@ public class Debugger extends LinearOpMode {
     private TelemetryManager telemetryM;
 
     // Poses
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(0.0));
+    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
     public static Pose goalPose     = new Pose(60.0, 60.0);
 
     // Boolean flags
@@ -97,15 +97,15 @@ public class Debugger extends LinearOpMode {
 
             // Normal driving mode
             if (!slowMode) follower.setTeleOpDrive(
+                    gamepad1.left_stick_x,
                     -gamepad1.left_stick_y,
-                    -gamepad1.left_stick_x,
                     -gamepad1.right_stick_x,
                     isRobotCentric
             );
             // Precision driving mode
             else follower.setTeleOpDrive(
+                    gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
                     -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                    -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
                     -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
                     isRobotCentric
             );
