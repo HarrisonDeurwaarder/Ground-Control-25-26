@@ -98,7 +98,7 @@ public class TestTurret extends LinearOpMode{
 
         follower.startTeleOpDrive(true);
 
-        
+
 
         // Map mechanism motors
         intake = hardwareMap.get(DcMotorEx.class, "intake");
