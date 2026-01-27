@@ -62,7 +62,7 @@ public class Debugger extends LinearOpMode {
     private static final double RAMP_CAMP_DURATION = 3.0;
 
     private static Pose goalPose =                new Pose(60.0, 60.0);
-    private static Pose startPose =               new Pose(0.0, 0.0, Math.toRadians(90.0));
+    private static Pose startPose =               new Pose(0.0, 0.0, Math.toRadians(0.0));
     private static Pose scorePose =               new Pose(24.0, 24.0, 0.0);
 
     private static Pose prePickup1Pose =          new Pose(20.0, 12.0, 0.0);

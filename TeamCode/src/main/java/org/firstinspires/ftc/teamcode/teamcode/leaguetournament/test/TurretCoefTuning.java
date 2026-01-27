@@ -56,7 +56,7 @@ public class TurretCoefTuning extends LinearOpMode {
 
     private double hoodZero = 0.17;
     private double timeState = 0.0;
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(0.0));
     public static Pose goalPose = new Pose(60.0, 60.0);
 
     // Tuning variables
