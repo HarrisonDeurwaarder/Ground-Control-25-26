@@ -54,6 +54,7 @@ public class TurretCoefTuning extends LinearOpMode {
     @IgnoreConfigurable
     private TelemetryManager telemetryM;
 
+    private double hoodZero = 0.17;
     private double timeState = 0.0;
     public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
     public static Pose goalPose = new Pose(60.0, 60.0);
@@ -158,7 +159,7 @@ public class TurretCoefTuning extends LinearOpMode {
             hardwareController.PDController(opmodeTimer.getElapsedTimeSeconds() - timeState);
             timeState = opmodeTimer.getElapsedTimeSeconds();
             // Hood
-            hardwareController.turretHood.setPosition(hoodPosition);
+            hardwareController.turretHood.setPosition(Math.min(hoodZero, hoodPosition));
 
             updateTelemetry();
         }
