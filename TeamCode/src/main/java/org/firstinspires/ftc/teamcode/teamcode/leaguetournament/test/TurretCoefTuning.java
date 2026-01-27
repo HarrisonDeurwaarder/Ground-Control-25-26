@@ -89,8 +89,9 @@ public class TurretCoefTuning extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            follower.update();
+            hardwareController.turretRotation.setTargetPosition((int) (-90.0 * HardwareController.TICKS_PER_DEGREE));
 
+            follower.update();
             follower.setTeleOpDrive(
                     gamepad1.left_stick_y,
                     gamepad1.left_stick_x,
