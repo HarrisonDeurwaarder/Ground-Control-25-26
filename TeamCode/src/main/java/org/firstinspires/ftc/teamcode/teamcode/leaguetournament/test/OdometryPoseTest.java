@@ -44,7 +44,7 @@ public class OdometryPoseTest extends LinearOpMode {
 
     private Follower follower;
     private TelemetryManager telemetryM;
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(0.0));
+    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
 
     @Override
     public void runOpMode() {
