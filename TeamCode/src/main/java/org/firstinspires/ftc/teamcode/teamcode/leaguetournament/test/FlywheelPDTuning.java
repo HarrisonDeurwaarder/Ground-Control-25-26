@@ -47,7 +47,7 @@ public class FlywheelPDTuning extends LinearOpMode {
     private HardwareController hardwareController;
 
     public static double targetSpeed = 28 * 30; // ticks/sec
-    public static double p = 3.0;
+    public static double p = 0.0;
     public static double i = 3.0;
     public static double d = 3.0;
     public static double f = 3.0;

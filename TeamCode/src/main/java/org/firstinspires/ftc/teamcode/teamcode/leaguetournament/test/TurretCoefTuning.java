@@ -54,14 +54,14 @@ public class TurretCoefTuning extends LinearOpMode {
     @IgnoreConfigurable
     private TelemetryManager telemetryM;
 
-    private double hoodZero = 0.17;
+    private static double hoodZero = 0.19;
     private double timeState = 0.0;
     public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(0.0));
     public static Pose goalPose = new Pose(60.0, 60.0);
 
     // Tuning variables
-    public static double flywheelTargetSpeed = 35.0; // RPS
-    public static double hoodPosition = 0.0; // RPS
+    public static double flywheelTargetSpeed = 30.0; // RPS
+    public static double hoodPosition = 0.0; //
 
 
     @Override
@@ -94,9 +94,9 @@ public class TurretCoefTuning extends LinearOpMode {
 
             follower.update();
             follower.setTeleOpDrive(
-                    gamepad1.left_stick_y,
-                    gamepad1.left_stick_x,
-                    gamepad1.right_stick_x,
+                    -gamepad1.left_stick_y,
+                    -gamepad1.left_stick_x,
+                    -gamepad1.right_stick_x,
                     false
             );
 
@@ -111,9 +111,9 @@ public class TurretCoefTuning extends LinearOpMode {
                 // Switch gate to open
                 hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                 // Switch intake mode to [intake] if needed
-                if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+                if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
                 // Then feed and intake
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
@@ -124,9 +124,9 @@ public class TurretCoefTuning extends LinearOpMode {
             // When trigger is held, intake
             else if (gamepad1.left_trigger >= 0.05) {
                 // Switch intake mode to reverse if needed
-                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
                 // Then power intake and gate
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
@@ -137,9 +137,9 @@ public class TurretCoefTuning extends LinearOpMode {
             // When trigger is held, intake
             else if (gamepad1.left_bumper) {
                 // Switch intake mode to reverse if needed
-                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
                 // Then power intake and gate
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);

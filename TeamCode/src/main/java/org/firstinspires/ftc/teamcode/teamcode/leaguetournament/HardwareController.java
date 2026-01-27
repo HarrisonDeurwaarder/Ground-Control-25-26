@@ -19,7 +19,7 @@ public class HardwareController {
     // Power constants
     public static final double INTAKE_POWER = 0.8;
     public static final double TRANSFER_POWER = 0.8;
-    public static final double TURRET_ROTATION_POWER = 1.0;
+    public static final double TURRET_ROTATION_POWER = 0.4;
 
     // Miscellaneous constants
     @IgnoreConfigurable
@@ -49,7 +49,7 @@ public class HardwareController {
     public LLResultTypes.FiducialResult goalFiducial = null;
 
     // Flywheel PD
-    public static double Kp = 0.5;
+    public static double Kp = 0.025;
     public static double Kd = 0.0;
 
     // Declare actuators
@@ -280,7 +280,7 @@ public class HardwareController {
     public void PDController(double deltaTime) {
         // Save previous error for derivative term
         double previousError = turretVelocityError;
-        turretVelocityError = targetSpeed - (turretFlywheel.getVelocity() / (TICKS_PER_DEGREE * 360)); // P-value
+        turretVelocityError = targetSpeed - (turretFlywheel.getVelocity() / 28.0); // P-value
 
         // Compute power
         double power = (Kp * turretVelocityError + Kd * (turretVelocityError - previousError) / deltaTime);
