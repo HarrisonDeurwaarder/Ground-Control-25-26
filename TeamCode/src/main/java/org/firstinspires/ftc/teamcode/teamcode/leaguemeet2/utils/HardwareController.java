@@ -123,7 +123,7 @@ public class HardwareController {
         // Set default target position
         turretYaw.setTargetPosition(0);
         turretYaw.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        turretYaw.setPower(0.5);
+        turretYaw.setPower(0.8);
     }
 
     /**

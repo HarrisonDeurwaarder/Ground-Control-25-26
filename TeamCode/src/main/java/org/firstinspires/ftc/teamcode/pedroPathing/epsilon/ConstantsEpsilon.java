@@ -49,8 +49,8 @@ public class ConstantsEpsilon {
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             // Cartesian velocity
-            .xVelocity(51.0)
-            .yVelocity(41.0);
+            .xVelocity(80.0) //51
+            .yVelocity(80.0); //41
 
     public static PinpointConstants pinpointConstants = new PinpointConstants()
             // Pinpoint offset from robot center

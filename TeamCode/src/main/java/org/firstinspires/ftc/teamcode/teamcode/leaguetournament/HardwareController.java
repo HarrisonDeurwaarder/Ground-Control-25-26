@@ -19,6 +19,7 @@ public class HardwareController {
     // Power constants
     public static final double INTAKE_POWER = 0.8;
     public static final double TRANSFER_POWER = 0.8;
+    public static final double TURRET_ROTATION_POWER = 1.0;
 
     // Miscellaneous constants
     @IgnoreConfigurable
@@ -139,7 +140,7 @@ public class HardwareController {
         // Set default target position
         turretRotation.setTargetPosition(0);
         turretRotation.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        turretRotation.setPower(0.5);
+        turretRotation.setPower(TURRET_ROTATION_POWER);
     }
 
     /**

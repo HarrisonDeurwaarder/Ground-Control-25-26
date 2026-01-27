@@ -1,5 +1,11 @@
 package org.firstinspires.ftc.teamcode.teamcode.tests;
 
+import com.bylazar.configurables.annotations.IgnoreConfigurable;
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -9,6 +15,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
+import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
 import java.util.List;
 
@@ -26,6 +35,24 @@ Limits: (-90 degrees, +90 degrees) or (-735 ticks, +735 ticks)
 
 @TeleOp(name="Turret Test", group="Tests")
 public class TestTurret extends LinearOpMode{
+
+    @IgnoreConfigurable
+    private Timer opmodeTimer;
+    @IgnoreConfigurable
+    private Follower follower;
+    @IgnoreConfigurable
+    private HardwareController hardwareController;
+    @IgnoreConfigurable
+    private TelemetryManager telemetryM;
+
+    // Poses
+    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    public static Pose goalPose     = new Pose(60.0, 60.0);
+
+    // Boolean flags
+    private boolean isRobotCentric = false;
+    private boolean slowMode = false;
+
     public static final double TICKS_PER_RADIAN = 233.96; // Ticks from motor per turret radian
     public static final int TICKS_PER_REVOLUTION = 1470; // Ticks from motor per rotation
     public static final double TICKS_PER_DEGREE = 4.083;
@@ -51,7 +78,28 @@ public class TestTurret extends LinearOpMode{
     public boolean turret_state = false;
     public Limelight3A limelight;
 
+
+
+
     public void runOpMode() {
+
+        opmodeTimer = new Timer();
+        opmodeTimer.resetTimer();
+
+        // Instanciate controllers
+        hardwareController = new HardwareController(hardwareMap);
+
+        // Configure follower
+        follower = ConstantsEpsilon.createFollower(hardwareMap);
+        follower.setStartingPose(startingPose);
+        follower.update();
+
+        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+
+        follower.startTeleOpDrive(true);
+
+        
+
         // Map mechanism motors
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         transfer = hardwareMap.get(DcMotorEx.class, "transfer");
