@@ -79,7 +79,7 @@ public class OdometryPoseTest extends LinearOpMode {
             // Panels telemetry
             telemetryM.addData("X", Math.round(10.0 * follower.getPose().getX()) / 10.0);
             telemetryM.addData("Y", Math.round(10.0 * follower.getPose().getY()) / 10.0);
-            telemetryM.addData("θ", Math.round(10.0 * follower.getPose().getHeading()) / 10.0);
+            telemetryM.addData("θ", Math.round(10.0 * Math.toDegrees(follower.getPose().getHeading())) / 10.0);
             telemetryM.update();
         }
     }

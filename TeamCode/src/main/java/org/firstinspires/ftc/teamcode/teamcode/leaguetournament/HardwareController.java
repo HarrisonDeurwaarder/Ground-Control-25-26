@@ -201,7 +201,7 @@ public class HardwareController {
         if (enableFlywheel) {
             // If fiducial has been found, then lock on
             if (goalFiducial != null) {
-                updateFlywheelByFiducialDistance(goalFiducial);
+                updateFlywheelByDistance(goalFiducial);
             }
         // Else set to zero velocity
         } else {
@@ -256,21 +256,18 @@ public class HardwareController {
 
     /**
      * Update flywheel speed by regression values
-     *
-     * @param fiducial goal fiducial detection
     */
-    private void updateFlywheelByFiducialDistance(LLResultTypes.FiducialResult fiducial) {
+    private void updateFlywheelByDistance(double distance) {
         // Compute distance to goal
-        double tA = fiducial.getTargetArea();
-        distance = 14.76 / Math.sqrt(tA);
-
         // Compute target speed and hood angle using regression values
-        targetSpeed = 0.11 * distance + 31.5;
-        hoodPosition = Math.max(Math.min(0.55 - (0.00153 * distance) + (0.00000301 * Math.pow(distance, 2)), 0.50), 0.3);
+        targetSpeed = Math.min(0.176 * distance + 33.9 + 1.0, 58); // +1 is for diff in target/actual speed
+        hoodPosition = Math.max(Math.min((0.00438 * distance + 0.0457), 0.6), 0.19);
         // Send values
         turretFlywheel.setVelocity(targetSpeed);
         turretHood.setPosition(hoodPosition);
     }
+
+
 
     /**
      * PD controller for turret velocity
@@ -288,4 +285,7 @@ public class HardwareController {
         power = Math.max(Math.min(power, 1.0), -1.0);
         turretFlywheel.setPower(power);
     }
+
+    // Hood Angle: 0.00438x + 0.0457
+    // Flywheel Speed (RPS): 0.176x + 33.9
 }
