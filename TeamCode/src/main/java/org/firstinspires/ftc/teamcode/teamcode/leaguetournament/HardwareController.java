@@ -9,6 +9,7 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -121,8 +122,8 @@ public class HardwareController {
         rightBack.setDirection(DcMotorEx.Direction.FORWARD);
 
         // Set mechanism motor directions
-        intake.setDirection(DcMotorEx.Direction.FORWARD);
-        transfer.setDirection(DcMotorEx.Direction.FORWARD);
+        intake.setDirection(DcMotorEx.Direction.REVERSE);
+        transfer.setDirection(DcMotorEx.Direction.REVERSE);
         turretFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
         turretRotation.setDirection(DcMotorEx.Direction.REVERSE);
 
