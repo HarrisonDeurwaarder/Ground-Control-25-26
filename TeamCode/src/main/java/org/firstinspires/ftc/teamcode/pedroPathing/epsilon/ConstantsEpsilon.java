@@ -33,8 +33,7 @@ public class ConstantsEpsilon {
             // PID values
             .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0.0, 0.004, 0.05))
             .headingPIDFCoefficients(new PIDFCoefficients(1.5, 0.0, 0.05, 0.04))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.1, 0.0, 0.0, 0.1, 0.6))
-            .centripetalScaling(0.01);
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.1, 0.0, 0.0, 0.1, 0.6));
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1.0)
@@ -49,8 +48,8 @@ public class ConstantsEpsilon {
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             // Cartesian velocity
-            .xVelocity(80.0) //51
-            .yVelocity(80.0); //41
+            .xVelocity(51.0) //51
+            .yVelocity(41.0); //41
 
     public static PinpointConstants pinpointConstants = new PinpointConstants()
             // Pinpoint offset from robot center

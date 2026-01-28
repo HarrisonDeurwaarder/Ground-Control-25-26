@@ -43,11 +43,11 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Const;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.pedroPathing.delta.ConstantsDelta;
-import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
+import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
+import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
-@Disabled
 @Autonomous(name="LM2 Auto (Red, Near)", group="League Meet 2")
 public class AutoRedNear extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
@@ -85,12 +85,12 @@ public class AutoRedNear extends LinearOpMode {
 
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
-        follower = ConstantsDelta.createFollower(hardwareMap);
+        follower = ConstantsEpsilon.createFollower(hardwareMap);
         buildPaths();
         follower.setStartingPose(startPose);
 
         // Hardware controller for mechanism access
-        hardwareController = new HardwareController(hardwareMap, startPose);
+        hardwareController = new HardwareController(hardwareMap);
 
         waitForStart();
         runtime.reset();
@@ -109,9 +109,6 @@ public class AutoRedNear extends LinearOpMode {
             follower.update();
             autoPathUpdate();
 
-            if (pathState != -1) {
-                hardwareController.autoAimTurret(follower.getPose());
-            }            // Log telemetry
             updateTelemetry();
         }
 
