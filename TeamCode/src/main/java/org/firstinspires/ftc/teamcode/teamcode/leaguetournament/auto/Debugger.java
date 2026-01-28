@@ -62,22 +62,21 @@ public class Debugger extends LinearOpMode {
     private static final double RAMP_CAMP_DURATION = 3.0;
 
     private static Pose goalPose =                new Pose(60.0, 60.0);
-    private static Pose startPose =               new Pose(0.0, 0.0, Math.toRadians(0.0));
-    private static Pose scorePose =               new Pose(0.0, 0.0, 0.0);
+    private static Pose startPose =               new Pose(0.0, 0.0, Math.toRadians(90.0));
+    private static Pose scorePose =               new Pose(25.0, 8.8, Math.toRadians(0.0));
 
-    private static Pose intermediatePickup1Pose = new Pose(0.0, 0.0, 0.0);
-    private static Pose postPickup1Pose =         new Pose(0.0, 0.0, 0.0);
+    private static Pose postPickup1Pose =         new Pose(56.7, 8.8, Math.toRadians(0.0));
 
-    private static Pose intermediatePickup2Pose = new Pose(0.0, 0.0, 0.0);
-    private static Pose postPickup2Pose =         new Pose(0.0, 0.0,0.0);
+    private static Pose intermediatePickup2Pose = new Pose(28.9, -16, Math.toRadians(0.0));
+    private static Pose postPickup2Pose =         new Pose(58.5, -15.5,Math.toRadians(0.0));
 
-    private static Pose intermediatePickup3Pose = new Pose(0.0, 0.0, 0.0);
-    private static Pose postPickup3Pose =         new Pose(0.0, 0.0, 0.0);
+    private static Pose intermediatePickup3Pose = new Pose(28.9, -39.1, Math.toRadians(0.0));
+    private static Pose postPickup3Pose =         new Pose(62.3, -39.1, Math.toRadians(0.0));
 
-    private static Pose openGatePose =            new Pose(0.0, 0.0, 0.0);
-    private static Pose rampCampPose =            new Pose(0.0, 0.0, 0.0);
+    private static Pose openGatePose =            new Pose(61.2, -13.0, Math.toRadians(31.8));
+    private static Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(60.5));
 
-    private static Pose endAutoPose =             new Pose(50.0, 0.0, Math.toRadians(-90.0));
+    private static Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
 
     private Path scorePreload;
     private PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3, openGateRC, intakeRC, scoreRC, endAuto;
@@ -150,7 +149,7 @@ public class Debugger extends LinearOpMode {
 
         // Curved intake line for artifact set #1
         grabPickup1 = follower.pathBuilder()
-                .addPath(new BezierCurve(scorePose, intermediatePickup1Pose, postPickup1Pose))
+                .addPath(new BezierLine(scorePose, postPickup1Pose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), postPickup1Pose.getHeading())
                 .build();
 
