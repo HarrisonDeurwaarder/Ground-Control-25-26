@@ -160,27 +160,6 @@ public class HardwareController {
      * @param goalPose goal pose
     */
     public void updateTurret(Follower follower, Pose goalPose, double timestamp) {
-        // Get fiducials
-        List<LLResultTypes.FiducialResult> fiducials = limelight.getLatestResult().getFiducialResults();
-        // Get team goal id
-        int tID = isRedTeam ? 24 : 20;
-
-        boolean isGoalFound = false;
-        // Loop fiducials
-        for (LLResultTypes.FiducialResult fiducial : fiducials) {
-            // If ID matches the goal
-            if (fiducial.getFiducialId() == tID) {
-                // Mark as found and break out
-                isGoalFound = true;
-                goalFiducial = fiducial;
-                break;
-            }
-        }
-
-        /*
-        CONDITIONAL TURRET UPDATES
-        */
-
         // Translate the goal pose in accordance with expected velocity if enabled
         if (enableArtifactVelocityCorrection) goalPose = new Pose(
                     goalPose.getX() - ARTIFACT_AIRTIME * follower.getVelocity().getXComponent(),
@@ -195,14 +174,12 @@ public class HardwareController {
         else {
             turretRotation.setTargetPosition((int) (-90.0 * TICKS_PER_DEGREE));
         }
-        tagDetected = isGoalFound;
 
         // Control flywheel if enabled
         if (enableFlywheel) {
-            // If fiducial has been found, then lock on
-            if (goalFiducial != null) {
-                updateFlywheelByDistance(goalFiducial);
-            }
+            // If flywheel enabled set parameters by distance
+            double distance = follower.getPose().distanceFrom(goalPose);
+            updateFlywheelByDistance(distance);
         // Else set to zero velocity
         } else {
             targetSpeed = 0.0;
@@ -261,7 +238,7 @@ public class HardwareController {
         // Compute distance to goal
         // Compute target speed and hood angle using regression values
         targetSpeed = Math.min(0.176 * distance + 33.9 + 1.0, 58); // +1 is for diff in target/actual speed
-        hoodPosition = Math.max(Math.min((0.00438 * distance + 0.0457), 0.6), 0.19);
+        hoodPosition = Math.max(Math.min((0.00438 * distance + 0.0457), 0.57), 0.19);
         // Send values
         turretFlywheel.setVelocity(targetSpeed);
         turretHood.setPosition(hoodPosition);
