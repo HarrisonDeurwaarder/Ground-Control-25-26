@@ -133,9 +133,9 @@ public class Debugger extends LinearOpMode {
                 // Switch gate to open
                 hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                 // Switch intake mode to [intake] if needed
-                if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+                if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
                 // Then feed and intake
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
@@ -146,9 +146,9 @@ public class Debugger extends LinearOpMode {
             // When trigger is held, intake
             else if (gamepad1.left_trigger >= 0.05) {
                 // Switch intake mode to reverse if needed
-                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
                 // Then power intake and gate
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
@@ -159,9 +159,9 @@ public class Debugger extends LinearOpMode {
             // When trigger is held, intake
             else if (gamepad1.left_bumper) {
                 // Switch intake mode to reverse if needed
-                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
+                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
                 // Then power intake and gate
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
@@ -189,6 +189,8 @@ public class Debugger extends LinearOpMode {
         telemetryM.addData("Turret Angle", hardwareController.turretAngle);
         telemetryM.addData("Turret Ticks", hardwareController.turretTicks);
         telemetryM.addData("Tag in Frame", hardwareController.tagDetected);
+
+        telemetryM.addData("Target Speed", hardwareController.targetSpeed);
 
         telemetryM.addData("Distance", hardwareController.distance);
         telemetryM.update();

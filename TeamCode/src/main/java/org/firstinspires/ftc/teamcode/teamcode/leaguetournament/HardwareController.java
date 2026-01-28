@@ -74,7 +74,7 @@ public class HardwareController {
     @IgnoreConfigurable
     public boolean enableFlywheel = true;
     @IgnoreConfigurable
-    public boolean enableArtifactVelocityCorrection = true;
+    public boolean enableArtifactVelocityCorrection = false;
 
     /**
      * Map devices; set all devices to default direction
@@ -240,7 +240,7 @@ public class HardwareController {
         targetSpeed = Math.min(0.176 * distance + 33.9 + 1.0, 58); // +1 is for diff in target/actual speed
         hoodPosition = Math.max(Math.min((0.00438 * distance + 0.0457), 0.57), 0.19);
         // Send values
-        turretFlywheel.setVelocity(targetSpeed);
+        //turretFlywheel.setVelocity(targetSpeed);
         turretHood.setPosition(hoodPosition);
     }
 
