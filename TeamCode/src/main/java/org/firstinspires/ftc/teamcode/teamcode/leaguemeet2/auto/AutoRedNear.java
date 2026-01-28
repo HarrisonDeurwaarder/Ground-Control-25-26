@@ -48,6 +48,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
+@Disabled
 @Autonomous(name="LM2 Auto (Red, Near)", group="League Meet 2")
 public class AutoRedNear extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();

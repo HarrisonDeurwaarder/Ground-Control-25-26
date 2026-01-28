@@ -49,7 +49,6 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareControll
 
 @Autonomous(name="Auto Debugger", group="League Meet 2")
 public class Debugger extends LinearOpMode {
-    private ElapsedTime runtime = new ElapsedTime();
     @IgnoreConfigurable
     private Timer pathTimer, opmodeTimer;
     @IgnoreConfigurable
@@ -60,20 +59,22 @@ public class Debugger extends LinearOpMode {
     private TelemetryManager telemetryM;
     private int pathState = 0;
 
+    private static final double RAMP_UP_DURATION   = 2.0;
     private static final double FEED_DURATION      = 1.0;
-    private static final double RAMP_CAMP_DURATION = 3.0;
+    private static final double RC_GATE_DURATION   = 1.0;
+    private static final double RC_INTAKE_DURATION = 2.0;
 
     private static Pose goalPose =                new Pose(60.0, 60.0);
-    private static Pose startPose =               new Pose(0.0, 0.0, Math.toRadians(90.0));
+    private static Pose startPose =               new Pose(40.2, 60.9, Math.toRadians(90.0));
     private static Pose scorePose =               new Pose(25.0, 8.8, Math.toRadians(0.0));
 
     private static Pose postPickup1Pose =         new Pose(56.7, 8.8, Math.toRadians(0.0));
 
-    private static Pose intermediatePickup2Pose = new Pose(28.9, -16, Math.toRadians(0.0));
+    private static Pose intermediatePickup2Pose = new Pose(25.9, -16, Math.toRadians(0.0));
     private static Pose postPickup2Pose =         new Pose(58.5, -15.5,Math.toRadians(0.0));
 
-    private static Pose intermediatePickup3Pose = new Pose(28.9, -39.1, Math.toRadians(0.0));
-    private static Pose postPickup3Pose =         new Pose(62.3, -39.1, Math.toRadians(0.0));
+    private static Pose intermediatePickup3Pose = new Pose(25.9, -39.1, Math.toRadians(0.0));
+    private static Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
 
     private static Pose openGatePose =            new Pose(61.2, -13.0, Math.toRadians(31.8));
     private static Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(60.5));
@@ -98,10 +99,9 @@ public class Debugger extends LinearOpMode {
 
         // Hardware controller for mechanism access
         hardwareController = new HardwareController(hardwareMap);
-        hardwareController.resetTurret();
 
         waitForStart();
-        runtime.reset();
+        pathTimer.resetTimer();
 
         hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
         hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
@@ -229,9 +229,13 @@ public class Debugger extends LinearOpMode {
                 follower.followPath(scorePreload);
                 setPathState(1);
                 break;
-            // Feed for duration
+            // Ramp up for duration
             case 1:
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()) setPathState(2);
+                break;
+            // Feed for duration
+            case 2:
+                if (pathTimer.getElapsedTimeSeconds() >= RAMP_UP_DURATION) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     setPathState(10);
                 }
@@ -272,28 +276,29 @@ public class Debugger extends LinearOpMode {
                     setPathState(21);
                 }
                 break;
-            // Go to RC intake position
+            // Pause to press gate
             case 21:
-                if (!follower.isBusy()) {
-                    follower.followPath(intakeRC, true);
-                    setPathState(22);
-                }
-                break;
-            // Pause to intake
+                if (!follower.isBusy()) setPathState(22);
+            // Go to RC intake position
             case 22:
-                if (!follower.isBusy()) {
+                if (pathTimer.getElapsedTimeSeconds() >= RC_GATE_DURATION) {
+                    follower.followPath(intakeRC, true);
                     setPathState(23);
                 }
                 break;
-            // Go to score position
+            // Pause to intake
             case 23:
-                if (pathTimer.getElapsedTimeSeconds() >= RAMP_CAMP_DURATION) {
+                if (!follower.isBusy()) setPathState(24);
+                break;
+            // Go to score position
+            case 24:
+                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
                     follower.followPath(scoreRC, true);
-                    setPathState(24);
+                    setPathState(25);
                 }
                 break;
             // Feed for duration
-            case 24:
+            case 25:
                 if (!follower.isBusy()) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     setPathState(30);
@@ -310,66 +315,29 @@ public class Debugger extends LinearOpMode {
                     setPathState(31);
                 }
                 break;
-            // Go to RC intake position
+            // Pause to press gate
             case 31:
-                if (!follower.isBusy()) {
-                    follower.followPath(intakeRC, true);
-                    setPathState(32);
-                }
-                break;
-            // Pause to intake
+                if (!follower.isBusy()) setPathState(32);
+                // Go to RC intake position
             case 32:
-                if (!follower.isBusy()) {
+                if (pathTimer.getElapsedTimeSeconds() >= RC_GATE_DURATION) {
+                    follower.followPath(intakeRC, true);
                     setPathState(33);
                 }
                 break;
-            // Go to score position
-            case 33:
-                if (pathTimer.getElapsedTimeSeconds() >= RAMP_CAMP_DURATION) {
-                    follower.followPath(scoreRC, true);
-                    setPathState(34);
-                }
-                break;
-            // Feed for duration
-            case 34:
-                if (!follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                    setPathState(40);
-                }
-                break;
-
-
-            // Ramp camp 3
-            // Disable feeder and open gate
-            case 40:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(openGateRC, true);
-                    setPathState(41);
-                }
-                break;
-            // Go to RC intake position
-            case 41:
-                if (!follower.isBusy()) {
-                    follower.followPath(intakeRC, true);
-                    setPathState(42);
-                }
-                break;
             // Pause to intake
-            case 42:
-                if (!follower.isBusy()) {
-                    setPathState(43);
-                }
+            case 33:
+                if (!follower.isBusy()) setPathState(34);
                 break;
             // Go to score position
-            case 43:
-                if (pathTimer.getElapsedTimeSeconds() >= RAMP_CAMP_DURATION) {
+            case 34:
+                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
                     follower.followPath(scoreRC, true);
-                    setPathState(44);
+                    setPathState(35);
                 }
                 break;
             // Feed for duration
-            case 44:
+            case 35:
                 if (!follower.isBusy()) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     setPathState(50);

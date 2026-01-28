@@ -285,7 +285,6 @@ public class HardwareController {
     /**
      * PID controller for turret velocity
      *
-     * @param deltaTime time since last run cycle
      * @return power output power for flywheel motor
      */
     public double PID_Controller() {
