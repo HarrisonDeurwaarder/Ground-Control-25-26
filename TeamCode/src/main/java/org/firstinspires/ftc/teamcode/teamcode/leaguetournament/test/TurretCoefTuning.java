@@ -174,6 +174,7 @@ public class TurretCoefTuning extends LinearOpMode {
 
         telemetryM.addData("Target Speed", flywheelTargetSpeed);
         telemetryM.addData("Hood Position", hoodPosition);
+        telemetryM.addData("Rotation Enc Position", hardwareController.turretRotation.getCurrentPosition());
         telemetryM.update();
 
         // Controls (On driver hub telemetry)

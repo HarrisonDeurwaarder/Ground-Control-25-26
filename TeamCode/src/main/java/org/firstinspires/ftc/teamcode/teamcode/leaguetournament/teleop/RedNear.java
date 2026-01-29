@@ -43,7 +43,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
 @Configurable
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp Debugger", group="League Tournament")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp Red Near", group="League Tournament")
 public class RedNear extends LinearOpMode {
 
     @IgnoreConfigurable
@@ -97,14 +97,14 @@ public class RedNear extends LinearOpMode {
             // Normal driving mode
             if (!slowMode) follower.setTeleOpDrive(
                     -gamepad1.left_stick_y,
-                    gamepad1.left_stick_x,
+                    -gamepad1.left_stick_x,
                     -gamepad1.right_stick_x,
                     isRobotCentric
             );
             // Precision driving mode
             else follower.setTeleOpDrive(
                     -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                    gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
+                    -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
                     -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
                     isRobotCentric
             );

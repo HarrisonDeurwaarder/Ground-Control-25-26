@@ -18,15 +18,17 @@ import java.util.List;
 @Configurable
 public class HardwareController {
     // Power constants
-    public static final double INTAKE_POWER = 0.8;
-    public static final double TRANSFER_POWER = 0.8;
-    public static final double TURRET_ROTATION_POWER = 0.4;
+    public static final double INTAKE_POWER = 1.0;
+    public static final double TRANSFER_POWER = 1.0;
+    public static final double TURRET_ROTATION_POWER = 0.8;
 
     // Miscellaneous constants
     @IgnoreConfigurable
-    public static final double TICKS_PER_DEGREE = 6.806; // Ticks per degree
+    public static final double TURRET_ROTATION_TICKS_PER_DEGREE = 4.317;
     @IgnoreConfigurable
-    public static final int TURRET_TICK_LIMIT = 1200; // Ticks
+    public static final double FLYWHEEL_TICKS_PER_DEGREE = 0.077;
+    @IgnoreConfigurable
+    public static final int TURRET_TICK_LIMIT = 800; // Ticks
 
     public static double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
     public static double ARTIFACT_AIRTIME = 0.5; // Seconds
@@ -43,14 +45,18 @@ public class HardwareController {
     @IgnoreConfigurable
     public double distance = 0.0;
     @IgnoreConfigurable
-    public double turretVelocityError = 0.0;
+    public double lastRecordedError = 0.0;
+    @IgnoreConfigurable
+    public double lastRecordedIntegral = 0.0;
     @IgnoreConfigurable
     public double lastRecordedTime = 0.0;
     @IgnoreConfigurable
     public LLResultTypes.FiducialResult goalFiducial = null;
 
-    // Flywheel PD
+    // Flywheel PID
     public static double Kp = 0.5;
+    public static double Ks = 0.0;
+    public static double Ki = 0.0;
     public static double Kd = 0.0;
 
     // Declare actuators
@@ -68,8 +74,6 @@ public class HardwareController {
     public boolean tagDetected = false;
 
     // Control flow flags
-    @IgnoreConfigurable
-    public boolean isRedTeam = true;
     @IgnoreConfigurable
     public boolean enableAutoAiming = true;
     @IgnoreConfigurable
@@ -173,7 +177,7 @@ public class HardwareController {
         }
         // Else set to default position
         else {
-            turretRotation.setTargetPosition((int) (-90.0 * TICKS_PER_DEGREE));
+            turretRotation.setTargetPosition((int) (-90.0 * TURRET_ROTATION_TICKS_PER_DEGREE));
         }
 
         // Control flywheel if enabled
@@ -196,9 +200,9 @@ public class HardwareController {
      * @param angle angle (degrees)
      */
     public void updateTurretTarget(double angle) {
-        int ticks180 = (int) (180 * TICKS_PER_DEGREE);
+        int ticks180 = (int) (180 * TURRET_ROTATION_TICKS_PER_DEGREE);
         // Compute target position
-        int ticks = (int) (angle * TICKS_PER_DEGREE);
+        int ticks = (int) (angle * TURRET_ROTATION_TICKS_PER_DEGREE);
 
         // Modify tick count to stay in bounds
         if (ticks < -TURRET_TICK_LIMIT) {
@@ -253,15 +257,19 @@ public class HardwareController {
      * @param deltaTime time since last run cycle
      */
     public void PDController(double deltaTime) {
-        // Save previous error for derivative term
-        double previousError = turretVelocityError;
-        turretVelocityError = targetSpeed - (turretFlywheel.getVelocity() / 28.0); // P-value
-
+        double proportional = targetSpeed - (turretFlywheel.getVelocity() / (FLYWHEEL_TICKS_PER_DEGREE * 360));
+        double derivative   = (proportional - lastRecordedError) / deltaTime;
+        double integral     = lastRecordedIntegral + proportional * deltaTime;
+        double constant     = Math.signum(proportional);
         // Compute power
-        double power = (Kp * turretVelocityError + Kd * (turretVelocityError - previousError) / deltaTime);
+        double power = Kp * proportional + Kd * derivative + Ki * integral + Ks * constant;
         // Clip power
         power = Math.max(Math.min(power, 1.0), -1.0);
         turretFlywheel.setPower(power);
+
+        // Save previous
+        lastRecordedError = proportional;
+        lastRecordedIntegral = integral
     }
 
     // Hood Angle: 0.00438x + 0.0457

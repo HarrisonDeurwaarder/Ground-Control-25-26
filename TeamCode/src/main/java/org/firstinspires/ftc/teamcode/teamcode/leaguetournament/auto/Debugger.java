@@ -57,7 +57,7 @@ public class Debugger extends LinearOpMode {
     private HardwareController hardwareController;
     @IgnoreConfigurable
     private TelemetryManager telemetryM;
-    private int pathState = 0;
+    private int pathState, cycleState = 0;
 
     private static final double RAMP_UP_DURATION   = 2.0;
     private static final double FEED_DURATION      = 1.0;
@@ -99,6 +99,9 @@ public class Debugger extends LinearOpMode {
 
         // Hardware controller for mechanism access
         hardwareController = new HardwareController(hardwareMap);
+
+        // Ramp up flywheel speed prior to shooting preload
+        hardwareController.updateTurret(follower, goalPose, 0.0);
 
         waitForStart();
         pathTimer.resetTimer();
@@ -222,186 +225,153 @@ public class Debugger extends LinearOpMode {
      * Updates the auto paths
      */
     private void autoPathUpdate(){
-        switch (pathState) {
+        switch (cycleState) {
             // Preload
-            // Go to score position
             case 0:
-                follower.followPath(scorePreload);
-                setPathState(1);
+                runPreloadCycle(scorePreload);
                 break;
-            // Ramp up for duration
-            case 1:
-                if (!follower.isBusy()) setPathState(2);
-                break;
-            // Feed for duration
-            case 2:
-                if (pathTimer.getElapsedTimeSeconds() >= RAMP_UP_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                    setPathState(10);
-                }
-                break;
-
 
             // Artifact set 2
-            // Disable feeder and intake artifacts
-            case 10:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(grabPickup2, true);
-                    setPathState(11);
-                }
-                break;
-            // Go to score position
-            case 11:
-                if (!follower.isBusy()) {
-                    follower.followPath(scorePickup2, true);
-                    setPathState(12);
-                }
-                break;
-            // Feed for duration
-            case 12:
-                if (!follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                    setPathState(20);
-                }
+            case 1:
+                runArtifactSetCycle(grabPickup2, scorePickup2);
                 break;
 
-
-            // Ramp camp 1
-            // Disable feeder and open gate
-            case 20:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(openGateRC, true);
-                    setPathState(21);
-                }
-                break;
-            // Pause to press gate and intake
-            case 21:
-                if (!follower.isBusy()) setPathState(24);/*
-            // Go to RC intake position
-            case 22:
-                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
-                    follower.followPath(intakeRC, true);
-                    setPathState(23);
-                }
-                break;
-            // Pause to intake
-            case 23:
-                if (!follower.isBusy()) setPathState(24);
-                break;*/
-            // Go to score position
-            case 24:
-                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
-                    follower.followPath(scoreRC, true);
-                    setPathState(25);
-                }
-                break;
-            // Feed for duration
-            case 25:
-                if (!follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                    setPathState(30);
-                }
+            // RC 1
+            case 2:
+                runRCCycle(openGateRC, scoreRC);
                 break;
 
+            // RC 2
+            case 3:
+                runRCCycle(openGateRC, scoreRC);
+                break;
 
             // Artifact set 1
-            // Disable feeder and intake artifacts
-            case 30:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(grabPickup1, true);
-                    setPathState(31);
-                }
+            case 4:
+                runArtifactSetCycle(grabPickup2, scorePickup2);
                 break;
-            // Go to score position
-            case 31:
-                if (!follower.isBusy()) {
-                    follower.followPath(scorePickup1, true);
-                    setPathState(32);
-                }
-                break;
-            // Feed for duration
-            case 32:
-                if (!follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                    setPathState(40);
-                }
-                break;
-
-
-            // Ramp camp 2
-            // Disable feeder and open gate
-            case 40:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(openGateRC, true);
-                    setPathState(41);
-                }
-                break;
-            // Pause to press gate and intake
-            case 41:
-                if (!follower.isBusy()) setPathState(44);
-            // Go to score position
-            case 44:
-                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
-                    follower.followPath(scoreRC, true);
-                    setPathState(45);
-                }
-                break;
-            // Feed for duration
-            case 45:
-                if (!follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                    setPathState(50);
-                }
-                break;
-
-
-            // Artifact set 3
-            // Disable feeder and intake artifacts
-            case 50:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(grabPickup3, true);
-                    setPathState(51);
-                }
-                break;
-            // Go to score position
-            case 51:
-                if (!follower.isBusy()) {
-                    follower.followPath(scorePickup3, true);
-                    setPathState(52);
-                }
-                break;
-            // Feed for duration
-            case 52:
-                if (!follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                    setPathState(60);
-                }
-                break;
-
 
             // End-of-auto parking
-            case 60:
+            case 5:
                 if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
                     hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
                     follower.followPath(endAuto, true);
-                    setPathState(-1);
+                    incrementCycleState();
                 }
                 break;
         }
     }
 
     /**
-     * Advanced to a new path state
+     * Run preload cycle
      *
-     * @param pathState new path state
+     * @param score scoring path
      */
-    private void setPathState(int pathState) {
-        this.pathState = pathState;
+    private void runPreloadCycle(Path score) {
+        switch (pathState) {
+            // Go to score position
+            case 0:
+                follower.followPath(score);
+                incrementPathState();
+                break;
+            // Ramp up for duration
+            case 1:
+                if (!follower.isBusy()) incrementPathState();
+                break;
+            // Feed for duration
+            case 2:
+                if (pathTimer.getElapsedTimeSeconds() >= RAMP_UP_DURATION) {
+                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                    incrementCycleState();
+                }
+                break;
+        }
+    }
+
+    /**
+     * Run an artifact set cycle
+     *
+     * @param grabPickup artifact intake path
+     * @param score scoring path
+     */
+    private void runArtifactSetCycle(PathChain grabPickup, PathChain score) {
+        switch (pathState) {
+            // Disable feeder and intake artifacts
+            case 0:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
+                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+                    follower.followPath(grabPickup, true);
+                    incrementPathState();
+                }
+                break;
+            // Go to score position
+            case 1:
+                if (!follower.isBusy()) {
+                    follower.followPath(score, true);
+                    incrementPathState();
+                }
+                break;
+            // Feed for duration
+            case 2:
+                if (!follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                    incrementCycleState();
+                }
+                break;
+        }
+    }
+
+    /**
+     * Run a ramp camp cycle
+     *
+     * @param openGate open gate path
+     * @param score scoring path
+     */
+    private void runRCCycle(PathChain openGate, PathChain score) {
+        switch (pathState) {
+            // Disable feeder and open gate
+            case 0:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
+                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+                    follower.followPath(openGate, true);
+                    incrementPathState();
+                }
+                break;
+            // Pause to press gate and intake
+            case 1:
+                if (!follower.isBusy()) incrementPathState();
+            // Go to score position
+            case 2:
+                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
+                    follower.followPath(score, true);
+                    incrementPathState();
+                }
+                break;
+            // Feed for duration
+            case 3:
+                if (!follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                    incrementCycleState();
+                }
+                break;
+        }
+    }
+
+    /**
+     * Advanced to the next cycle
+     */
+    private void incrementCycleState() {
+        cycleState++;
+        // Cycle state resets always come with path state resets
+        pathState = 0;
+        pathTimer.resetTimer();
+    }
+
+    /**
+     * Advanced to the next path state
+     */
+    private void incrementPathState() {
+        pathState++;
         pathTimer.resetTimer();
     }
 
@@ -413,7 +383,6 @@ public class Debugger extends LinearOpMode {
         telemetryM.addData("Path State", pathState);
         telemetryM.addData("Path Timer", pathTimer.getElapsedTime());
         telemetryM.addData("Target Pose", follower.getCurrentPath().getPose(1.0));
-        telemetryM.addData("is fol", follower.isBusy());
 
         telemetryM.addData("Position (In)", follower.getPose());
         telemetryM.addData("Velocity (In/Sec)", follower.getVelocity());
