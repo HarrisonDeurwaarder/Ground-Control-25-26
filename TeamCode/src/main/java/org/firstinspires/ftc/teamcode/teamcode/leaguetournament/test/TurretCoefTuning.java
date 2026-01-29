@@ -29,6 +29,9 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.test;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.IgnoreConfigurable;
 import com.bylazar.telemetry.PanelsTelemetry;
@@ -42,17 +45,14 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
-@Configurable
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Turret Coefficient Tuner", group="Tests")
+@Config
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Turret Coefficient Tuner", group="Test")
 public class TurretCoefTuning extends LinearOpMode {
-    @IgnoreConfigurable
     private Timer opmodeTimer;
-    @IgnoreConfigurable
     private Follower follower;
-    @IgnoreConfigurable
     private HardwareController hardwareController;
-    @IgnoreConfigurable
-    private TelemetryManager telemetryM;
+    private TelemetryPacket packet;
+    private FtcDashboard dashboard;
 
     private static double hoodZero = 0.19;
     private double timeState = 0.0;
@@ -78,7 +78,8 @@ public class TurretCoefTuning extends LinearOpMode {
         follower.setStartingPose(startingPose);
         follower.update();
 
-        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+        packet = new TelemetryPacket();
+        dashboard = FtcDashboard.getInstance();
 
         follower.startTeleOpDrive(true);
 
@@ -169,13 +170,13 @@ public class TurretCoefTuning extends LinearOpMode {
         Pose turretCenter = new Pose(follower.getPose().getX(), follower.getPose().getY() - 3.0);
 
         // Debug telemetry (On panels)
-        telemetryM.addData("Distance (in)", turretCenter.distanceFrom(goalPose));
-        telemetryM.addData("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / 28.0);
+        packet.put("Distance (in)", turretCenter.distanceFrom(goalPose));
+        packet.put("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / 28.0);
 
-        telemetryM.addData("Target Speed", flywheelTargetSpeed);
-        telemetryM.addData("Hood Position", hoodPosition);
-        telemetryM.addData("Rotation Enc Position", hardwareController.turretRotation.getCurrentPosition());
-        telemetryM.update();
+        packet.put("Target Speed", flywheelTargetSpeed);
+        packet.put("Hood Position", hardwareController.turretHood.getPosition());
+        packet.put("Rotation Encoder Position", hardwareController.turretRotation.getCurrentPosition());
+        dashboard.sendTelemetryPacket(packet);
 
         // Controls (On driver hub telemetry)
         telemetry.addLine("A - Precision Mode");

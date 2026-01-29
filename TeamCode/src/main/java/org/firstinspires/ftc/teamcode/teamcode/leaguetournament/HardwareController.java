@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.IgnoreConfigurable;
 import com.pedropathing.follower.Follower;
@@ -15,7 +16,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.List;
 
-@Configurable
+@Config
 public class HardwareController {
     // Power constants
     public static final double INTAKE_POWER = 1.0;
@@ -23,11 +24,8 @@ public class HardwareController {
     public static final double TURRET_ROTATION_POWER = 0.8;
 
     // Miscellaneous constants
-    @IgnoreConfigurable
     public static final double TURRET_ROTATION_TICKS_PER_DEGREE = 4.317;
-    @IgnoreConfigurable
     public static final double FLYWHEEL_TICKS_PER_DEGREE = 0.077;
-    @IgnoreConfigurable
     public static final int TURRET_TICK_LIMIT = 800; // Ticks
 
     public static double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
@@ -37,20 +35,13 @@ public class HardwareController {
     public static double CLOSED_ANGLE = 0.61;
 
     // Adaptive turret variables
-    @IgnoreConfigurable
     public double targetSpeed = DEFAULT_FLYWHEEL_RPS;
-    @IgnoreConfigurable
     public double hoodPosition = 0.5;
 
-    @IgnoreConfigurable
     public double distance = 0.0;
-    @IgnoreConfigurable
     public double lastRecordedError = 0.0;
-    @IgnoreConfigurable
     public double lastRecordedIntegral = 0.0;
-    @IgnoreConfigurable
     public double lastRecordedTime = 0.0;
-    @IgnoreConfigurable
     public LLResultTypes.FiducialResult goalFiducial = null;
 
     // Flywheel PID
@@ -66,19 +57,13 @@ public class HardwareController {
     public Limelight3A limelight;
 
     // Telemetry variables
-    @IgnoreConfigurable
     public int turretAngle = 180;
-    @IgnoreConfigurable
     public int turretTicks = 0;
-    @IgnoreConfigurable
     public boolean tagDetected = false;
 
     // Control flow flags
-    @IgnoreConfigurable
     public boolean enableAutoAiming = true;
-    @IgnoreConfigurable
     public boolean enableFlywheel = true;
-    @IgnoreConfigurable
     public boolean enableArtifactVelocityCorrection = false;
 
     /**
@@ -269,7 +254,7 @@ public class HardwareController {
 
         // Save previous
         lastRecordedError = proportional;
-        lastRecordedIntegral = integral
+        lastRecordedIntegral = integral;
     }
 
     // Hood Angle: 0.00438x + 0.0457

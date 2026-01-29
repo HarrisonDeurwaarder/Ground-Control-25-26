@@ -29,35 +29,41 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.test;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.graph.GraphManager;
 import com.bylazar.graph.PanelsGraph;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
-@Configurable
+@Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel PIDF Tuner", group="Test")
-public class FlywheelPDTuning extends LinearOpMode {
+public class FlywheelPIDTuning extends LinearOpMode {
 
-    private TelemetryManager telemetryM;
-    private GraphManager graphM;
+    private Timer opmodeTimer;
+    private double lastRecordedTime = 0.0;
+
+    private TelemetryPacket packet;
+    private FtcDashboard dashboard;
     private HardwareController hardwareController;
 
-    public static double targetSpeed = 28 * 30; // ticks/sec
-    public static double p = 0.0;
-    public static double i = 3.0;
-    public static double d = 3.0;
-    public static double f = 3.0;
+    public static double targetSpeed = 30 * (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360);
 
     @Override
     public void runOpMode() {
 
-        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
-        graphM = PanelsGraph.INSTANCE.getManager();
+        packet = new TelemetryPacket();
+        dashboard = FtcDashboard.getInstance();
         hardwareController = new HardwareController(hardwareMap);
+
+        opmodeTimer = new Timer();
+        opmodeTimer.resetTimer();
 
         waitForStart();
 
@@ -67,21 +73,16 @@ public class FlywheelPDTuning extends LinearOpMode {
 
         // Functional loop of OpMode
         while (opModeIsActive()) {
-            // Set target speed
-            hardwareController.turretFlywheel.setVelocityPIDFCoefficients(p, i, d, f);
-            hardwareController.turretFlywheel.setVelocity(targetSpeed);
-            double error = targetSpeed - hardwareController.turretFlywheel.getVelocity();
+            hardwareController.PDController(opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
+            lastRecordedTime = opmodeTimer.getElapsedTime();;
+
             // Panels telemetry
-            telemetryM.addData("Target Speed (RPS)", targetSpeed / 28);
-            telemetryM.addData("Current Speed (RPS)", hardwareController.turretFlywheel.getVelocity() / 28);
-            telemetryM.addData("Error", Math.round(10 * error) / 280);
-            telemetryM.addData("Power", Math.round(10 * hardwareController.turretFlywheel.getPower()) / 10);
+            packet.put("Target Speed (RPS)", targetSpeed / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+            packet.put("Current Speed (RPS)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+            packet.put("Error", hardwareController.lastRecordedError / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+            packet.put("Power", hardwareController.turretFlywheel.getPower());
 
-            graphM.addData("Target Speed", targetSpeed);
-            graphM.addData("Current Speed", hardwareController.turretFlywheel.getVelocity());
-
-            telemetryM.update();
-            graphM.update();
+            dashboard.sendTelemetryPacket(packet);
         }
     }
 }

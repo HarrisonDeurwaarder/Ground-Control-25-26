@@ -29,6 +29,9 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.test;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
@@ -38,12 +41,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 
-@Configurable
+@Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Odometry Pose Test", group="Test")
 public class OdometryPoseTest extends LinearOpMode {
 
     private Follower follower;
-    private TelemetryManager telemetryM;
+    private TelemetryPacket packet;
+    private FtcDashboard dashboard;
     public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
 
     @Override
@@ -53,7 +57,8 @@ public class OdometryPoseTest extends LinearOpMode {
         follower.setStartingPose(startingPose);
         follower.update();
 
-        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+        packet = new TelemetryPacket();
+        dashboard = FtcDashboard.getInstance();
 
         follower.startTeleOpDrive(true);
 
@@ -77,10 +82,10 @@ public class OdometryPoseTest extends LinearOpMode {
             );
 
             // Panels telemetry
-            telemetryM.addData("X", Math.round(10.0 * follower.getPose().getX()) / 10.0);
-            telemetryM.addData("Y", Math.round(10.0 * follower.getPose().getY()) / 10.0);
-            telemetryM.addData("θ", Math.round(10.0 * Math.toDegrees(follower.getPose().getHeading())) / 10.0);
-            telemetryM.update();
+            packet.put("X", Math.round(10.0 * follower.getPose().getX()) / 10.0);
+            packet.put("Y", Math.round(10.0 * follower.getPose().getY()) / 10.0);
+            packet.put("θ", Math.round(10.0 * Math.toDegrees(follower.getPose().getHeading())) / 10.0);
+            dashboard.sendTelemetryPacket(packet);
         }
     }
 }

@@ -29,6 +29,9 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.teleop;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.IgnoreConfigurable;
 import com.bylazar.telemetry.PanelsTelemetry;
@@ -42,18 +45,15 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
-@Configurable
+@Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp Red Near", group="League Tournament")
 public class RedNear extends LinearOpMode {
 
-    @IgnoreConfigurable
     private Timer opmodeTimer;
-    @IgnoreConfigurable
     private Follower follower;
-    @IgnoreConfigurable
     private HardwareController hardwareController;
-    @IgnoreConfigurable
-    private TelemetryManager telemetryM;
+    private TelemetryPacket packet;
+    private FtcDashboard dashboard;
 
     // Poses
     public static Pose startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
@@ -80,7 +80,8 @@ public class RedNear extends LinearOpMode {
         follower.setStartingPose(startingPose);
         follower.update();
 
-        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+        packet = new TelemetryPacket();
+        dashboard = FtcDashboard.getInstance();
 
         follower.startTeleOpDrive(true);
 
@@ -181,18 +182,18 @@ public class RedNear extends LinearOpMode {
 
     public void updateTelemetry() {
         // Debug telemetry (On panels)
-        telemetryM.addData("Position (In)", follower.getPose());
-        telemetryM.addData("Velocity (In/Sec)", follower.getVelocity());
-        telemetryM.addData("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / HardwareController.TICKS_PER_DEGREE);
+        packet.put("Position (In)", follower.getPose());
+        packet.put("Velocity (In/Sec)", follower.getVelocity());
+        packet.put("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / HardwareController.FLYWHEEL_TICKS_PER_DEGREE);
 
-        telemetryM.addData("Turret Angle", hardwareController.turretAngle);
-        telemetryM.addData("Turret Ticks", hardwareController.turretTicks);
-        telemetryM.addData("Tag in Frame", hardwareController.tagDetected);
+        packet.put("Turret Angle", hardwareController.turretAngle);
+        packet.put("Turret Ticks", hardwareController.turretTicks);
+        packet.put("Tag in Frame", hardwareController.tagDetected);
 
-        telemetryM.addData("Target Speed", hardwareController.targetSpeed);
+        packet.put("Target Speed", hardwareController.targetSpeed);
 
-        telemetryM.addData("Distance", hardwareController.distance);
-        telemetryM.update();
+        packet.put("Distance", hardwareController.distance);
+        dashboard.sendTelemetryPacket(packet);
 
         // Controls (On driver hub telemetry)
         telemetry.addLine("A - Precision Mode");

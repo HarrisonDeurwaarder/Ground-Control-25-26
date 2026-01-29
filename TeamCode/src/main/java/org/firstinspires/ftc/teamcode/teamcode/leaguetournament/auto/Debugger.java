@@ -29,6 +29,9 @@
 
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.auto;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.bylazar.configurables.annotations.IgnoreConfigurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
@@ -47,16 +50,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
+@Config
 @Autonomous(name="Auto Debugger", group="League Meet 2")
 public class Debugger extends LinearOpMode {
-    @IgnoreConfigurable
     private Timer pathTimer, opmodeTimer;
-    @IgnoreConfigurable
     private Follower follower;
-    @IgnoreConfigurable
     private HardwareController hardwareController;
-    @IgnoreConfigurable
-    private TelemetryManager telemetryM;
+    private TelemetryPacket packet;
+    private FtcDashboard dashboard;
     private int pathState, cycleState = 0;
 
     private static final double RAMP_UP_DURATION   = 2.0;
@@ -91,7 +92,8 @@ public class Debugger extends LinearOpMode {
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
 
-        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+        packet = new TelemetryPacket();
+        dashboard = FtcDashboard.getInstance();
 
         follower = ConstantsEpsilon.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
@@ -380,14 +382,14 @@ public class Debugger extends LinearOpMode {
      */
     private void updateTelemetry() {
         // Write telemetry
-        telemetryM.addData("Path State", pathState);
-        telemetryM.addData("Path Timer", pathTimer.getElapsedTime());
-        telemetryM.addData("Target Pose", follower.getCurrentPath().getPose(1.0));
+        packet.put("Path State", pathState);
+        packet.put("Path Timer", pathTimer.getElapsedTime());
+        packet.put("Target Pose", follower.getCurrentPath().getPose(1.0));
 
-        telemetryM.addData("Position (In)", follower.getPose());
-        telemetryM.addData("Velocity (In/Sec)", follower.getVelocity());
-        telemetryM.addData("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity(AngleUnit.DEGREES));
+        packet.put("Position (In)", follower.getPose());
+        packet.put("Velocity (In/Sec)", follower.getVelocity());
+        packet.put("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity(AngleUnit.DEGREES));
 
-        telemetryM.update();
+        dashboard.sendTelemetryPacket(packet);
     }
 }
