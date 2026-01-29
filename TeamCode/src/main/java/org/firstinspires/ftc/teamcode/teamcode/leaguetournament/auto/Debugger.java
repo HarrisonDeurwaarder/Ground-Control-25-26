@@ -60,10 +60,10 @@ public class Debugger extends LinearOpMode {
     private FtcDashboard dashboard;
     private int pathState, cycleState = 0;
 
-    private static final double RAMP_UP_DURATION   = 2.0;
-    private static final double FEED_DURATION      = 1.0;
-    private static final double RC_GATE_DURATION   = 1.0;
-    private static final double RC_INTAKE_DURATION = 2.0;
+    public static double FEED_DURATION      = 1.0;
+    public static double RC_GATE_DURATION   = 1.0;
+    public static double RC_INTAKE_DURATION = 2.0;
+    public static double FLYWHEEL_ACCEPTED_ERROR = 2.0; // RPS
 
     private static Pose goalPose =                new Pose(60.0, 60.0);
     private static Pose startPose =               new Pose(40.2, 60.9, Math.toRadians(90.0));
@@ -151,20 +151,20 @@ public class Debugger extends LinearOpMode {
 
         // Shooting position for preloaded artifacts
         scorePreload = new Path(new BezierLine(startPose, scorePose));
-        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
+        scorePreload.setTangentHeadingInterpolation();
 
         /* ARTIFACT SET 1 */
 
         // Curved intake line for artifact set #1
         grabPickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, postPickup1Pose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), postPickup1Pose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
 
         // Shooting position for artifact set #1
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(postPickup1Pose, scorePose))
-                .setLinearHeadingInterpolation(postPickup1Pose.getHeading(), scorePose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
 
         /* ARTIFACT SET 2 */
@@ -172,13 +172,13 @@ public class Debugger extends LinearOpMode {
         // Curved intake line for artifact set #2
         grabPickup2 = follower.pathBuilder()
                 .addPath(new BezierCurve(scorePose, intermediatePickup2Pose, postPickup2Pose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), postPickup2Pose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
 
         // Shooting position for artifact set #2
         scorePickup2 = follower.pathBuilder()
                 .addPath(new BezierCurve(postPickup2Pose, intermediatePickup2Pose, scorePose))
-                .setLinearHeadingInterpolation(postPickup2Pose.getHeading(), scorePose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
 
         /* ARTIFACT SET 3 */
@@ -186,13 +186,13 @@ public class Debugger extends LinearOpMode {
         // Curved intake line for artifact set #3
         grabPickup3 = follower.pathBuilder()
                 .addPath(new BezierCurve(scorePose, intermediatePickup3Pose, postPickup3Pose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), postPickup3Pose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
 
         // Shooting position for artifact set #3
         scorePickup3 = follower.pathBuilder()
                 .addPath(new BezierLine(postPickup3Pose, scorePose))
-                .setLinearHeadingInterpolation(postPickup3Pose.getHeading(), scorePose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
 
         /* RAMP CAMP PROTOCOL */
@@ -200,26 +200,26 @@ public class Debugger extends LinearOpMode {
         // Curved gate open per G418
         openGateRC = follower.pathBuilder()
                 .addPath(new BezierCurve(scorePose, intermediatePickup2Pose, openGatePose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), openGatePose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
 
         /*// Ramp camp
         intakeRC = follower.pathBuilder()
                 .addPath(new BezierLine(openGatePose, rampCampPose))
-                .setLinearHeadingInterpolation(openGatePose.getHeading(), rampCampPose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();*/
 
         // Shooting position for artifact set #1
         scoreRC = follower.pathBuilder()
                 .addPath(new BezierCurve(rampCampPose, intermediatePickup2Pose, scorePose))
-                .setLinearHeadingInterpolation(rampCampPose.getHeading(), scorePose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
 
         /* PARKING PROTOCOL */
 
         endAuto = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, endAutoPose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), endAutoPose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
     }
 
@@ -276,13 +276,11 @@ public class Debugger extends LinearOpMode {
                 follower.followPath(score);
                 incrementPathState();
                 break;
-            // Ramp up for duration
-            case 1:
-                if (!follower.isBusy()) incrementPathState();
-                break;
             // Feed for duration
             case 2:
-                if (pathTimer.getElapsedTimeSeconds() >= RAMP_UP_DURATION) {
+                // Advance if flywheel is up to speed
+                double flywheelRPS = hardwareController.turretFlywheel.getVelocity() / HardwareController.FLYWHEEL_TICKS_PER_DEGREE;
+                if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS && hardwareController.targetSpeed + FLYWHEEL_ACCEPTED_ERROR >= flywheelRPS) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     incrementCycleState();
                 }
@@ -300,7 +298,7 @@ public class Debugger extends LinearOpMode {
         switch (pathState) {
             // Disable feeder and intake artifacts
             case 0:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
                     hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
                     follower.followPath(grabPickup, true);
                     incrementPathState();
@@ -333,7 +331,7 @@ public class Debugger extends LinearOpMode {
         switch (pathState) {
             // Disable feeder and open gate
             case 0:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
                     hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
                     follower.followPath(openGate, true);
                     incrementPathState();
