@@ -1,32 +1,3 @@
-/* Copyright (c) 2021 FIRST. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted (subject to the limitations in the disclaimer below) provided that
- * the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list
- * of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice, this
- * list of conditions and the following disclaimer in the documentation and/or
- * other materials provided with the distribution.
- *
- * Neither the name of FIRST nor the names of its contributors may be used to endorse or
- * promote products derived from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
- * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.teleop;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -38,37 +9,57 @@ import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.telemetry.SelectableOpMode;
+import com.pedropathing.util.PoseHistory;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
-import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.Tuning.*;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
-@Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp Debugger", group="League Tournament")
-public class Debugger extends LinearOpMode {
+import java.util.ArrayList;
 
-    private Timer opmodeTimer;
-    private Follower follower;
-    private HardwareController hardwareController;
-    private TelemetryPacket packet;
-    private FtcDashboard dashboard;
+@Configurable
+@TeleOp(name = "TeleOp", group = "League Tournament")
+public class TeleOpPackage extends SelectableOpMode {
+    public static Follower follower;
+    public TeleOpPackage() {
+        super("Select a TeleOp", s -> {
+            s.add("Red Near", RedNearTeleOp::new);
+            s.add("Red Far", RedFarTeleOp::new);
+            s.add("Blue Near", BlueNearTeleOp::new);
+            s.add("Blue Far", BlueFarTeleOp::new);
+            s.add("Debugger", DebuggerTeleOp::new);
+        });
+    }
+}
+
+
+@Config
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Debugger", group="League Tournament")
+class DebuggerTeleOp extends LinearOpMode {
+
+    protected Timer opmodeTimer;
+    protected Follower follower;
+    protected HardwareController hardwareController;
+    protected TelemetryPacket packet;
+    protected FtcDashboard dashboard;
 
     // Poses
     public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
     public static Pose goalPose     = new Pose(60.0, 60.0);
 
     // Boolean flags
-    private boolean isRobotCentric = false;
-    private boolean slowMode = false;
+    protected boolean isRobotCentric = false;
+    protected boolean slowMode = false;
 
     // Constants
-    private static double SLOW_MODE_MULTIPLIER = 0.2;
+    protected static double SLOW_MODE_MULTIPLIER = 0.2;
 
     @Override
-    public void runOpMode() {
+    public final void runOpMode() {
 
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
@@ -86,6 +77,9 @@ public class Debugger extends LinearOpMode {
 
         follower.startTeleOpDrive(true);
 
+        // Display controls on gamepad
+        displayControls();
+
         waitForStart();
 
         /* ###############################
@@ -95,21 +89,7 @@ public class Debugger extends LinearOpMode {
         while (opModeIsActive()) {
 
             follower.update();
-
-            // Normal driving mode
-            if (!slowMode) follower.setTeleOpDrive(
-                    gamepad1.left_stick_x,
-                    -gamepad1.left_stick_y,
-                    -gamepad1.right_stick_x,
-                    isRobotCentric
-            );
-            // Precision driving mode
-            else follower.setTeleOpDrive(
-                    gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
-                    -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                    -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
-                    isRobotCentric
-            );
+            setTeleOpDrive();
 
             /* NON-DRIVING CONTROLS */
 
@@ -179,9 +159,29 @@ public class Debugger extends LinearOpMode {
 
             updateTelemetry();
         }
+
+        // Brake flywheel on
+        hardwareController.turretFlywheel.setVelocity(0.0);
     }
 
-    public void updateTelemetry() {
+    private void setTeleOpDrive() {
+        // Normal driving mode
+        if (!slowMode) follower.setTeleOpDrive(
+                gamepad1.left_stick_x,
+                -gamepad1.left_stick_y,
+                -gamepad1.right_stick_x,
+                isRobotCentric
+        );
+            // Precision driving mode
+        else follower.setTeleOpDrive(
+                gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
+                -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
+                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
+                isRobotCentric
+        );
+    }
+
+    private void updateTelemetry() {
         // Debug telemetry (On panels)
         packet.put("Position (In)", follower.getPose());
         packet.put("Velocity (In/Sec)", follower.getVelocity());
@@ -195,7 +195,9 @@ public class Debugger extends LinearOpMode {
 
         packet.put("Distance", hardwareController.distance);
         dashboard.sendTelemetryPacket(packet);
+    }
 
+    private void displayControls() {
         // Controls (On driver hub telemetry)
         telemetry.addLine("A - Precision Mode");
         telemetry.addLine("B - Movement Center");
@@ -208,5 +210,105 @@ public class Debugger extends LinearOpMode {
         telemetry.addLine("RT - Feed");
 
         telemetry.update();
+    }
+}
+
+
+@Config
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Red Near", group="League Tournament")
+class RedNearTeleOp extends DebuggerTeleOp {
+    // Set teleop specific poses
+    public static Pose startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
+    public static Pose goalPose     = new Pose(60.0, 60.0);
+    private void setTeleOpDrive() {
+        // Normal driving mode
+        if (!slowMode) follower.setTeleOpDrive(
+                -gamepad1.left_stick_y,
+                -gamepad1.left_stick_x,
+                -gamepad1.right_stick_x,
+                false
+        );
+            // Precision driving mode
+        else follower.setTeleOpDrive(
+                -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
+                -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
+                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
+                false
+        );
+    }
+}
+
+
+@Config
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Red Far", group="League Tournament")
+class RedFarTeleOp extends DebuggerTeleOp {
+    // Set teleop specific poses
+    public static Pose startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
+    public static Pose goalPose     = new Pose(60.0, 60.0);
+    private void setTeleOpDrive() {
+        // Normal driving mode
+        if (!slowMode) follower.setTeleOpDrive(
+                -gamepad1.left_stick_y,
+                -gamepad1.left_stick_x,
+                -gamepad1.right_stick_x,
+                false
+        );
+            // Precision driving mode
+        else follower.setTeleOpDrive(
+                -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
+                -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
+                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
+                false
+        );
+    }
+}
+
+
+@Config
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Blue Near", group="League Tournament")
+class BlueNearTeleOp extends DebuggerTeleOp {
+    // Set teleop specific poses
+    public static Pose startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
+    public static Pose goalPose     = new Pose(60.0, 60.0);
+    private void setTeleOpDrive() {
+        // Normal driving mode
+        if (!slowMode) follower.setTeleOpDrive(
+                gamepad1.left_stick_y,
+                gamepad1.left_stick_x,
+                -gamepad1.right_stick_x,
+                false
+        );
+            // Precision driving mode
+        else follower.setTeleOpDrive(
+                gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
+                gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
+                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
+                false
+        );
+    }
+}
+
+
+@Config
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Blue Near", group="League Tournament")
+class BlueFarTeleOp extends DebuggerTeleOp {
+    // Set teleop specific poses
+    public static Pose startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
+    public static Pose goalPose     = new Pose(60.0, 60.0);
+    private void setTeleOpDrive() {
+        // Normal driving mode
+        if (!slowMode) follower.setTeleOpDrive(
+                gamepad1.left_stick_y,
+                gamepad1.left_stick_x,
+                -gamepad1.right_stick_x,
+                false
+        );
+            // Precision driving mode
+        else follower.setTeleOpDrive(
+                gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
+                gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
+                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
+                false
+        );
     }
 }

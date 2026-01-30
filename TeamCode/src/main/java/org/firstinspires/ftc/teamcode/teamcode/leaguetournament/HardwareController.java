@@ -114,7 +114,7 @@ public class HardwareController {
         intake.setDirection(DcMotorEx.Direction.REVERSE);
         transfer.setDirection(DcMotorEx.Direction.REVERSE);
         turretFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
-        turretRotation.setDirection(DcMotorEx.Direction.REVERSE);
+        turretRotation.setDirection(DcMotorEx.Direction.FORWARD);
 
         // Set servo directions
         turretHood.setDirection(Servo.Direction.FORWARD);

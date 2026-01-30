@@ -36,12 +36,14 @@ import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
+@Disabled
 @Configurable
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp Blue Near", group="League Tournament")
 public class BlueNear extends LinearOpMode {
@@ -177,13 +179,16 @@ public class BlueNear extends LinearOpMode {
 
             updateTelemetry();
         }
+
+        // Brake flywheel on
+        hardwareController.turretFlywheel.setVelocity(0.0);
     }
 
     public void updateTelemetry() {
         // Debug telemetry (On panels)
         telemetryM.addData("Position (In)", follower.getPose());
         telemetryM.addData("Velocity (In/Sec)", follower.getVelocity());
-        telemetryM.addData("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / HardwareController.TICKS_PER_DEGREE);
+        telemetryM.addData("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / HardwareController.FLYWHEEL_TICKS_PER_DEGREE);
 
         telemetryM.addData("Turret Angle", hardwareController.turretAngle);
         telemetryM.addData("Turret Ticks", hardwareController.turretTicks);

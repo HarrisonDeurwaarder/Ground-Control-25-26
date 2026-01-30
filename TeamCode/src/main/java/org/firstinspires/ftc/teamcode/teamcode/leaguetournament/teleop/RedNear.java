@@ -39,12 +39,14 @@ import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
+@Disabled
 @Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp Red Near", group="League Tournament")
 public class RedNear extends LinearOpMode {
@@ -178,6 +180,9 @@ public class RedNear extends LinearOpMode {
 
             updateTelemetry();
         }
+
+        // Brake flywheel on
+        hardwareController.turretFlywheel.setVelocity(0.0);
     }
 
     public void updateTelemetry() {
