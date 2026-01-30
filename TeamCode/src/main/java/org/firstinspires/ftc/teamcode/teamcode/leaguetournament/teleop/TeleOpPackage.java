@@ -47,8 +47,8 @@ class DebuggerTeleOp extends OpMode {
     protected FtcDashboard dashboard;
 
     // Poses
-    public Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
-    public Pose goalPose     = new Pose(60.0, 60.0);
+    protected Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    protected Pose goalPose     = new Pose(60.0, 60.0);
 
     // Boolean flags
     protected boolean isRobotCentric = false;
@@ -219,9 +219,11 @@ class DebuggerTeleOp extends OpMode {
 
 
 class RedNearTeleOp extends DebuggerTeleOp {
-    // Set teleop specific poses
-    public Pose startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
-    public Pose goalPose     = new Pose(60.0, 60.0);
+    RedNearTeleOp() {
+        // Reassign poses
+        this.startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
+        this.goalPose     = new Pose(60.0, 60.0);
+    }
     private void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
@@ -242,9 +244,11 @@ class RedNearTeleOp extends DebuggerTeleOp {
 
 
 class RedFarTeleOp extends DebuggerTeleOp {
-    // Set teleop specific poses
-    public Pose startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
-    public Pose goalPose     = new Pose(60.0, 60.0);
+    RedFarTeleOp() {
+        // Reassign poses
+        this.startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
+        this.goalPose     = new Pose(60.0, 60.0);
+    }
     private void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
@@ -265,9 +269,11 @@ class RedFarTeleOp extends DebuggerTeleOp {
 
 
 class BlueNearTeleOp extends DebuggerTeleOp {
-    // Set teleop specific poses
-    public Pose startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
-    public Pose goalPose     = new Pose(60.0, 60.0);
+    BlueNearTeleOp() {
+        // Reassign poses
+        this.startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
+        this.goalPose     = new Pose(60.0, 60.0);
+    }
     private void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
@@ -288,9 +294,11 @@ class BlueNearTeleOp extends DebuggerTeleOp {
 
 
 class BlueFarTeleOp extends DebuggerTeleOp {
-    // Set teleop specific poses
-    public Pose startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
-    public Pose goalPose     = new Pose(60.0, 60.0);
+    BlueFarTeleOp() {
+        // Reassign poses
+        this.startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
+        this.goalPose     = new Pose(60.0, 60.0);
+    }
     private void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(

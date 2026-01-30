@@ -44,7 +44,7 @@ public class HardwareController {
 
     // Flywheel PID
     public static double Kp = 0.5;
-    public static double Kd = 0.3;
+    public static double Kd = 0.0003;
     public static double Ks = 0.2;
 
     // Declare actuators

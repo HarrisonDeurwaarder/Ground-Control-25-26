@@ -44,7 +44,7 @@ public class AutoPackage extends LinearOpMode {
     private static Pose intermediatePickup3Pose = new Pose(25.9, -39.1, Math.toRadians(0.0));
     private static Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
 
-    private static Pose openGatePose =            new Pose(61.2, -13.0, Math.toRadians(31.8));
+    private static Pose openGatePose =            new Pose(61.2,	-13,	Math.toRadians(31.8));
     private static Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(60.5));
 
     private static Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
@@ -178,7 +178,7 @@ public class AutoPackage extends LinearOpMode {
 
         // Shooting position for artifact set #1
         scoreRC = follower.pathBuilder()
-                .addPath(new BezierCurve(rampCampPose, intermediatePickup2Pose, scorePose))
+                .addPath(new BezierCurve(openGatePose, intermediatePickup2Pose, scorePose))
                 .setTangentHeadingInterpolation()
                 .build();
 
