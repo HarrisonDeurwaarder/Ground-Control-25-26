@@ -9,51 +9,52 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
+import com.pedropathing.telemetry.SelectableOpMode;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
+
 @Config
-@Autonomous(name="Auto Debugger", group="League Meet 2")
-public class AutoPackage extends LinearOpMode {
-    private Timer pathTimer, opmodeTimer;
-    private Follower follower;
-    private HardwareController hardwareController;
-    private TelemetryPacket packet;
-    private FtcDashboard dashboard;
-    private int pathState, cycleState = 0;
+@Autonomous(name = "Autonomous", group = "League Tournament")
+public class AutoPackage extends SelectableOpMode {
+    public static Follower follower;
+    public AutoPackage() {
+        super("Select an Auto", s -> {
+            s.add("Red Near", RedNearAuto::new);
+            s.add("Red Far", RedFarAuto::new);
+            s.add("Blue Near", BlueNearAuto::new);
+            s.add("Blue Far", BlueFarAuto::new);
+        });
+    }
+}
+
+
+abstract class Debugger extends OpMode {
+    protected Timer pathTimer, opmodeTimer;
+    protected Follower follower;
+    protected HardwareController hardwareController;
+    protected TelemetryPacket packet;
+    protected FtcDashboard dashboard;
+    protected int pathState, cycleState = 0;
 
     public static double FEED_DURATION      = 0.75;
     public static double RC_GATE_DURATION   = 0.5;
     public static double RC_INTAKE_DURATION = 3.0;
     public static double FLYWHEEL_ACCEPTED_ERROR = 2.0; // RPS
 
-    private static Pose goalPose =                new Pose(60.0, 60.0);
-    private static Pose startPose =               new Pose(40.2, 60.9, Math.toRadians(90.0));
-    private static Pose scorePose =               new Pose(24.0, 10.8, Math.toRadians(0.0));
-
-    private static Pose postPickup1Pose =         new Pose(56.7, 8.8, Math.toRadians(0.0));
-
-    private static Pose intermediatePickup2Pose = new Pose(25.9, -16, Math.toRadians(0.0));
-    private static Pose postPickup2Pose =         new Pose(58.5, -15.5,Math.toRadians(0.0));
-
-    private static Pose intermediatePickup3Pose = new Pose(22.9, -39.1, Math.toRadians(0.0));
-    private static Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
-
-    private static Pose openGatePose =            new Pose(62.1,	-12,	Math.toRadians(31.0));
-    private static Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(40.5));
-
-    private static Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
-
-    private Path scorePreload;
-    private PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3, openGateRC, intakeRC, scoreRC, endAuto;
+    protected Pose goalPose =  new Pose(60.0, 60.0);
+    protected Pose startPose = new Pose(40.2, 60.9, Math.toRadians(90.0));
+    protected Pose scorePose = new Pose(24.0, 10.8, Math.toRadians(0.0));
 
     @Override
-    public void runOpMode() {
+    public final void init() {
         // Pedro objects
         pathTimer = new Timer();
         opmodeTimer = new Timer();
@@ -68,28 +69,34 @@ public class AutoPackage extends LinearOpMode {
 
         // Hardware controller for mechanism access
         hardwareController = new HardwareController(hardwareMap);
+    }
 
-        waitForStart();
+    @Override
+    public final void init_loop() { displayTelemetryMessage(); }
+
+    @Override
+    public final void start() {
         pathTimer.resetTimer();
 
         hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
         hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
+    }
 
-        // Quit auto if stop is requested
-        if (isStopRequested()) return;
+    @Override
+    public final void loop() {
+        // Loop movements of robot
+        follower.update();
+        autoPathUpdate();
 
-        // Functional loop of OpMode
-        while (opModeIsActive()) {
-            // Loop movements of robot
-            follower.update();
-            autoPathUpdate();
+        // Perform turret updates
+        hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
 
-            // Perform turret updates
-            hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
+        // Log telemetry
+        updateTelemetry();
+    }
 
-            // Log telemetry
-            updateTelemetry();
-        }
+    @Override
+    public final void stop() {
         // Disable all motors
         hardwareController.gate.setPosition(0.5);
         hardwareController.intake.setPower(0.0);
@@ -101,10 +108,179 @@ public class AutoPackage extends LinearOpMode {
         hardwareController.updateTurretTarget(0.0);
     }
 
+    protected abstract void buildPaths();
+
+    protected abstract void autoPathUpdate();
+
+    /**
+     * Run preload cycle
+     *
+     * @param score scoring path
+     */
+    protected void runPreloadCycle(Path score) {
+        switch (pathState) {
+            // Go to score position
+            case 0:
+                follower.followPath(score);
+                incrementPathState();
+                break;
+            // Feed for duration
+            case 1:
+                // Advance if flywheel is up to speed
+                double flywheelRPS = hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360.0);
+                if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS) {
+                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                    incrementCycleState();
+                }
+                break;
+        }
+    }
+
+    /**
+     * Run an artifact set cycle
+     *
+     * @param grabPickup artifact intake path
+     * @param score scoring path
+     */
+    protected void runArtifactSetCycle(PathChain grabPickup, PathChain score) {
+        switch (pathState) {
+            // Disable feeder and intake artifacts
+            case 0:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+                    follower.followPath(grabPickup, true);
+                    incrementPathState();
+                }
+                break;
+            // Go to score position
+            case 1:
+                if (!follower.isBusy()) {
+                    follower.followPath(score, true);
+                    incrementPathState();
+                }
+                break;
+            // Feed for duration
+            case 2:
+                if (!follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                    incrementCycleState();
+                }
+                break;
+        }
+    }
+
+    /**
+     * Run a ramp camp cycle
+     *
+     * @param openGate open gate path
+     * @param intake intake path
+     * @param score scoring path
+     */
+    protected void runRCCycle(PathChain openGate, PathChain intake, PathChain score) {
+        switch (pathState) {
+            // Disable feeder and open gate
+            case 0:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+                    follower.followPath(openGate, true);
+                    incrementPathState();
+                }
+                break;
+            // Pause to press gate
+            case 1:
+                if (!follower.isBusy()) incrementPathState();
+            // Go to intake position
+            case 2:
+                if (pathTimer.getElapsedTimeSeconds() >= RC_GATE_DURATION) {
+                    follower.followPath(intake, true);
+                    incrementPathState();
+                }
+                break;
+            // Pause to intake
+            case 3:
+                if (!follower.isBusy()) incrementPathState();
+                break;
+            // Feed for duration
+            case 4:
+                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
+                    follower.followPath(score);
+                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                    incrementCycleState();
+                }
+                break;
+        }
+    }
+
+    /**
+     * Advanced to the next cycle
+     */
+    protected void incrementCycleState() {
+        cycleState++;
+        // Cycle state resets always come with path state resets
+        pathState = 0;
+        pathTimer.resetTimer();
+    }
+
+    /**
+     * Advanced to the next path state
+     */
+    protected void incrementPathState() {
+        pathState++;
+        pathTimer.resetTimer();
+    }
+
+    protected void displayTelemetryMessage() {
+        telemetry.addLine("An autonomous has been selected. Press start to begin");
+    }
+
+    /**
+     * Updates panels telemetry
+     */
+    protected void updateTelemetry() {
+        // Write telemetry
+        packet.put("Path State", pathState);
+        packet.put("Cycle State", cycleState);
+        packet.put("Path Timer", pathTimer.getElapsedTime());
+        packet.put("Target Pose", follower.getCurrentPath().getPose(1.0));
+
+        packet.put("Position (In)", follower.getPose());
+        packet.put("Velocity (In/Sec)", follower.getVelocity());
+        packet.put("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+
+        dashboard.sendTelemetryPacket(packet);
+    }
+}
+
+
+class RedNearAuto extends Debugger {
+    protected Pose postPickup1Pose =         new Pose(56.7, 8.8, Math.toRadians(0.0));
+
+    protected Pose intermediatePickup2Pose = new Pose(25.9, -16, Math.toRadians(0.0));
+    protected Pose postPickup2Pose =         new Pose(58.5, -15.5,Math.toRadians(0.0));
+
+    protected Pose intermediatePickup3Pose = new Pose(22.9, -39.1, Math.toRadians(0.0));
+    protected Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
+
+    protected Pose openGatePose =            new Pose(62.1,	-12,	Math.toRadians(31.0));
+    protected Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(40.5));
+
+    protected Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
+
+    protected Path scorePreload;
+    protected PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3, openGateRC, intakeRC, scoreRC, endAuto;
+
+    RedNearAuto() {
+        super();
+        // Reset poses
+        this.goalPose =  new Pose(60.0, 60.0);
+        this.startPose = new Pose(40.2, 60.9, Math.toRadians(90.0));
+        this.scorePose = new Pose(24.0, 10.8, Math.toRadians(0.0));
+    }
+
     /**
      * Instanciate and build PathChains
      */
-    private void buildPaths() {
+    protected void buildPaths() {
 
         /* ARTIFACT PRELOAD */
 
@@ -185,7 +361,7 @@ public class AutoPackage extends LinearOpMode {
     /**
      * Updates the auto paths
      */
-    private void autoPathUpdate(){
+    protected void autoPathUpdate(){
         switch (cycleState) {
             // Preload
             case 0:
@@ -222,21 +398,70 @@ public class AutoPackage extends LinearOpMode {
                 break;
         }
     }
+}
+
+
+class RedFarAuto extends Debugger {
+    protected Pose postPickup1Pose =    new Pose(61.5, -67.7, Math.toRadians(0.0));
+    protected Pose rcExcessIntakePose = new Pose(61.5, -57.7, Math.toRadians(90));
+    protected Pose endAutoPose =        new Pose(36.0, -63.0, Math.toRadians(90.0));
+
+    protected PathChain grabPickup1, scorePickup1, rcExcessIntake, rcExcessScore, endAuto;
+
+    RedFarAuto() {
+        super();
+        // Reset poses
+        this.goalPose =  new Pose(60.0, 60.0);
+        this.startPose = new Pose(12.0, -63.0, Math.toRadians(90.0));
+        this.scorePose = new Pose(12.0, -63.0, Math.toRadians(90.0));
+    }
 
     /**
-     * Run preload cycle
-     *
-     * @param score scoring path
+     * Instanciate and build PathChains
      */
-    private void runPreloadCycle(Path score) {
-        switch (pathState) {
-            // Go to score position
+    protected void buildPaths() {
+
+        /* ARTIFACT SET 1 */
+
+        // Curved intake line for artifact set #1
+        grabPickup1 = follower.pathBuilder()
+                .addPath(new BezierLine(scorePose, postPickup1Pose))
+                .setTangentHeadingInterpolation()
+                .build();
+
+        // Shooting position for artifact set #1
+        scorePickup1 = follower.pathBuilder()
+                .addPath(new BezierLine(postPickup1Pose, scorePose))
+                .setTangentHeadingInterpolation()
+                .build();
+
+        /* RC EXCESS INTAKE PROTOCOL */
+
+        rcExcessIntake = follower.pathBuilder()
+                .addPath(new BezierCurve(scorePose, postPickup1Pose, rcExcessIntakePose))
+                .setTangentHeadingInterpolation()
+                .build();
+
+        rcExcessScore = follower.pathBuilder()
+                .addPath(new BezierCurve(rcExcessIntakePose, scorePose))
+                .setTangentHeadingInterpolation()
+                .build();
+
+        /* PARKING PROTOCOL */
+
+        endAuto = follower.pathBuilder()
+                .addPath(new BezierLine(scorePose, endAutoPose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), endAutoPose.getHeading())
+                .build();
+    }
+
+    /**
+     * Updates the auto paths
+     */
+    protected void autoPathUpdate(){
+        switch (cycleState) {
+            // Preload
             case 0:
-                follower.followPath(score);
-                incrementPathState();
-                break;
-            // Feed for duration
-            case 1:
                 // Advance if flywheel is up to speed
                 double flywheelRPS = hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360.0);
                 if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS) {
@@ -244,115 +469,79 @@ public class AutoPackage extends LinearOpMode {
                     incrementCycleState();
                 }
                 break;
-        }
-    }
 
-    /**
-     * Run an artifact set cycle
-     *
-     * @param grabPickup artifact intake path
-     * @param score scoring path
-     */
-    private void runArtifactSetCycle(PathChain grabPickup, PathChain score) {
-        switch (pathState) {
-            // Disable feeder and intake artifacts
-            case 0:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(grabPickup, true);
-                    incrementPathState();
-                }
-                break;
-            // Go to score position
+            // Artifact set 1
             case 1:
-                if (!follower.isBusy()) {
-                    follower.followPath(score, true);
-                    incrementPathState();
-                }
+                runArtifactSetCycle(grabPickup1, scorePickup1);
                 break;
-            // Feed for duration
-            case 2:
-                if (!follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                    incrementCycleState();
-                }
-                break;
-        }
-    }
 
-    /**
-     * Run a ramp camp cycle
-     *
-     * @param openGate open gate path
-     * @param score scoring path
-     */
-    private void runRCCycle(PathChain openGate, PathChain intake, PathChain score) {
-        switch (pathState) {
-            // Disable feeder and open gate
-            case 0:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(openGate, true);
-                    incrementPathState();
-                }
-                break;
-            // Pause to press gate
-            case 1:
-                if (!follower.isBusy()) incrementPathState();
-            // Go to intake position
+            // RC residual #1
             case 2:
-                if (pathTimer.getElapsedTimeSeconds() >= RC_GATE_DURATION) {
-                    follower.followPath(intake, true);
-                    incrementPathState();
-                }
+                runArtifactSetCycle(rcExcessIntake, rcExcessScore);
                 break;
-            // Pause to intake
+
+            // RC residual #2
             case 3:
-                if (!follower.isBusy()) incrementPathState();
+                runArtifactSetCycle(rcExcessIntake, rcExcessScore);
                 break;
-            // Feed for duration
+
+            // RC residual #3
             case 4:
-                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
-                    follower.followPath(score);
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                runArtifactSetCycle(rcExcessIntake, rcExcessScore);
+                break;
+
+            // RC residual #4
+            case 5:
+                runArtifactSetCycle(rcExcessIntake, rcExcessScore);
+                break;
+
+            // End-of-auto parking
+            case 6:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+                    follower.followPath(endAuto, true);
                     incrementCycleState();
                 }
                 break;
         }
     }
+}
 
-    /**
-     * Advanced to the next cycle
-     */
-    private void incrementCycleState() {
-        cycleState++;
-        // Cycle state resets always come with path state resets
-        pathState = 0;
-        pathTimer.resetTimer();
+
+class BlueNearAuto extends RedNearAuto {
+    BlueNearAuto() {
+        super();
+        // Reset poses
+        this.goalPose =  new Pose(-60.0, 60.0);
+        this.startPose = new Pose(-40.0, 60.9, Math.toRadians(90.0));
+        this.scorePose = new Pose(-25.0, 8.8, Math.toRadians(180.0));
+
+        this.postPickup1Pose =         new Pose(-55.7, 8.8, Math.toRadians(180.0));
+
+        this.intermediatePickup2Pose = new Pose(-28.1, -16.0, Math.toRadians(180.0));
+        this.postPickup2Pose =         new Pose(-60.5, -16.0,Math.toRadians(180.0));
+
+        this.intermediatePickup3Pose = new Pose(-28.1, -39.1, Math.toRadians(180.0));
+        this.postPickup3Pose =         new Pose(63.1, -39.1, Math.toRadians(180.0));
+
+        this.openGatePose =            new Pose(-60.3,	-13.4,	Math.toRadians(147.2));
+        this.rampCampPose =            new Pose(-61.3, -17.8, Math.toRadians(126.2));
+
+        this.endAutoPose =             new Pose(-47.8, 0.0, Math.toRadians(90.0));
     }
+}
 
-    /**
-     * Advanced to the next path state
-     */
-    private void incrementPathState() {
-        pathState++;
-        pathTimer.resetTimer();
-    }
 
-    /**
-     * Updates panels telemetry
-     */
-    private void updateTelemetry() {
-        // Write telemetry
-        packet.put("Path State", pathState);
-        packet.put("Cycle State", cycleState);
-        packet.put("Path Timer", pathTimer.getElapsedTime());
-        packet.put("Target Pose", follower.getCurrentPath().getPose(1.0));
+class BlueFarAuto extends RedFarAuto {
+    BlueFarAuto() {
+        super();
+        // Reset poses
+        this.goalPose =  new Pose(-60.0, 60.0);
+        this.startPose = new Pose(-12.0, -63.0, Math.toRadians(90.0));
+        this.scorePose = new Pose(-12.0, -63.0, Math.toRadians(90.0));
 
-        packet.put("Position (In)", follower.getPose());
-        packet.put("Velocity (In/Sec)", follower.getVelocity());
-        packet.put("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
-
-        dashboard.sendTelemetryPacket(packet);
+        this.postPickup1Pose =    new Pose(-61.5, -67.7, Math.toRadians(180.0));
+        this.rcExcessIntakePose = new Pose(-61.5, -57.7, Math.toRadians(90.0));
+        this.endAutoPose =        new Pose(-36.0, -63.0, Math.toRadians(90.0));
     }
 }

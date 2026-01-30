@@ -81,7 +81,6 @@ class DebuggerTeleOp extends OpMode {
     public final void init_loop() {
         // Display controls on gamepad
         displayControls();
-
     }
 
     @Override
