@@ -28,7 +28,7 @@ public class AutoPackage extends LinearOpMode {
     private int pathState, cycleState = 0;
 
     public static double FEED_DURATION      = 0.75;
-    public static double RC_GATE_DURATION   = 1.0;
+    public static double RC_GATE_DURATION   = 0.5;
     public static double RC_INTAKE_DURATION = 3.0;
     public static double FLYWHEEL_ACCEPTED_ERROR = 2.0; // RPS
 
@@ -41,11 +41,11 @@ public class AutoPackage extends LinearOpMode {
     private static Pose intermediatePickup2Pose = new Pose(25.9, -16, Math.toRadians(0.0));
     private static Pose postPickup2Pose =         new Pose(58.5, -15.5,Math.toRadians(0.0));
 
-    private static Pose intermediatePickup3Pose = new Pose(25.9, -39.1, Math.toRadians(0.0));
+    private static Pose intermediatePickup3Pose = new Pose(22.9, -39.1, Math.toRadians(0.0));
     private static Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
 
-    private static Pose openGatePose =            new Pose(62.1,	-13,	Math.toRadians(35.0));
-    private static Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(60.5));
+    private static Pose openGatePose =            new Pose(62.1,	-12,	Math.toRadians(31.0));
+    private static Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(40.5));
 
     private static Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
 
@@ -89,21 +89,16 @@ public class AutoPackage extends LinearOpMode {
 
             // Log telemetry
             updateTelemetry();
-
-            if (isStopRequested()) {
-                // Disable all motors
-                hardwareController.gate.setPosition(0.5);
-                hardwareController.intake.setPower(0.0);
-                hardwareController.transfer.setPower(0.0);
-                follower.breakFollowing();
-
-                // Reset turret
-                hardwareController.turretFlywheel.setPower(0.0);
-                hardwareController.updateTurretTarget(0.0);
-                break;
-            }
         }
+        // Disable all motors
+        hardwareController.gate.setPosition(0.5);
+        hardwareController.intake.setPower(0.0);
+        hardwareController.transfer.setPower(0.0);
+        follower.breakFollowing();
 
+        // Reset turret
+        hardwareController.turretFlywheel.setPower(0.0);
+        hardwareController.updateTurretTarget(0.0);
     }
 
     /**
@@ -167,23 +162,23 @@ public class AutoPackage extends LinearOpMode {
                 .setTangentHeadingInterpolation()
                 .build();
 
-        /*// Ramp camp
+        // Ramp camp
         intakeRC = follower.pathBuilder()
                 .addPath(new BezierLine(openGatePose, rampCampPose))
                 .setTangentHeadingInterpolation()
-                .build();*/
+                .build();
 
         // Shooting position for artifact set #1
         scoreRC = follower.pathBuilder()
-                .addPath(new BezierCurve(openGatePose, intermediatePickup2Pose, scorePose))
-                .setLinearHeadingInterpolation(openGatePose.getHeading(), scorePose.getHeading())
+                .addPath(new BezierCurve(rampCampPose, intermediatePickup2Pose, scorePose))
+                .setLinearHeadingInterpolation(rampCampPose.getHeading(), scorePose.getHeading())
                 .build();
 
         /* PARKING PROTOCOL */
 
         endAuto = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, endAutoPose))
-                .setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(scorePose.getHeading(), endAutoPose.getHeading())
                 .build();
     }
 
@@ -204,7 +199,7 @@ public class AutoPackage extends LinearOpMode {
 
             // RC 1
             case 2:
-                runRCCycle(openGateRC, scoreRC);
+                runRCCycle(openGateRC, intakeRC, scoreRC);
                 break;
 
             // Artifact set 1
@@ -219,9 +214,10 @@ public class AutoPackage extends LinearOpMode {
 
             // End-of-auto parking
             case 5:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
                     hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
                     follower.followPath(endAuto, true);
+                    incrementCycleState();
                 }
                 break;
         }
@@ -290,7 +286,7 @@ public class AutoPackage extends LinearOpMode {
      * @param openGate open gate path
      * @param score scoring path
      */
-    private void runRCCycle(PathChain openGate, PathChain score) {
+    private void runRCCycle(PathChain openGate, PathChain intake, PathChain score) {
         switch (pathState) {
             // Disable feeder and open gate
             case 0:
@@ -300,19 +296,24 @@ public class AutoPackage extends LinearOpMode {
                     incrementPathState();
                 }
                 break;
-            // Pause to press gate and intake
+            // Pause to press gate
             case 1:
                 if (!follower.isBusy()) incrementPathState();
-            // Go to score position
+            // Go to intake position
             case 2:
-                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
-                    follower.followPath(score, true);
+                if (pathTimer.getElapsedTimeSeconds() >= RC_GATE_DURATION) {
+                    follower.followPath(intake, true);
                     incrementPathState();
                 }
                 break;
-            // Feed for duration
+            // Pause to intake
             case 3:
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()) incrementPathState();
+                break;
+            // Feed for duration
+            case 4:
+                if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
+                    follower.followPath(score);
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     incrementCycleState();
                 }
