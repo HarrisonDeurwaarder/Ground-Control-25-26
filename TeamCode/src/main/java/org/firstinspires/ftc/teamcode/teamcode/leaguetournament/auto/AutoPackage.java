@@ -45,9 +45,9 @@ abstract class DebuggerAuto extends OpMode {
     protected int pathState, cycleState = 0;
 
     public static double FEED_DURATION      = 0.75;
-    public static double RC_GATE_DURATION   = 0.5;
+    public static double RC_GATE_DURATION   = 0.0;
     public static double RC_INTAKE_DURATION = 3.0;
-    public static double FLYWHEEL_ACCEPTED_ERROR = 2.0; // RPS
+    public static double FLYWHEEL_ACCEPTED_ERROR = 1.0; // RPS
 
     protected Pose goalPose =  new Pose(60.0, 60.0);
     protected Pose startPose = new Pose(40.2, 60.9, Math.toRadians(90.0));
@@ -204,7 +204,13 @@ abstract class DebuggerAuto extends OpMode {
             // Feed for duration
             case 4:
                 if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
-                    follower.followPath(score);
+                    follower.followPath(score, true);
+                    incrementPathState();
+                }
+                break;
+            // Feed for duration
+            case 5:
+                if (!follower.isBusy()) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     incrementCycleState();
                 }

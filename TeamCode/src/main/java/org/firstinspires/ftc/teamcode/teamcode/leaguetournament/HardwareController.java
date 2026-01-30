@@ -32,7 +32,7 @@ public class HardwareController {
     public static double ARTIFACT_AIRTIME = 0.5; // Seconds
 
     public static double OPEN_ANGLE   = 0.71;
-    public static double CLOSED_ANGLE = 0.61;
+    public static double CLOSED_ANGLE = 0.56;
 
     // Adaptive turret variables
     public double targetSpeed = DEFAULT_FLYWHEEL_RPS;
