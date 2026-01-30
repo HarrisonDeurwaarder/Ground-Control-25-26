@@ -40,15 +40,12 @@ public class HardwareController {
 
     public double distance = 0.0;
     public double lastRecordedError = 0.0;
-    public double lastRecordedIntegral = 0.0;
     public double lastRecordedTime = 0.0;
-    public LLResultTypes.FiducialResult goalFiducial = null;
 
     // Flywheel PID
     public static double Kp = 0.5;
-    public static double Ks = 0.0;
-    public static double Ki = 0.0;
-    public static double Kd = 0.0;
+    public static double Kd = 0.3;
+    public static double Ks = 0.2;
 
     // Declare actuators
     public DcMotorEx leftFront, leftBack, rightFront, rightBack;
@@ -227,7 +224,7 @@ public class HardwareController {
     private void updateFlywheelByDistance(double distance) {
         // Compute distance to goal
         // Compute target speed and hood angle using regression values
-        targetSpeed = Math.min(0.176 * distance + 33.9 + 1.0, 58); // +1 is for diff in target/actual speed
+        targetSpeed = Math.min(0.176 * distance + 33.9, 58); // +1 is for diff in target/actual speed
         hoodPosition = Math.max(Math.min((0.00438 * distance + 0.0457), 0.57), 0.19);
         // Send values
         //turretFlywheel.setVelocity(targetSpeed);
@@ -242,19 +239,17 @@ public class HardwareController {
      * @param deltaTime time since last run cycle
      */
     public void PDController(double deltaTime) {
-        double proportional = targetSpeed - (turretFlywheel.getVelocity() / (FLYWHEEL_TICKS_PER_DEGREE * 360));
+        double proportional = targetSpeed - (turretFlywheel.getVelocity() / 28.0);
         double derivative   = (proportional - lastRecordedError) / deltaTime;
-        double integral     = lastRecordedIntegral + proportional * deltaTime;
         double constant     = Math.signum(proportional);
         // Compute power
-        double power = Kp * proportional + Kd * derivative + Ki * integral + Ks * constant;
+        double power = Kp * proportional + Kd * derivative + Ks * constant;
         // Clip power
         power = Math.max(Math.min(power, 1.0), -1.0);
         turretFlywheel.setPower(power);
 
         // Save previous
         lastRecordedError = proportional;
-        lastRecordedIntegral = integral;
     }
 
     // Hood Angle: 0.00438x + 0.0457

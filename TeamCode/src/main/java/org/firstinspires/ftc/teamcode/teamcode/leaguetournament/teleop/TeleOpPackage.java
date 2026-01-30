@@ -13,6 +13,7 @@ import com.pedropathing.telemetry.SelectableOpMode;
 import com.pedropathing.util.PoseHistory;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
@@ -21,7 +22,7 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareControll
 
 import java.util.ArrayList;
 
-@Configurable
+@Config
 @TeleOp(name = "TeleOp", group = "League Tournament")
 public class TeleOpPackage extends SelectableOpMode {
     public static Follower follower;
@@ -37,9 +38,7 @@ public class TeleOpPackage extends SelectableOpMode {
 }
 
 
-@Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Debugger", group="League Tournament")
-class DebuggerTeleOp extends LinearOpMode {
+class DebuggerTeleOp extends OpMode {
 
     protected Timer opmodeTimer;
     protected Follower follower;
@@ -48,8 +47,8 @@ class DebuggerTeleOp extends LinearOpMode {
     protected FtcDashboard dashboard;
 
     // Poses
-    public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
-    public static Pose goalPose     = new Pose(60.0, 60.0);
+    public Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    public Pose goalPose     = new Pose(60.0, 60.0);
 
     // Boolean flags
     protected boolean isRobotCentric = false;
@@ -59,7 +58,7 @@ class DebuggerTeleOp extends LinearOpMode {
     protected static double SLOW_MODE_MULTIPLIER = 0.2;
 
     @Override
-    public final void runOpMode() {
+    public final void init() {
 
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
@@ -76,90 +75,95 @@ class DebuggerTeleOp extends LinearOpMode {
         dashboard = FtcDashboard.getInstance();
 
         follower.startTeleOpDrive(true);
+    }
+
+    @Override
+    public final void init_loop() {
+        // Display controls on gamepad
+        displayControls();
+
+    }
+
+    @Override
+    public final void loop() {
 
         // Display controls on gamepad
         displayControls();
 
-        waitForStart();
+        follower.update();
+        setTeleOpDrive();
 
-        /* ###############################
-                        START
-           ############################### */
+        /* NON-DRIVING CONTROLS */
 
-        while (opModeIsActive()) {
+        // Toggle slow mode
+        if (gamepad1.aWasPressed()) slowMode = !slowMode;
 
-            follower.update();
-            setTeleOpDrive();
+        // Toggle robot-centered
+        if (gamepad1.bWasPressed()) isRobotCentric = !isRobotCentric;
 
-            /* NON-DRIVING CONTROLS */
+        // Toggle auto-aiming
+        if (gamepad1.xWasPressed()) hardwareController.enableAutoAiming = !hardwareController.enableAutoAiming;
 
-            // Toggle slow mode
-            if (gamepad1.aWasPressed()) slowMode = !slowMode;
+        // Toggle flywheel
+        if (gamepad1.yWasPressed()) hardwareController.enableFlywheel = !hardwareController.enableFlywheel;
 
-            // Toggle robot-centered
-            if (gamepad1.bWasPressed()) isRobotCentric = !isRobotCentric;
+        // Switch gate to closed only if robot is not feeding
+        if (gamepad1.right_trigger < 0.05) hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
 
-            // Toggle auto-aiming
-            if (gamepad1.xWasPressed()) hardwareController.enableAutoAiming = !hardwareController.enableAutoAiming;
-
-            // Toggle flywheel
-            if (gamepad1.yWasPressed()) hardwareController.enableFlywheel = !hardwareController.enableFlywheel;
-
-            // Switch gate to closed only if robot is not feeding
-            if (gamepad1.right_trigger < 0.05) hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-
-            // FEEDING CONDITIONAL
-            // When trigger is held and flywheel velocity is acceptable, feed
-            if (gamepad1.right_trigger >= 0.05) {
-                // Switch gate to open
-                hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                // Switch intake mode to [intake] if needed
-                if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
-                }
-                // Then feed and intake
-                hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-                hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
+        // FEEDING CONDITIONAL
+        // When trigger is held and flywheel velocity is acceptable, feed
+        if (gamepad1.right_trigger >= 0.05) {
+            // Switch gate to open
+            hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+            // Switch intake mode to [intake] if needed
+            if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
+                hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
             }
-
-            // INTAKE CONDITIONAL
-            // When trigger is held, intake
-            else if (gamepad1.left_trigger >= 0.05) {
-                // Switch intake mode to reverse if needed
-                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
-                }
-                // Then power intake and gate
-                hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-                hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
-            }
-
-            // OUTTAKE CONDITIONAL
-            // When trigger is held, intake
-            else if (gamepad1.left_bumper) {
-                // Switch intake mode to reverse if needed
-                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
-                }
-                // Then power intake and gate
-                hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-                hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
-            }
-
-            // Else don't power either motor
-            else {
-                hardwareController.intake.setPower(0.0);
-                hardwareController.transfer.setPower(0.0);
-            }
-            // Perform turret updates
-            hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
-
-            updateTelemetry();
+            // Then feed and intake
+            hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
+            hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
         }
 
+        // INTAKE CONDITIONAL
+        // When trigger is held, intake
+        else if (gamepad1.left_trigger >= 0.05) {
+            // Switch intake mode to reverse if needed
+            if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
+                hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+            }
+            // Then power intake and gate
+            hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
+            hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
+        }
+
+        // OUTTAKE CONDITIONAL
+        // When trigger is held, intake
+        else if (gamepad1.left_bumper) {
+            // Switch intake mode to reverse if needed
+            if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
+                hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+            }
+            // Then power intake and gate
+            hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
+            hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
+        }
+
+        // Else don't power either motor
+        else {
+            hardwareController.intake.setPower(0.0);
+            hardwareController.transfer.setPower(0.0);
+        }
+        // Perform turret updates
+        hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
+
+        updateTelemetry();
+    }
+
+    @Override
+    public void stop() {
         // Brake flywheel on
         hardwareController.turretFlywheel.setVelocity(0.0);
     }
@@ -185,7 +189,7 @@ class DebuggerTeleOp extends LinearOpMode {
         // Debug telemetry (On panels)
         packet.put("Position (In)", follower.getPose());
         packet.put("Velocity (In/Sec)", follower.getVelocity());
-        packet.put("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / HardwareController.FLYWHEEL_TICKS_PER_DEGREE);
+        packet.put("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
 
         packet.put("Turret Angle", hardwareController.turretAngle);
         packet.put("Turret Ticks", hardwareController.turretTicks);
@@ -214,12 +218,10 @@ class DebuggerTeleOp extends LinearOpMode {
 }
 
 
-@Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Red Near", group="League Tournament")
 class RedNearTeleOp extends DebuggerTeleOp {
     // Set teleop specific poses
-    public static Pose startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
-    public static Pose goalPose     = new Pose(60.0, 60.0);
+    public Pose startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
+    public Pose goalPose     = new Pose(60.0, 60.0);
     private void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
@@ -239,12 +241,10 @@ class RedNearTeleOp extends DebuggerTeleOp {
 }
 
 
-@Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Red Far", group="League Tournament")
 class RedFarTeleOp extends DebuggerTeleOp {
     // Set teleop specific poses
-    public static Pose startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
-    public static Pose goalPose     = new Pose(60.0, 60.0);
+    public Pose startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
+    public Pose goalPose     = new Pose(60.0, 60.0);
     private void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
@@ -264,12 +264,10 @@ class RedFarTeleOp extends DebuggerTeleOp {
 }
 
 
-@Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Blue Near", group="League Tournament")
 class BlueNearTeleOp extends DebuggerTeleOp {
     // Set teleop specific poses
-    public static Pose startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
-    public static Pose goalPose     = new Pose(60.0, 60.0);
+    public Pose startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
+    public Pose goalPose     = new Pose(60.0, 60.0);
     private void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
@@ -289,12 +287,10 @@ class BlueNearTeleOp extends DebuggerTeleOp {
 }
 
 
-@Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Blue Near", group="League Tournament")
 class BlueFarTeleOp extends DebuggerTeleOp {
     // Set teleop specific poses
-    public static Pose startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
-    public static Pose goalPose     = new Pose(60.0, 60.0);
+    public Pose startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
+    public Pose goalPose     = new Pose(60.0, 60.0);
     private void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
