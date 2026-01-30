@@ -350,7 +350,7 @@ public class AutoPackage extends LinearOpMode {
 
         packet.put("Position (In)", follower.getPose());
         packet.put("Velocity (In/Sec)", follower.getVelocity());
-        packet.put("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity(AngleUnit.DEGREES));
+        packet.put("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
 
         dashboard.sendTelemetryPacket(packet);
     }
