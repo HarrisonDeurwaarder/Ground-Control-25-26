@@ -163,8 +163,15 @@ class DebuggerTeleOp extends OpMode {
 
     @Override
     public void stop() {
-        // Brake flywheel on
-        hardwareController.turretFlywheel.setVelocity(0.0);
+        // Disable all motors
+        hardwareController.gate.setPosition(0.5);
+        hardwareController.intake.setPower(0.0);
+        hardwareController.transfer.setPower(0.0);
+        follower.breakFollowing();
+
+        // Reset turret
+        hardwareController.turretFlywheel.setPower(0.0);
+        hardwareController.updateTurretTarget(0.0);
     }
 
     protected void setTeleOpDrive() {
@@ -278,7 +285,7 @@ class BlueNearTeleOp extends DebuggerTeleOp {
         super();
         // Reassign poses
         this.startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
-        this.goalPose     = new Pose(60.0, 60.0);
+        this.goalPose     = new Pose(-60.0, 60.0);
     }
 
     @Override
@@ -306,7 +313,7 @@ class BlueFarTeleOp extends DebuggerTeleOp {
         super();
         // Reassign poses
         this.startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
-        this.goalPose     = new Pose(60.0, 60.0);
+        this.goalPose     = new Pose(-60.0, 60.0);
     }
 
     @Override

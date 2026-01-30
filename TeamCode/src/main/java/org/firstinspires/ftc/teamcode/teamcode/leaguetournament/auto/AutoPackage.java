@@ -36,7 +36,7 @@ public class AutoPackage extends SelectableOpMode {
 }
 
 
-abstract class Debugger extends OpMode {
+abstract class DebuggerAuto extends OpMode {
     protected Timer pathTimer, opmodeTimer;
     protected Follower follower;
     protected HardwareController hardwareController;
@@ -189,6 +189,7 @@ abstract class Debugger extends OpMode {
             // Pause to press gate
             case 1:
                 if (!follower.isBusy()) incrementPathState();
+                break;
             // Go to intake position
             case 2:
                 if (pathTimer.getElapsedTimeSeconds() >= RC_GATE_DURATION) {
@@ -252,7 +253,7 @@ abstract class Debugger extends OpMode {
 }
 
 
-class RedNearAuto extends Debugger {
+class RedNearAuto extends DebuggerAuto {
     protected Pose postPickup1Pose =         new Pose(56.7, 8.8, Math.toRadians(0.0));
 
     protected Pose intermediatePickup2Pose = new Pose(25.9, -16, Math.toRadians(0.0));
@@ -261,8 +262,9 @@ class RedNearAuto extends Debugger {
     protected Pose intermediatePickup3Pose = new Pose(22.9, -39.1, Math.toRadians(0.0));
     protected Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
 
-    protected Pose openGatePose =            new Pose(62.1,	-12,	Math.toRadians(31.0));
-    protected Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(40.5));
+    protected Pose RCIntermediatePose =      new Pose(61.7, -13.9, Math.toRadians(28.5));
+    protected Pose RCGatePose =              new Pose(61.7, -13.9, Math.toRadians(28.5));
+    protected Pose RCIntakePose =            new Pose(62.8, -47.5, Math.toRadians(40.5));
 
     protected Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
 
@@ -334,20 +336,20 @@ class RedNearAuto extends Debugger {
 
         // Curved gate open per G418
         openGateRC = follower.pathBuilder()
-                .addPath(new BezierCurve(scorePose, intermediatePickup2Pose, openGatePose))
+                .addPath(new BezierCurve(scorePose, intermediatePickup2Pose, RCIntermediatePose, RCGatePose))
                 .setTangentHeadingInterpolation()
                 .build();
 
         // Ramp camp
         intakeRC = follower.pathBuilder()
-                .addPath(new BezierLine(openGatePose, rampCampPose))
-                .setTangentHeadingInterpolation()
+                .addPath(new BezierLine(RCGatePose, RCIntakePose))
+                .setLinearHeadingInterpolation(RCGatePose.getHeading(), RCIntakePose.getHeading())
                 .build();
 
         // Shooting position for artifact set #1
         scoreRC = follower.pathBuilder()
-                .addPath(new BezierCurve(rampCampPose, intermediatePickup2Pose, scorePose))
-                .setLinearHeadingInterpolation(rampCampPose.getHeading(), scorePose.getHeading())
+                .addPath(new BezierCurve(RCIntakePose, intermediatePickup2Pose, scorePose))
+                .setLinearHeadingInterpolation(RCIntakePose.getHeading(), scorePose.getHeading())
                 .build();
 
         /* PARKING PROTOCOL */
@@ -401,11 +403,12 @@ class RedNearAuto extends Debugger {
 }
 
 
-class RedFarAuto extends Debugger {
+class RedFarAuto extends DebuggerAuto {
     protected Pose postPickup1Pose =    new Pose(61.5, -67.7, Math.toRadians(0.0));
     protected Pose rcExcessIntakePose = new Pose(61.5, -57.7, Math.toRadians(90));
     protected Pose endAutoPose =        new Pose(36.0, -63.0, Math.toRadians(90.0));
 
+    protected Path scorePreload;
     protected PathChain grabPickup1, scorePickup1, rcExcessIntake, rcExcessScore, endAuto;
 
     RedFarAuto() {
@@ -420,6 +423,12 @@ class RedFarAuto extends Debugger {
      * Instanciate and build PathChains
      */
     protected void buildPaths() {
+
+        /* ARTIFACT PRELOAD */
+
+        // Shooting position for preloaded artifacts
+        scorePreload = new Path(new BezierLine(startPose, scorePose));
+        scorePreload.setTangentHeadingInterpolation();
 
         /* ARTIFACT SET 1 */
 
@@ -462,12 +471,7 @@ class RedFarAuto extends Debugger {
         switch (cycleState) {
             // Preload
             case 0:
-                // Advance if flywheel is up to speed
-                double flywheelRPS = hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360.0);
-                if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
-                    incrementCycleState();
-                }
+                runPreloadCycle(scorePreload);
                 break;
 
             // Artifact set 1
@@ -524,8 +528,9 @@ class BlueNearAuto extends RedNearAuto {
         this.intermediatePickup3Pose = new Pose(-28.1, -39.1, Math.toRadians(180.0));
         this.postPickup3Pose =         new Pose(63.1, -39.1, Math.toRadians(180.0));
 
-        this.openGatePose =            new Pose(-60.3,	-13.4,	Math.toRadians(147.2));
-        this.rampCampPose =            new Pose(-61.3, -17.8, Math.toRadians(126.2));
+        this.RCIntermediatePose =      new Pose(0.0, 0.0, Math.toRadians(0.0));
+        this.RCGatePose =              new Pose(-60.3,	-13.4,	Math.toRadians(147.2));
+        this.RCIntakePose =            new Pose(-61.3, -17.8, Math.toRadians(126.2));
 
         this.endAutoPose =             new Pose(-47.8, 0.0, Math.toRadians(90.0));
     }
