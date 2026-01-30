@@ -69,9 +69,6 @@ public class AutoPackage extends LinearOpMode {
         // Hardware controller for mechanism access
         hardwareController = new HardwareController(hardwareMap);
 
-        // Ramp up flywheel speed prior to shooting preload
-        hardwareController.updateTurret(follower, goalPose, 0.0);
-
         waitForStart();
         pathTimer.resetTimer();
 
@@ -246,7 +243,7 @@ public class AutoPackage extends LinearOpMode {
             // Feed for duration
             case 2:
                 // Advance if flywheel is up to speed
-                double flywheelRPS = hardwareController.turretFlywheel.getVelocity() / HardwareController.FLYWHEEL_TICKS_PER_DEGREE;
+                double flywheelRPS = hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360);
                 if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS && hardwareController.targetSpeed + FLYWHEEL_ACCEPTED_ERROR >= flywheelRPS) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     incrementCycleState();
