@@ -27,14 +27,14 @@ public class AutoPackage extends LinearOpMode {
     private FtcDashboard dashboard;
     private int pathState, cycleState = 0;
 
-    public static double FEED_DURATION      = 1.0;
+    public static double FEED_DURATION      = 0.75;
     public static double RC_GATE_DURATION   = 1.0;
-    public static double RC_INTAKE_DURATION = 2.0;
+    public static double RC_INTAKE_DURATION = 3.0;
     public static double FLYWHEEL_ACCEPTED_ERROR = 2.0; // RPS
 
     private static Pose goalPose =                new Pose(60.0, 60.0);
     private static Pose startPose =               new Pose(40.2, 60.9, Math.toRadians(90.0));
-    private static Pose scorePose =               new Pose(25.0, 8.8, Math.toRadians(0.0));
+    private static Pose scorePose =               new Pose(24.0, 10.8, Math.toRadians(0.0));
 
     private static Pose postPickup1Pose =         new Pose(56.7, 8.8, Math.toRadians(0.0));
 
@@ -44,7 +44,7 @@ public class AutoPackage extends LinearOpMode {
     private static Pose intermediatePickup3Pose = new Pose(25.9, -39.1, Math.toRadians(0.0));
     private static Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
 
-    private static Pose openGatePose =            new Pose(61.2,	-13,	Math.toRadians(31.8));
+    private static Pose openGatePose =            new Pose(62.1,	-13,	Math.toRadians(35.0));
     private static Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(60.5));
 
     private static Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
@@ -128,7 +128,7 @@ public class AutoPackage extends LinearOpMode {
         // Shooting position for artifact set #1
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(postPickup1Pose, scorePose))
-                .setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(postPickup1Pose.getHeading(), scorePose.getHeading())
                 .build();
 
         /* ARTIFACT SET 2 */
@@ -142,7 +142,7 @@ public class AutoPackage extends LinearOpMode {
         // Shooting position for artifact set #2
         scorePickup2 = follower.pathBuilder()
                 .addPath(new BezierCurve(postPickup2Pose, intermediatePickup2Pose, scorePose))
-                .setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(postPickup2Pose.getHeading(), scorePose.getHeading())
                 .build();
 
         /* ARTIFACT SET 3 */
@@ -156,7 +156,7 @@ public class AutoPackage extends LinearOpMode {
         // Shooting position for artifact set #3
         scorePickup3 = follower.pathBuilder()
                 .addPath(new BezierLine(postPickup3Pose, scorePose))
-                .setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(postPickup3Pose.getHeading(), scorePose.getHeading())
                 .build();
 
         /* RAMP CAMP PROTOCOL */
@@ -176,7 +176,7 @@ public class AutoPackage extends LinearOpMode {
         // Shooting position for artifact set #1
         scoreRC = follower.pathBuilder()
                 .addPath(new BezierCurve(openGatePose, intermediatePickup2Pose, scorePose))
-                .setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(openGatePose.getHeading(), scorePose.getHeading())
                 .build();
 
         /* PARKING PROTOCOL */
@@ -207,14 +207,14 @@ public class AutoPackage extends LinearOpMode {
                 runRCCycle(openGateRC, scoreRC);
                 break;
 
-            // RC 2
+            // Artifact set 1
             case 3:
-                runRCCycle(openGateRC, scoreRC);
+                runArtifactSetCycle(grabPickup1, scorePickup1);
                 break;
 
-            // Artifact set 1
+            // Artifact set 3
             case 4:
-                runArtifactSetCycle(grabPickup2, scorePickup2);
+                runArtifactSetCycle(grabPickup3, scorePickup3);
                 break;
 
             // End-of-auto parking
@@ -222,7 +222,6 @@ public class AutoPackage extends LinearOpMode {
                 if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
                     hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
                     follower.followPath(endAuto, true);
-                    incrementCycleState();
                 }
                 break;
         }
@@ -241,10 +240,10 @@ public class AutoPackage extends LinearOpMode {
                 incrementPathState();
                 break;
             // Feed for duration
-            case 2:
+            case 1:
                 // Advance if flywheel is up to speed
-                double flywheelRPS = hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360);
-                if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS && hardwareController.targetSpeed + FLYWHEEL_ACCEPTED_ERROR >= flywheelRPS) {
+                double flywheelRPS = hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360.0);
+                if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     incrementCycleState();
                 }
@@ -345,6 +344,7 @@ public class AutoPackage extends LinearOpMode {
     private void updateTelemetry() {
         // Write telemetry
         packet.put("Path State", pathState);
+        packet.put("Cycle State", cycleState);
         packet.put("Path Timer", pathTimer.getElapsedTime());
         packet.put("Target Pose", follower.getCurrentPath().getPose(1.0));
 
