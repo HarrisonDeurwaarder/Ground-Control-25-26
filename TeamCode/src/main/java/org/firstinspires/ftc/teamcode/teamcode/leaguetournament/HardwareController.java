@@ -224,7 +224,7 @@ public class HardwareController {
     private void updateFlywheelByDistance(double distance) {
         // Compute distance to goal
         // Compute target speed and hood angle using regression values
-        targetSpeed = Math.min(0.176 * distance + 33.9, 58); // +1 is for diff in target/actual speed
+        targetSpeed = Math.min(0.176 * distance + 32.9, 58); // +1 is for diff in target/actual speed
         hoodPosition = Math.max(Math.min((0.00438 * distance + 0.0457), 0.57), 0.19);
         // Send values
         //turretFlywheel.setVelocity(targetSpeed);
