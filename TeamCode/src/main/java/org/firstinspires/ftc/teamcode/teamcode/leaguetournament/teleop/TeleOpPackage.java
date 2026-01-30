@@ -168,7 +168,7 @@ class DebuggerTeleOp extends OpMode {
         hardwareController.turretFlywheel.setVelocity(0.0);
     }
 
-    private void setTeleOpDrive() {
+    protected void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
                 gamepad1.left_stick_x,
@@ -185,7 +185,7 @@ class DebuggerTeleOp extends OpMode {
         );
     }
 
-    private void updateTelemetry() {
+    protected void updateTelemetry() {
         // Debug telemetry (On panels)
         packet.put("Position (In)", follower.getPose());
         packet.put("Velocity (In/Sec)", follower.getVelocity());
@@ -201,7 +201,7 @@ class DebuggerTeleOp extends OpMode {
         dashboard.sendTelemetryPacket(packet);
     }
 
-    private void displayControls() {
+    protected void displayControls() {
         // Controls (On driver hub telemetry)
         telemetry.addLine("A - Precision Mode");
         telemetry.addLine("B - Movement Center");
@@ -220,11 +220,14 @@ class DebuggerTeleOp extends OpMode {
 
 class RedNearTeleOp extends DebuggerTeleOp {
     RedNearTeleOp() {
+        super();
         // Reassign poses
         this.startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
         this.goalPose     = new Pose(60.0, 60.0);
     }
-    private void setTeleOpDrive() {
+
+    @Override
+    protected void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
                 -gamepad1.left_stick_y,
@@ -245,11 +248,14 @@ class RedNearTeleOp extends DebuggerTeleOp {
 
 class RedFarTeleOp extends DebuggerTeleOp {
     RedFarTeleOp() {
+        super();
         // Reassign poses
         this.startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
         this.goalPose     = new Pose(60.0, 60.0);
     }
-    private void setTeleOpDrive() {
+
+    @Override
+    protected void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
                 -gamepad1.left_stick_y,
@@ -270,11 +276,14 @@ class RedFarTeleOp extends DebuggerTeleOp {
 
 class BlueNearTeleOp extends DebuggerTeleOp {
     BlueNearTeleOp() {
+        super();
         // Reassign poses
         this.startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
         this.goalPose     = new Pose(60.0, 60.0);
     }
-    private void setTeleOpDrive() {
+
+    @Override
+    protected void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
                 gamepad1.left_stick_y,
@@ -295,11 +304,14 @@ class BlueNearTeleOp extends DebuggerTeleOp {
 
 class BlueFarTeleOp extends DebuggerTeleOp {
     BlueFarTeleOp() {
+        super();
         // Reassign poses
         this.startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
         this.goalPose     = new Pose(60.0, 60.0);
     }
-    private void setTeleOpDrive() {
+
+    @Override
+    protected void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
                 gamepad1.left_stick_y,
