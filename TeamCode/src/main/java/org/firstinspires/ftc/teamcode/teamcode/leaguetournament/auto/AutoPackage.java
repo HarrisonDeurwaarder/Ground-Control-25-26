@@ -45,9 +45,9 @@ abstract class Debugger extends OpMode {
     protected int pathState, cycleState = 0;
 
     public static double FEED_DURATION      = 0.75;
-    public static double RC_GATE_DURATION   = 0.5;
+    public static double RC_GATE_DURATION   = 0.0;
     public static double RC_INTAKE_DURATION = 3.0;
-    public static double FLYWHEEL_ACCEPTED_ERROR = 2.0; // RPS
+    public static double FLYWHEEL_ACCEPTED_ERROR = 1.0; // RPS
 
     protected Pose goalPose =  new Pose(60.0, 60.0);
     protected Pose startPose = new Pose(40.2, 60.9, Math.toRadians(90.0));
@@ -189,6 +189,7 @@ abstract class Debugger extends OpMode {
             // Pause to press gate
             case 1:
                 if (!follower.isBusy()) incrementPathState();
+                break;
             // Go to intake position
             case 2:
                 if (pathTimer.getElapsedTimeSeconds() >= RC_GATE_DURATION) {
@@ -203,7 +204,13 @@ abstract class Debugger extends OpMode {
             // Feed for duration
             case 4:
                 if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
-                    follower.followPath(score);
+                    follower.followPath(score, true);
+                    incrementPathState();
+                }
+                break;
+            // Feed for duration
+            case 5:
+                if (!follower.isBusy()) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     incrementCycleState();
                 }
@@ -261,7 +268,8 @@ class RedNearAuto extends Debugger {
     protected Pose intermediatePickup3Pose = new Pose(22.9, -39.1, Math.toRadians(0.0));
     protected Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
 
-    protected Pose openGatePose =            new Pose(62.1,	-12,	Math.toRadians(31.0));
+    // Changed
+    protected Pose openGatePose =            new Pose(59.3,	-13.5,	Math.toRadians(11.4));
     protected Pose rampCampPose =            new Pose(61.4, -18.5, Math.toRadians(40.5));
 
     protected Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
@@ -341,7 +349,9 @@ class RedNearAuto extends Debugger {
         // Ramp camp
         intakeRC = follower.pathBuilder()
                 .addPath(new BezierLine(openGatePose, rampCampPose))
-                .setTangentHeadingInterpolation()
+
+                // Changed to linear heading interpolation
+                .setLinearHeadingInterpolation(openGatePose.getHeading(), rampCampPose.getHeading())
                 .build();
 
         // Shooting position for artifact set #1
@@ -395,6 +405,18 @@ class RedNearAuto extends Debugger {
                     follower.followPath(endAuto, true);
                     incrementCycleState();
                 }
+                break;
+
+            // Added stop code at the end
+            case 6:
+                // Disable motors
+                hardwareController.gate.setPosition(0.5);
+                hardwareController.intake.setPower(0.0);
+                hardwareController.transfer.setPower(0.0);
+
+                // Reset turret
+                hardwareController.turretFlywheel.setPower(0.0);
+                hardwareController.updateTurretTarget(0.0);
                 break;
         }
     }
