@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.List;
@@ -80,6 +81,7 @@ public class HardwareController {
         transfer = hardwareMap.get(DcMotorEx.class, "transfer");
         turretFlywheel = hardwareMap.get(DcMotorEx.class, "turretFlywheel");
         turretRotation = hardwareMap.get(DcMotorEx.class, "turretRotation");
+        turretRotation.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, new PIDFCoefficients(5.0, 1.0, 0.0, 0.0));
 
         // Map servos
         turretHood = hardwareMap.get(Servo.class, "turretHood");
