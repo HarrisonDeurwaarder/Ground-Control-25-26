@@ -21,7 +21,7 @@ public class HardwareController {
     // Power constants
     public static final double INTAKE_POWER = 1.0;
     public static final double TRANSFER_POWER = 1.0;
-    public static final double TURRET_ROTATION_POWER = 0.8;
+    public static final double TURRET_ROTATION_POWER = 1.0;
 
     // Miscellaneous constants
     public static final double TURRET_ROTATION_TICKS_PER_DEGREE = 4.317;

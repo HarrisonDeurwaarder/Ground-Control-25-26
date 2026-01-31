@@ -95,19 +95,6 @@ abstract class DebuggerAuto extends OpMode {
         updateTelemetry();
     }
 
-    @Override
-    public final void stop() {
-        // Disable all motors
-        hardwareController.gate.setPosition(0.5);
-        hardwareController.intake.setPower(0.0);
-        hardwareController.transfer.setPower(0.0);
-        follower.breakFollowing();
-
-        // Reset turret
-        hardwareController.turretFlywheel.setPower(0.0);
-        hardwareController.updateTurretTarget(0.0);
-    }
-
     protected abstract void buildPaths();
 
     protected abstract void autoPathUpdate();
@@ -219,6 +206,32 @@ abstract class DebuggerAuto extends OpMode {
     }
 
     /**
+     * Run the end auto policy
+     */
+    protected void runEndAuto(PathChain endAuto) {
+        if (pathState == 0) {
+            if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
+                hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+                follower.followPath(endAuto, true);
+                incrementCycleState();
+
+                // Disable all motors
+                hardwareController.gate.setPosition(0.5);
+                hardwareController.intake.setPower(0.0);
+                hardwareController.transfer.setPower(0.0);
+
+                // Reset turret
+                hardwareController.turretFlywheel.setPower(0.0);
+                hardwareController.updateTurretTarget(0.0);
+                hardwareController.enableAutoAiming = false;
+                hardwareController.enableFlywheel = false;
+
+                incrementCycleState();
+            }
+        }
+    }
+
+    /**
      * Advanced to the next cycle
      */
     protected void incrementCycleState() {
@@ -260,7 +273,7 @@ abstract class DebuggerAuto extends OpMode {
 
 
 class RedNearAuto extends DebuggerAuto {
-    protected Pose postPickup1Pose =         new Pose(56.7, 8.8, Math.toRadians(0.0));
+    protected Pose postPickup1Pose =         new Pose(54.7, 8.8, Math.toRadians(0.0));
 
     protected Pose intermediatePickup2Pose = new Pose(25.9, -16, Math.toRadians(0.0));
     protected Pose postPickup2Pose =         new Pose(58.5, -15.5,Math.toRadians(0.0));
@@ -269,8 +282,8 @@ class RedNearAuto extends DebuggerAuto {
     protected Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
 
     protected Pose RCIntermediatePose =      new Pose(61.7, -13.9, Math.toRadians(28.5));
-    protected Pose RCGatePose =              new Pose(61.7, -13.9, Math.toRadians(28.5));
-    protected Pose RCIntakePose =            new Pose(62.8, -47.5, Math.toRadians(40.5));
+    protected Pose RCGatePose =              new Pose(58.9, -12.8, Math.toRadians(19.5));
+    protected Pose RCIntakePose =            new Pose(63.0, -18.1, Math.toRadians(50.9));
 
     protected Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
 
@@ -398,11 +411,7 @@ class RedNearAuto extends DebuggerAuto {
 
             // End-of-auto parking
             case 5:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(endAuto, true);
-                    incrementCycleState();
-                }
+                runEndAuto(endAuto);
                 break;
         }
     }
@@ -507,11 +516,7 @@ class RedFarAuto extends DebuggerAuto {
 
             // End-of-auto parking
             case 6:
-                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                    follower.followPath(endAuto, true);
-                    incrementCycleState();
-                }
+                runEndAuto(endAuto);
                 break;
         }
     }
