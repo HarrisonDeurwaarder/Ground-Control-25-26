@@ -44,9 +44,9 @@ abstract class DebuggerAuto extends OpMode {
     protected FtcDashboard dashboard;
     protected int pathState, cycleState = 0;
 
-    public static double FEED_DURATION      = 0.75;
+    public static double FEED_DURATION      = 1.0;
     public static double RC_GATE_DURATION   = 0.0;
-    public static double RC_INTAKE_DURATION = 3.0;
+    public static double RC_INTAKE_DURATION = 1.5;
     public static double FLYWHEEL_ACCEPTED_ERROR = 1.0; // RPS
 
     protected Pose goalPose =  new Pose(60.0, 60.0);
@@ -89,8 +89,9 @@ abstract class DebuggerAuto extends OpMode {
         autoPathUpdate();
 
         // Perform turret updates
-        hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
-
+        if (cycleState < 5) {
+            hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
+        }
         // Log telemetry
         updateTelemetry();
     }
@@ -209,25 +210,21 @@ abstract class DebuggerAuto extends OpMode {
      * Run the end auto policy
      */
     protected void runEndAuto(PathChain endAuto) {
-        if (pathState == 0) {
-            if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
-                hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
-                follower.followPath(endAuto, true);
-                incrementCycleState();
+        if (pathState == 0 && pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
+            hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+            follower.followPath(endAuto, true);
+            incrementCycleState();
 
-                // Disable all motors
-                hardwareController.gate.setPosition(0.5);
-                hardwareController.intake.setPower(0.0);
-                hardwareController.transfer.setPower(0.0);
+            // Disable all motors
+            hardwareController.gate.setPosition(0.5);
+            hardwareController.intake.setPower(0.0);
+            hardwareController.transfer.setPower(0.0);
 
-                // Reset turret
-                hardwareController.turretFlywheel.setPower(0.0);
-                hardwareController.updateTurretTarget(0.0);
-                hardwareController.enableAutoAiming = false;
-                hardwareController.enableFlywheel = false;
+            // Reset turret
+            hardwareController.turretFlywheel.setPower(0.0);
+            hardwareController.updateTurretTarget(0.0);
 
-                incrementCycleState();
-            }
+            incrementCycleState();
         }
     }
 
@@ -261,11 +258,14 @@ abstract class DebuggerAuto extends OpMode {
         packet.put("Path State", pathState);
         packet.put("Cycle State", cycleState);
         packet.put("Path Timer", pathTimer.getElapsedTime());
-        packet.put("Target Pose", follower.getCurrentPath().getPose(1.0));
+        packet.put("Target Pose", follower.getCurrentPath() != null ? follower.getCurrentPath().getPose(1.0) == null : null);
 
         packet.put("Position (In)", follower.getPose());
         packet.put("Velocity (In/Sec)", follower.getVelocity());
-        packet.put("Flywheel Velocity (Degrees/Sec)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+        packet.put("Flywheel Velocity (Rotations/Sec)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+
+        packet.put("Flywheel Target Speed (RPS)", hardwareController.targetSpeed);
+        packet.put("Turret Target Angle (Degrees)", hardwareController.turretAngle);
 
         dashboard.sendTelemetryPacket(packet);
     }
@@ -278,10 +278,10 @@ class RedNearAuto extends DebuggerAuto {
     protected Pose intermediatePickup2Pose = new Pose(25.9, -16, Math.toRadians(0.0));
     protected Pose postPickup2Pose =         new Pose(58.5, -15.5,Math.toRadians(0.0));
 
-    protected Pose intermediatePickup3Pose = new Pose(22.9, -39.1, Math.toRadians(0.0));
+    protected Pose intermediatePickup3Pose = new Pose(19.9, -43.1, Math.toRadians(0.0));
     protected Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
 
-    protected Pose RCIntermediatePose =      new Pose(61.7, -13.9, Math.toRadians(28.5));
+    protected Pose RCIntermediatePose =      new Pose(61.7, -20.9, Math.toRadians(28.5));
     protected Pose RCGatePose =              new Pose(58.9, -12.8, Math.toRadians(19.5));
     protected Pose RCIntakePose =            new Pose(63.0, -18.1, Math.toRadians(50.9));
 
@@ -307,7 +307,7 @@ class RedNearAuto extends DebuggerAuto {
 
         // Shooting position for preloaded artifacts
         scorePreload = new Path(new BezierLine(startPose, scorePose));
-        scorePreload.setTangentHeadingInterpolation();
+        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
         /* ARTIFACT SET 1 */
 
@@ -355,8 +355,8 @@ class RedNearAuto extends DebuggerAuto {
 
         // Curved gate open per G418
         openGateRC = follower.pathBuilder()
-                .addPath(new BezierCurve(scorePose, intermediatePickup2Pose, RCIntermediatePose, RCGatePose))
-                .setTangentHeadingInterpolation()
+                .addPath(new BezierCurve(scorePose, intermediatePickup2Pose, RCGatePose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), RCGatePose.getHeading())
                 .build();
 
         // Ramp camp
@@ -419,8 +419,8 @@ class RedNearAuto extends DebuggerAuto {
 
 
 class RedFarAuto extends DebuggerAuto {
-    protected Pose postPickup1Pose =    new Pose(61.5, -67.7, Math.toRadians(0.0));
-    protected Pose rcExcessIntakePose = new Pose(61.5, -57.7, Math.toRadians(90));
+    protected Pose postPickup1Pose =    new Pose(61.5, -61.0, Math.toRadians(0.0));
+    protected Pose rcExcessIntakePose = new Pose(61.5, -61.0, Math.toRadians(0.0));
     protected Pose endAutoPose =        new Pose(36.0, -63.0, Math.toRadians(90.0));
 
     protected Path scorePreload;
@@ -430,8 +430,8 @@ class RedFarAuto extends DebuggerAuto {
         super();
         // Reset poses
         this.goalPose =  new Pose(60.0, 60.0);
-        this.startPose = new Pose(12.0, -63.0, Math.toRadians(90.0));
-        this.scorePose = new Pose(12.0, -63.0, Math.toRadians(90.0));
+        this.startPose = new Pose(12.0, -66.7, Math.toRadians(90.0));
+        this.scorePose = new Pose(17.0, -58.0, Math.toRadians(0.0));
     }
 
     /**
@@ -443,32 +443,32 @@ class RedFarAuto extends DebuggerAuto {
 
         // Shooting position for preloaded artifacts
         scorePreload = new Path(new BezierLine(startPose, scorePose));
-        scorePreload.setTangentHeadingInterpolation();
+        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
         /* ARTIFACT SET 1 */
 
         // Curved intake line for artifact set #1
         grabPickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, postPickup1Pose))
-                .setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(scorePose.getHeading(), postPickup1Pose.getHeading())
                 .build();
 
         // Shooting position for artifact set #1
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(postPickup1Pose, scorePose))
-                .setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(postPickup1Pose.getHeading(), scorePose.getHeading())
                 .build();
 
         /* RC EXCESS INTAKE PROTOCOL */
 
         rcExcessIntake = follower.pathBuilder()
-                .addPath(new BezierCurve(scorePose, postPickup1Pose, rcExcessIntakePose))
-                .setTangentHeadingInterpolation()
+                .addPath(new BezierCurve(scorePose, rcExcessIntakePose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), rcExcessIntakePose.getHeading())
                 .build();
 
         rcExcessScore = follower.pathBuilder()
-                .addPath(new BezierCurve(rcExcessIntakePose, scorePose))
-                .setTangentHeadingInterpolation()
+                .addPath(new BezierLine(rcExcessIntakePose, scorePose))
+                .setLinearHeadingInterpolation(rcExcessIntakePose.getHeading(), scorePose.getHeading())
                 .build();
 
         /* PARKING PROTOCOL */
@@ -509,13 +509,8 @@ class RedFarAuto extends DebuggerAuto {
                 runArtifactSetCycle(rcExcessIntake, rcExcessScore);
                 break;
 
-            // RC residual #4
-            case 5:
-                runArtifactSetCycle(rcExcessIntake, rcExcessScore);
-                break;
-
             // End-of-auto parking
-            case 6:
+            case 5:
                 runEndAuto(endAuto);
                 break;
         }
@@ -528,20 +523,20 @@ class BlueNearAuto extends RedNearAuto {
         super();
         // Reset poses
         this.goalPose =  new Pose(-60.0, 60.0);
-        this.startPose = new Pose(-40.0, 60.9, Math.toRadians(90.0));
-        this.scorePose = new Pose(-25.0, 8.8, Math.toRadians(180.0));
+        this.startPose = new Pose(-40.2, 60.9, Math.toRadians(90.0));
+        this.scorePose = new Pose(-24.0, 10.8, Math.toRadians(180.0));
 
-        this.postPickup1Pose =         new Pose(-55.7, 8.8, Math.toRadians(180.0));
+        this.postPickup1Pose =         new Pose(-54.7, 8.8, Math.toRadians(180.0));
 
-        this.intermediatePickup2Pose = new Pose(-28.1, -16.0, Math.toRadians(180.0));
-        this.postPickup2Pose =         new Pose(-60.5, -16.0,Math.toRadians(180.0));
+        this.intermediatePickup2Pose = new Pose(-25.9, -16, Math.toRadians(180.0));
+        this.postPickup2Pose =         new Pose(-58.5, -15.5,Math.toRadians(180.0));
 
-        this.intermediatePickup3Pose = new Pose(-28.1, -39.1, Math.toRadians(180.0));
-        this.postPickup3Pose =         new Pose(63.1, -39.1, Math.toRadians(180.0));
+        this.intermediatePickup3Pose = new Pose(-19.9, -43.1, Math.toRadians(180.0));
+        this.postPickup3Pose =         new Pose(-61.3, -39.1, Math.toRadians(180.0));
 
-        this.RCIntermediatePose =      new Pose(0.0, 0.0, Math.toRadians(0.0));
-        this.RCGatePose =              new Pose(-60.3,	-13.4,	Math.toRadians(147.2));
-        this.RCIntakePose =            new Pose(-61.3, -17.8, Math.toRadians(126.2));
+        this.RCIntermediatePose =      new Pose(-61.7, -20.9, Math.toRadians(180.0 - 28.5));
+        this.RCGatePose =              new Pose(-58.9, -12.8, Math.toRadians(180.0 - 19.5));
+        this.RCIntakePose =            new Pose(-63.0, -18.1, Math.toRadians(180.0 - 50.9));
 
         this.endAutoPose =             new Pose(-47.8, 0.0, Math.toRadians(90.0));
     }
@@ -554,10 +549,10 @@ class BlueFarAuto extends RedFarAuto {
         // Reset poses
         this.goalPose =  new Pose(-60.0, 60.0);
         this.startPose = new Pose(-12.0, -63.0, Math.toRadians(90.0));
-        this.scorePose = new Pose(-12.0, -63.0, Math.toRadians(90.0));
+        this.scorePose = new Pose(-17.0, -58.0, Math.toRadians(180.0));
 
         this.postPickup1Pose =    new Pose(-61.5, -67.7, Math.toRadians(180.0));
-        this.rcExcessIntakePose = new Pose(-61.5, -57.7, Math.toRadians(90.0));
-        this.endAutoPose =        new Pose(-36.0, -63.0, Math.toRadians(90.0));
+        this.rcExcessIntakePose = new Pose(-61.5, -67.7, Math.toRadians(180.0));
+        this.endAutoPose =        new Pose(-36.0, -67.7, Math.toRadians(90.0));
     }
 }

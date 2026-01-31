@@ -31,8 +31,8 @@ public class HardwareController {
     public static double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
     public static double ARTIFACT_AIRTIME = 0.5; // Seconds
 
-    public static double OPEN_ANGLE   = 0.71;
-    public static double CLOSED_ANGLE = 0.56;
+    public static double OPEN_ANGLE   = 0.81;
+    public static double CLOSED_ANGLE = 0.6;
 
     // Adaptive turret variables
     public double targetSpeed = DEFAULT_FLYWHEEL_RPS;
@@ -61,7 +61,7 @@ public class HardwareController {
     // Control flow flags
     public boolean enableAutoAiming = true;
     public boolean enableFlywheel = true;
-    public boolean enableArtifactVelocityCorrection = false;
+    public boolean enableArtifactVelocityCorrection = true;
 
     /**
      * Map devices; set all devices to default direction
@@ -166,7 +166,7 @@ public class HardwareController {
         if (enableFlywheel) {
             // If flywheel enabled set parameters by distance
             double distance = follower.getPose().distanceFrom(goalPose);
-            updateFlywheelByDistance(distance);
+            updateFlywheelByDistance(distance, follower.getPose().getY());
         // Else set to zero velocity
         } else {
             targetSpeed = 0.0;
@@ -221,14 +221,20 @@ public class HardwareController {
     /**
      * Update flywheel speed by regression values
     */
-    private void updateFlywheelByDistance(double distance) {
+    private void updateFlywheelByDistance(double distance, double y) {
         // Compute distance to goal
         // Compute target speed and hood angle using regression values
-        targetSpeed = Math.min(0.176 * distance + 32.9, 58); // +1 is for diff in target/actual speed
-        hoodPosition = Math.max(Math.min((0.00438 * distance + 0.0457), 0.57), 0.19);
-        // Send values
-        //turretFlywheel.setVelocity(targetSpeed);
-        turretHood.setPosition(hoodPosition);
+        if (y >= -12) {
+            targetSpeed = Math.min(0.259 * distance + 27.5, 60); // +1 is for diff in target/actual speed}
+            hoodPosition = Math.max(Math.min((0.00296 * distance + 0.107), 0.5), 0.19);
+        }
+        else {
+            targetSpeed = 57.0;
+            hoodPosition = 0.45;
+        }
+            // Send values
+            //turretFlywheel.setVelocity(targetSpeed);
+            turretHood.setPosition(hoodPosition);
     }
 
 

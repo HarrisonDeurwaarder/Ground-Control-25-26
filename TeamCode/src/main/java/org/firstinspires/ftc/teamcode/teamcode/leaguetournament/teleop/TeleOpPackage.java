@@ -257,7 +257,7 @@ class RedFarTeleOp extends DebuggerTeleOp {
     RedFarTeleOp() {
         super();
         // Reassign poses
-        this.startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
+        this.startingPose = new Pose(36.0, -63.0, Math.toRadians(90.0));
         this.goalPose     = new Pose(60.0, 60.0);
     }
 
@@ -313,7 +313,7 @@ class BlueFarTeleOp extends DebuggerTeleOp {
     BlueFarTeleOp() {
         super();
         // Reassign poses
-        this.startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
+        this.startingPose = new Pose(-36.0, -63.0, Math.toRadians(90.0));
         this.goalPose     = new Pose(-60.0, 60.0);
     }
 

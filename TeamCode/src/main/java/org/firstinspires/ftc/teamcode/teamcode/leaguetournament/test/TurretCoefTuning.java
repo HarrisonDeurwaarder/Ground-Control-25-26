@@ -160,7 +160,7 @@ public class TurretCoefTuning extends LinearOpMode {
             hardwareController.PDController(opmodeTimer.getElapsedTimeSeconds() - timeState);
             timeState = opmodeTimer.getElapsedTimeSeconds();
             // Hood
-            hardwareController.turretHood.setPosition(Math.min(hoodZero, hoodPosition));
+            hardwareController.turretHood.setPosition(Math.max(hoodZero, hoodPosition));
 
             updateTelemetry();
         }
