@@ -225,7 +225,7 @@ public class HardwareController {
         // Compute distance to goal
         // Compute target speed and hood angle using regression values
         if (y >= -12) {
-            targetSpeed = Math.min(0.259 * distance + 27.5, 60); // +1 is for diff in target/actual speed}
+            targetSpeed = Math.min(0.259 * distance + 29.0, 60); // +1 is for diff in target/actual speed}
             hoodPosition = Math.max(Math.min((0.00296 * distance + 0.107), 0.5), 0.19);
         }
         else {
