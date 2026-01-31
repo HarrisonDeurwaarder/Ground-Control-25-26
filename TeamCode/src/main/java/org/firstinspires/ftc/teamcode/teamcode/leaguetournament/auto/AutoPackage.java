@@ -47,6 +47,7 @@ abstract class DebuggerAuto extends OpMode {
     public static double FEED_DURATION      = 1.0;
     public static double RC_GATE_DURATION   = 0.0;
     public static double RC_INTAKE_DURATION = 1.5;
+    public static double READY_DURATION     = 0.5;
     public static double FLYWHEEL_ACCEPTED_ERROR = 1.0; // RPS
 
     protected Pose goalPose =  new Pose(60.0, 60.0);
@@ -147,9 +148,13 @@ abstract class DebuggerAuto extends OpMode {
                     incrementPathState();
                 }
                 break;
-            // Feed for duration
+            // Get to score position
             case 2:
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()) incrementPathState();
+                break;
+            // Shoot artifacts
+            case 3:
+                if (pathTimer.getElapsedTimeSeconds() >= READY_DURATION) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     incrementCycleState();
                 }
@@ -189,16 +194,20 @@ abstract class DebuggerAuto extends OpMode {
             case 3:
                 if (!follower.isBusy()) incrementPathState();
                 break;
-            // Feed for duration
+            // Intake for duration
             case 4:
                 if (pathTimer.getElapsedTimeSeconds() >= RC_INTAKE_DURATION) {
                     follower.followPath(score, true);
                     incrementPathState();
                 }
                 break;
-            // Feed for duration
+            // Get to score position
             case 5:
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()) incrementPathState();
+                break;
+            // Shoot artifacts
+            case 6:
+                if (pathTimer.getElapsedTimeSeconds() >= READY_DURATION) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     incrementCycleState();
                 }

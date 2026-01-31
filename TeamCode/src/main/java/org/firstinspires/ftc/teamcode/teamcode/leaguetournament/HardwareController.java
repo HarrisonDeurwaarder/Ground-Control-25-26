@@ -61,7 +61,7 @@ public class HardwareController {
     // Control flow flags
     public boolean enableAutoAiming = true;
     public boolean enableFlywheel = true;
-    public boolean enableArtifactVelocityCorrection = true;
+    public boolean enableArtifactVelocityCorrection = false;
 
     /**
      * Map devices; set all devices to default direction

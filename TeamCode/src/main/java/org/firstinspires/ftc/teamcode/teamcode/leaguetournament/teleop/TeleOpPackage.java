@@ -65,7 +65,7 @@ class DebuggerTeleOp extends OpMode {
 
         // Instanciate controllers
         hardwareController = new HardwareController(hardwareMap);
-        hardwareController.enableArtifactVelocityCorrection = true;
+        hardwareController.enableArtifactVelocityCorrection = false;
 
         // Configure follower
         follower = ConstantsEpsilon.createFollower(hardwareMap);
