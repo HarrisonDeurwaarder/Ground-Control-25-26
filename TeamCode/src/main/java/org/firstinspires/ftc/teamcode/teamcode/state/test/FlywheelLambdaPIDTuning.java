@@ -69,8 +69,6 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
 
         // Functional loop of OpMode
         while (opModeIsActive()) {
-            hardwareController.computePIDCoef();
-
             hardwareController.targetSpeed = targetSpeed;
             hardwareController.PDController(opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
             lastRecordedTime = opmodeTimer.getElapsedTimeSeconds();

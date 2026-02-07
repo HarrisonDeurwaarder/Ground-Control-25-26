@@ -167,19 +167,35 @@ class DebuggerTeleOp extends OpMode {
         hardwareController.updateTurretTarget(0.0);
     }
 
-    protected void setTeleOpDrive() {
+    protected double[] getDefaultTeleOpControls() {
+        double[] controls = {
+                gamepad1.left_stick_x,
+                -gamepad1.left_stick_y,
+                -gamepad1.right_stick_x,
+        };
+        return controls;
+    }
+
+    protected final void setTeleOpDrive() {
+        double[] controls = getDefaultTeleOpControls();
+        // Write over default controls if robot-centric is enabled
+        if (isRobotCentric) {
+            controls[0] = -gamepad1.left_stick_y;
+            controls[1] = gamepad1.left_stick_x;
+            controls[2] = gamepad1.right_stick_x;
+        }
+        // Scale all controls if precision mode is enabled
+        if (slowMode) {
+            controls[0] *= SLOW_MODE_MULTIPLIER;
+            controls[1] *= SLOW_MODE_MULTIPLIER;
+            controls[2] *= SLOW_MODE_MULTIPLIER;
+        }
+
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
                 gamepad1.left_stick_x,
                 -gamepad1.left_stick_y,
                 -gamepad1.right_stick_x,
-                isRobotCentric
-        );
-            // Precision driving mode
-        else follower.setTeleOpDrive(
-                gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
-                -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
                 isRobotCentric
         );
     }
@@ -226,21 +242,13 @@ class RedNearTeleOp extends DebuggerTeleOp {
     }
 
     @Override
-    protected void setTeleOpDrive() {
-        // Normal driving mode
-        if (!slowMode) follower.setTeleOpDrive(
+    protected double[] getDefaultTeleOpControls() {
+        double[] controls = {
                 -gamepad1.left_stick_y,
                 -gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
-                false
-        );
-            // Precision driving mode
-        else follower.setTeleOpDrive(
-                -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
-                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
-                false
-        );
+        };
+        return controls;
     }
 }
 
@@ -254,21 +262,13 @@ class RedFarTeleOp extends DebuggerTeleOp {
     }
 
     @Override
-    protected void setTeleOpDrive() {
-        // Normal driving mode
-        if (!slowMode) follower.setTeleOpDrive(
+    protected double[] getDefaultTeleOpControls() {
+        double[] controls = {
                 -gamepad1.left_stick_y,
                 -gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
-                false
-        );
-            // Precision driving mode
-        else follower.setTeleOpDrive(
-                -gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                -gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
-                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
-                false
-        );
+        };
+        return controls;
     }
 }
 
@@ -282,21 +282,13 @@ class BlueNearTeleOp extends DebuggerTeleOp {
     }
 
     @Override
-    protected void setTeleOpDrive() {
-        // Normal driving mode
-        if (!slowMode) follower.setTeleOpDrive(
+    protected double[] getDefaultTeleOpControls() {
+        double[] controls = {
                 gamepad1.left_stick_y,
                 gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
-                false
-        );
-            // Precision driving mode
-        else follower.setTeleOpDrive(
-                gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
-                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
-                false
-        );
+        };
+        return controls;
     }
 }
 
@@ -310,20 +302,12 @@ class BlueFarTeleOp extends DebuggerTeleOp {
     }
 
     @Override
-    protected void setTeleOpDrive() {
-        // Normal driving mode
-        if (!slowMode) follower.setTeleOpDrive(
+    protected double[] getDefaultTeleOpControls() {
+        double[] controls = {
                 gamepad1.left_stick_y,
                 gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
-                false
-        );
-            // Precision driving mode
-        else follower.setTeleOpDrive(
-                gamepad1.left_stick_y * SLOW_MODE_MULTIPLIER,
-                gamepad1.left_stick_x * SLOW_MODE_MULTIPLIER,
-                -gamepad1.right_stick_x * SLOW_MODE_MULTIPLIER,
-                false
-        );
+        };
+        return controls;
     }
 }
