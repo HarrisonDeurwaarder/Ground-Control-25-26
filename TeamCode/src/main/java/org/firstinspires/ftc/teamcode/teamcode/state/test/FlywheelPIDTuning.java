@@ -55,7 +55,7 @@ public class FlywheelPIDTuning extends LinearOpMode {
 
         packet = new TelemetryPacket();
         dashboard = FtcDashboard.getInstance();
-        hardwareController = new HardwareController(hardwareMap, false);
+        hardwareController = new HardwareController(hardwareMap);
 
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
@@ -69,14 +69,14 @@ public class FlywheelPIDTuning extends LinearOpMode {
         // Functional loop of OpMode
         while (opModeIsActive()) {
             hardwareController.targetSpeed = targetSpeed;
-            hardwareController.PDController(opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
+            HardwareController.flywheelPID.compute(targetSpeed, opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
             lastRecordedTime = opmodeTimer.getElapsedTimeSeconds();
 
             // Panels telemetry
             packet.put("Target Speed (RPS)", targetSpeed);
-            packet.put("Current Speed (RPS)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
-            packet.put("Error", hardwareController.lastRecordedError);
-            packet.put("Power", hardwareController.turretFlywheel.getPower());
+            packet.put("Current Speed (RPS)", hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+            packet.put("Error", HardwareController.flywheelPID.lastError);
+            packet.put("Power", hardwareController.flywheelA.getPower());
 
             dashboard.sendTelemetryPacket(packet);
         }
