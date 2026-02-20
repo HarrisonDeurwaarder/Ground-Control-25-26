@@ -66,7 +66,7 @@ abstract class DebuggerAuto extends OpMode {
         buildPaths();
 
         // Hardware controller for mechanism access
-        hardwareController = new HardwareController(hardwareMap, false);
+        hardwareController = new HardwareController(hardwareMap);
     }
 
     @Override
@@ -113,7 +113,7 @@ abstract class DebuggerAuto extends OpMode {
             // Feed for duration
             case 1:
                 // Advance if flywheel is up to speed
-                double flywheelRPS = hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360.0);
+                double flywheelRPS = hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360.0);
                 if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS) {
                     hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
                     incrementCycleState();
@@ -227,7 +227,7 @@ abstract class DebuggerAuto extends OpMode {
             hardwareController.transfer.setPower(0.0);
 
             // Reset turret
-            hardwareController.turretFlywheel.setPower(0.0);
+            hardwareController.flywheelA.setPower(0.0);
             hardwareController.updateTurretTarget(0.0);
 
             incrementCycleState();
@@ -268,7 +268,7 @@ abstract class DebuggerAuto extends OpMode {
 
         packet.put("Position (In)", follower.getPose());
         packet.put("Velocity (In/Sec)", follower.getVelocity());
-        packet.put("Flywheel Velocity (Rotations/Sec)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+        packet.put("Flywheel Velocity (Rotations/Sec)", hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
 
         packet.put("Flywheel Target Speed (RPS)", hardwareController.targetSpeed);
         packet.put("Turret Target Angle (Degrees)", hardwareController.turretAngle);

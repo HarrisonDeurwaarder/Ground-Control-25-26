@@ -35,6 +35,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.teamcode.legacytests.PIDController;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
@@ -48,7 +49,6 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
     private FtcDashboard dashboard;
     private HardwareController hardwareController;
 
-
     public static double targetSpeed = 30;
 
     @Override
@@ -56,7 +56,7 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
 
         packet = new TelemetryPacket();
         dashboard = FtcDashboard.getInstance();
-        hardwareController = new HardwareController(hardwareMap, true);
+        hardwareController = new HardwareController(hardwareMap);
 
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
@@ -70,7 +70,7 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
         // Functional loop of OpMode
         while (opModeIsActive()) {
             hardwareController.targetSpeed = targetSpeed;
-            hardwareController.PDController(opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
+            HardwareController.flywheelPID.compute(opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
             lastRecordedTime = opmodeTimer.getElapsedTimeSeconds();
 
             // Display parameter information

@@ -8,6 +8,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -21,24 +22,27 @@ public class HardwareController {
     public static double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
 
     // Tick constants
-    public static final double TURRET_ROTATION_TICKS_PER_DEGREE = 4.317;
-    public static final double FLYWHEEL_TICKS_PER_DEGREE = 0.077;
-    public static final int TURRET_TICK_LIMIT = 800; // Ticks
+    public static final double TURRET_ROTATION_TICKS_PER_DEGREE = 2.241; //4.317;
+    // 133T : 24T
+    // 5.2:1 Gearbox
+    // 28 Ticks/rotation motor
+    public static final double FLYWHEEL_TICKS_PER_DEGREE = 0.078;
+    public static final int TURRET_TICK_LIMIT = 400; // Ticks
 
     // Duration constants
     public static double ARTIFACT_AIRTIME = 0.7; // Seconds
     public static double FEEDING_THROUGHPUT = 0.5; // Seconds
 
     // Transfer constants
-    public static double OPEN_ANGLE = 0.81;
-    public static double CLOSED_ANGLE = 0.6;
+    public static double OPEN_ANGLE = 0.66;
+    public static double CLOSED_ANGLE = 0.5;
 
     // PID
     public static PIDController flywheelPID = new PIDController(0.5, 0.0, 0.0003, 0.0, 0.2);
 
     // Instance variables
     public double targetSpeed = DEFAULT_FLYWHEEL_RPS;
-    public double hoodPosition = 0.5;
+    public double hoodPosition = 0.0;
 
     public double distance = 0.0;
     public Pose virtualRobotPose, virtualGoalPose;
@@ -98,9 +102,9 @@ public class HardwareController {
      */
     private void setAllToDefault() {
         // Set drivetrain motor directions
-        leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+        leftFront.setDirection(DcMotorEx.Direction.FORWARD);
         leftBack.setDirection(DcMotorEx.Direction.REVERSE);
-        rightFront.setDirection(DcMotorEx.Direction.FORWARD);
+        rightFront.setDirection(DcMotorEx.Direction.REVERSE);
         rightBack.setDirection(DcMotorEx.Direction.FORWARD);
 
         // Set mechanism motor directions
@@ -113,7 +117,7 @@ public class HardwareController {
         // Set servo directions
         turretHood.setDirection(Servo.Direction.FORWARD);
         gate.setDirection(Servo.Direction.FORWARD);
-        gate.setPosition(0.6);
+        gate.setPosition(0.5);
 
         flywheelA.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flywheelA.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -148,7 +152,7 @@ public class HardwareController {
         /* TURRET ALIGNMENT */
 
         // Align turret if enabled
-        if (enableAutoAiming) {
+        if (false) { // enableAutoAiming
             computeVirtualPoses(follower.getPose(), goalPose);
             alignTurretToHeading();
         }
@@ -237,16 +241,16 @@ public class HardwareController {
         // Compute distance to goal
         // Compute target speed and hood angle using regression values
         if (y >= -12) {
-            targetSpeed = Math.min(0.259 * distance + 29.0, 60); // +1 is for diff in target/actual speed}
-            hoodPosition = Math.max(Math.min((0.00296 * distance + 0.107), 0.5), 0.19);
+            targetSpeed = 45.0; // Math.min(0.259 * distance + 29.0, 60); // +1 is for diff in target/actual speed}
+            hoodPosition = 0.5; // Math.max(Math.min((0.00296 * distance + 0.107), 0.5), 0.19);
         }
         else {
-            targetSpeed = 57.0;
-            hoodPosition = 0.45;
+            targetSpeed = 45.0;
+            hoodPosition = 0.5;
         }
             // Send values
             //turretFlywheel.setVelocity(targetSpeed);
-            turretHood.setPosition(hoodPosition);
+            turretHood.setPosition(hoodPosition); //
     }
 
     // Hood Angle: 0.00438x + 0.0457
