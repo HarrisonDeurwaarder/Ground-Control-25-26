@@ -59,6 +59,6 @@ public class PIDController {
         integral += error * deltaTime;
         lastError = error;
 
-        return Kp * error + Ki * integral + Kd * derivative + Kf * setpoint + Ks * Math.signum(error);
+        return Kp * error + Ki * integral + Kd * derivative; //+ Kf * setpoint + Ks * Math.signum(error);
     }
 }

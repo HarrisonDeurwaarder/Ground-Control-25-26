@@ -38,7 +38,7 @@ public class HardwareController {
     public static double CLOSED_ANGLE = 0.5;
 
     // PID
-    public static PIDController flywheelPID = new PIDController(0.5, 0.0, 0.0003, 0.0, 0.2);
+    public static PIDController flywheelPID = new PIDController(0.1, 0.0, 0.0003, 0.0, 0.2);
 
     // Instance variables
     public double targetSpeed = DEFAULT_FLYWHEEL_RPS;
@@ -82,14 +82,14 @@ public class HardwareController {
         turretRotation = hardwareMap.get(DcMotorEx.class, "turretRotation");
 
         // Map servos
-        turretHood = hardwareMap.get(Servo.class, "turretHood");
+        turretHood = hardwareMap.get(Servo.class, "hood");
         gate = hardwareMap.get(Servo.class, "gate");
 
         // Map limelight
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        //limelight = hardwareMap.get(Limelight3A.class, "limelight");
         // Set poll rate
-        limelight.setPollRateHz(100);
-        limelight.start();
+        //limelight.setPollRateHz(100);
+        //limelight.start();
 
         setAllToDefault();
     }
@@ -102,14 +102,13 @@ public class HardwareController {
      */
     private void setAllToDefault() {
         // Set drivetrain motor directions
-        leftFront.setDirection(DcMotorEx.Direction.FORWARD);
-        leftBack.setDirection(DcMotorEx.Direction.REVERSE);
-        rightFront.setDirection(DcMotorEx.Direction.REVERSE);
-        rightBack.setDirection(DcMotorEx.Direction.FORWARD);
+        //leftFront.setDirection(DcMotorEx.Direction.FORWARD);
+        //leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+        //rightFront.setDirection(DcMotorEx.Direction.FORWARD);
+        //rightBack.setDirection(DcMotorEx.Direction.REVERSE);
 
         // Set mechanism motor directions
-        intake.setDirection(DcMotorEx.Direction.REVERSE);
-        transfer.setDirection(DcMotorEx.Direction.REVERSE);
+        intake.setDirection(DcMotorEx.Direction.FORWARD);
         flywheelA.setDirection(DcMotorEx.Direction.REVERSE);
         flywheelB.setDirection(DcMotorEx.Direction.REVERSE);
         turretRotation.setDirection(DcMotorEx.Direction.FORWARD);
@@ -128,8 +127,8 @@ public class HardwareController {
         turretRotation.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         turretRotation.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Set default target position
-        turretRotation.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, new PIDFCoefficients(5.0, 1.0, 0.0, 0.0));
         turretRotation.setTargetPosition(0);
+        turretRotation.setPower(0.5);
         turretRotation.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         //turretRotation.setPower(TURRET_ROTATION_POWER);
     }
@@ -174,13 +173,13 @@ public class HardwareController {
         // Set the flywheel power
         flywheelA.setPower(
                 Math.max(-1.0, Math.min(flywheelPID.compute(
-                        targetSpeed, flywheelA.getVelocity()
+                        targetSpeed, flywheelA.getVelocity()/28.0
                 ), 1.0))
         );
         // Set the flywheel power
         flywheelB.setPower(
                 Math.max(-1.0, Math.min(flywheelPID.compute(
-                        targetSpeed, flywheelA.getVelocity()
+                        targetSpeed, flywheelA.getVelocity()/28.0
                 ), 1.0))
         );
     }
@@ -241,11 +240,11 @@ public class HardwareController {
         // Compute distance to goal
         // Compute target speed and hood angle using regression values
         if (y >= -12) {
-            targetSpeed = 45.0; // Math.min(0.259 * distance + 29.0, 60); // +1 is for diff in target/actual speed}
+            targetSpeed = 20.0; // Math.min(0.259 * distance + 29.0, 60); // +1 is for diff in target/actual speed}
             hoodPosition = 0.5; // Math.max(Math.min((0.00296 * distance + 0.107), 0.5), 0.19);
         }
         else {
-            targetSpeed = 45.0;
+            targetSpeed = 20.0;
             hoodPosition = 0.5;
         }
             // Send values

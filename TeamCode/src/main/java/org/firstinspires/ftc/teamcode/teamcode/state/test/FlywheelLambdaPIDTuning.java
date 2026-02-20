@@ -39,7 +39,7 @@ import org.firstinspires.ftc.teamcode.teamcode.legacytests.PIDController;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel Lambda Tuner", group="Test")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel Lambda Tuner State", group="Test")
 public class FlywheelLambdaPIDTuning extends LinearOpMode {
 
     private Timer opmodeTimer;

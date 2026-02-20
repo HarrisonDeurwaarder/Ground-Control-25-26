@@ -42,7 +42,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Turret Regression Tuner", group="Test")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Turret Regression Tuner State", group="Test")
 public class TurretCoefTuning extends LinearOpMode {
     private Timer opmodeTimer;
     private Follower follower;
@@ -59,6 +59,7 @@ public class TurretCoefTuning extends LinearOpMode {
     public static double flywheelTargetSpeed = 30.0; // RPS
     public static double hoodPosition = 0.0; //
 
+    public double targetSpeed = 30.0;
 
     @Override
     public void runOpMode() {
@@ -67,7 +68,7 @@ public class TurretCoefTuning extends LinearOpMode {
         opmodeTimer.resetTimer();
 
         // Instanciate controllers
-        hardwareController = new HardwareController(hardwareMap, false);
+        hardwareController = new HardwareController(hardwareMap);
 
         // Configure follower
         follower = ConstantsEpsilon.createFollower(hardwareMap);
@@ -153,7 +154,7 @@ public class TurretCoefTuning extends LinearOpMode {
 
             // Flywheel
             hardwareController.targetSpeed = flywheelTargetSpeed;
-            hardwareController.PDController(opmodeTimer.getElapsedTimeSeconds() - timeState);
+            HardwareController.flywheelPID.compute(targetSpeed, opmodeTimer.getElapsedTimeSeconds() - timeState);
             timeState = opmodeTimer.getElapsedTimeSeconds();
             // Hood
             hardwareController.turretHood.setPosition(Math.max(hoodZero, hoodPosition));
@@ -167,7 +168,7 @@ public class TurretCoefTuning extends LinearOpMode {
 
         // Debug telemetry (On panels)
         packet.put("Distance (in)", turretCenter.distanceFrom(goalPose));
-        packet.put("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / 28.0);
+        packet.put("Flywheel Velocity (RPS)", hardwareController.flywheelA.getVelocity() / 28.0);
 
         packet.put("Target Speed", flywheelTargetSpeed);
         packet.put("Hood Position", hardwareController.turretHood.getPosition());

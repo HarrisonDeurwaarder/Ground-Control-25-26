@@ -106,10 +106,10 @@ public class MotorTest extends LinearOpMode {
                 //turretRotation.setPower((turretRotation.getPower() > 0.0) ? 0 : motor_power);
                 break;
             case 4:
-                leftFront.setPower((leftFront.getPower() > 0.0) ? 0 : motor_power);
+                leftBack.setPower((leftFront.getPower() > 0.0) ? 0 : motor_power);
                 break;
             case 5:
-                rightFront.setPower((rightFront.getPower() > 0.0) ? 0 : motor_power);
+                rightBack.setPower((rightFront.getPower() > 0.0) ? 0 : motor_power);
                 break;
             case 6:
                 break;

@@ -293,8 +293,8 @@ class BlueNearTeleOp extends DebuggerTeleOp {
     protected void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
-                gamepad1.left_stick_y,
                 gamepad1.left_stick_x,
+                gamepad1.left_stick_y,
                 -gamepad1.right_stick_x,
                 false
         );
@@ -321,8 +321,8 @@ class BlueFarTeleOp extends DebuggerTeleOp {
     protected void setTeleOpDrive() {
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
-                gamepad1.left_stick_y,
                 gamepad1.left_stick_x,
+                gamepad1.left_stick_y,
                 -gamepad1.right_stick_x,
                 false
         );

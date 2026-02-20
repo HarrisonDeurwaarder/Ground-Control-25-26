@@ -38,7 +38,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel PID Tuner", group="Test")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel PID Tuner State", group="Test")
 public class FlywheelPIDTuning extends LinearOpMode {
 
     private Timer opmodeTimer;

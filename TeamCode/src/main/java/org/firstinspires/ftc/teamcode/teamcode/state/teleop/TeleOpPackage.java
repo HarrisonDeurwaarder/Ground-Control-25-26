@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
-@TeleOp(name = "TeleOp", group = "League Tournament")
+@TeleOp(name = "TeleOp State", group = "League Tournament")
 public class TeleOpPackage extends SelectableOpMode {
     public static Follower follower;
     public TeleOpPackage() {
@@ -108,45 +108,38 @@ class DebuggerTeleOp extends OpMode {
             // Switch gate to open
             hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
             // Switch intake mode to [intake] if needed
-            if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
-                hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+            if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
             }
             // Then feed and intake
             hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-            hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
         }
 
         // INTAKE CONDITIONAL
         // When trigger is held, intake
         else if (gamepad1.left_trigger >= 0.05) {
             // Switch intake mode to reverse if needed
-            if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
-                hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+            if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
             }
             // Then power intake and gate
             hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-            hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
         }
 
         // OUTTAKE CONDITIONAL
         // When trigger is held, intake
         else if (gamepad1.left_bumper) {
             // Switch intake mode to reverse if needed
-            if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
-                hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+            if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
             }
             // Then power intake and gate
             hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-            hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
         }
 
         // Else don't power either motor
         else {
             hardwareController.intake.setPower(0.0);
-            hardwareController.transfer.setPower(0.0);
         }
         // Perform turret updates
         hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
@@ -159,7 +152,6 @@ class DebuggerTeleOp extends OpMode {
         // Disable all motors
         hardwareController.gate.setPosition(0.5);
         hardwareController.intake.setPower(0.0);
-        hardwareController.transfer.setPower(0.0);
         follower.breakFollowing();
 
         // Reset turret
@@ -170,8 +162,8 @@ class DebuggerTeleOp extends OpMode {
 
     protected double[] getDefaultTeleOpControls() {
         double[] controls = {
-                gamepad1.left_stick_x,
                 -gamepad1.left_stick_y,
+                -gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
         };
         return controls;
@@ -182,7 +174,7 @@ class DebuggerTeleOp extends OpMode {
         // Write over default controls if robot-centric is enabled
         if (isRobotCentric) {
             controls[0] = -gamepad1.left_stick_y;
-            controls[1] = gamepad1.left_stick_x;
+            controls[1] = -gamepad1.left_stick_x;
             controls[2] = gamepad1.right_stick_x;
         }
         // Scale all controls if precision mode is enabled
@@ -194,9 +186,9 @@ class DebuggerTeleOp extends OpMode {
 
         // Normal driving mode
         if (!slowMode) follower.setTeleOpDrive(
-                gamepad1.left_stick_x,
-                -gamepad1.left_stick_y,
-                -gamepad1.right_stick_x,
+                controls[0],
+                controls[1],
+                controls[2],
                 isRobotCentric
         );
     }
@@ -245,8 +237,8 @@ class RedNearTeleOp extends DebuggerTeleOp {
     @Override
     protected double[] getDefaultTeleOpControls() {
         double[] controls = {
-                -gamepad1.left_stick_y,
-                -gamepad1.left_stick_x,
+                gamepad1.left_stick_y,
+                gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
         };
         return controls;
@@ -265,8 +257,8 @@ class RedFarTeleOp extends DebuggerTeleOp {
     @Override
     protected double[] getDefaultTeleOpControls() {
         double[] controls = {
-                -gamepad1.left_stick_y,
-                -gamepad1.left_stick_x,
+                gamepad1.left_stick_y,
+                gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
         };
         return controls;
@@ -285,8 +277,8 @@ class BlueNearTeleOp extends DebuggerTeleOp {
     @Override
     protected double[] getDefaultTeleOpControls() {
         double[] controls = {
-                gamepad1.left_stick_y,
-                gamepad1.left_stick_x,
+                -gamepad1.left_stick_y,
+                -gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
         };
         return controls;
@@ -305,8 +297,8 @@ class BlueFarTeleOp extends DebuggerTeleOp {
     @Override
     protected double[] getDefaultTeleOpControls() {
         double[] controls = {
-                gamepad1.left_stick_y,
-                gamepad1.left_stick_x,
+                -gamepad1.left_stick_y,
+                -gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
         };
         return controls;

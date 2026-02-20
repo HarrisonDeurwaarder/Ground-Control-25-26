@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 
 @Config
-@Autonomous(name = "Autonomous", group = "League Tournament")
+@Autonomous(name = "Autonomous State", group = "League Tournament")
 public class AutoPackage extends SelectableOpMode {
     public static Follower follower;
     public AutoPackage() {

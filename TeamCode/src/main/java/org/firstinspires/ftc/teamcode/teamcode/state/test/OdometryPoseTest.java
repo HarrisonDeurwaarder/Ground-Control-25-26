@@ -39,7 +39,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 
 @Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Odometry Pose Test", group="Test")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Odometry Pose Test State", group="Test")
 public class OdometryPoseTest extends LinearOpMode {
 
     private Follower follower;

@@ -43,9 +43,9 @@ public class ConstantsEpsilon {
             .leftRearMotorName("leftBack")
             .leftFrontMotorName("leftFront")
             // Default drivetrain directions
-            .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
+            .leftFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             // Cartesian velocity
             .xVelocity(51.0) //51
