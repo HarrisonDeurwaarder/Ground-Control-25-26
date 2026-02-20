@@ -70,7 +70,7 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
         // Functional loop of OpMode
         while (opModeIsActive()) {
             hardwareController.targetSpeed = targetSpeed;
-            HardwareController.flywheelPID.compute(opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
+            HardwareController.flywheelPID.compute(hardwareController.targetSpeed, opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
             lastRecordedTime = opmodeTimer.getElapsedTimeSeconds();
 
             // Display parameter information
@@ -81,12 +81,15 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
 
             // Panels telemetry
             packet.put("Target Speed (RPS)", targetSpeed);
-            packet.put("Current Speed (RPS)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
-            packet.put("Error", hardwareController.lastRecordedError);
-            packet.put("Power", hardwareController.turretFlywheel.getPower());
+            packet.put("Current Speed (RPS)", hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+            packet.put("Error", HardwareController.flywheelPID.lastError);
+            packet.put("Power", hardwareController.flywheelA.getPower());
 
-            packet.put("Kp", HardwareController.turret.Kp);
-            packet.put("Kd", HardwareController.Kd);
+            packet.put("Kp", HardwareController.flywheelPID.Kp);
+            packet.put("Ki", HardwareController.flywheelPID.Ki);
+            packet.put("Kd", HardwareController.flywheelPID.Kd);
+            packet.put("Kf", HardwareController.flywheelPID.Kf);
+            packet.put("Ks", HardwareController.flywheelPID.Ks);
 
             dashboard.sendTelemetryPacket(packet);
         }
