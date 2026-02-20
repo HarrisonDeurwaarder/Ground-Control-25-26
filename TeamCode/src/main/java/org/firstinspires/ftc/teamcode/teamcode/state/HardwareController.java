@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
+import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -17,42 +18,34 @@ public class HardwareController {
     public static final double INTAKE_POWER = 1.0;
     public static final double TRANSFER_POWER = 1.0;
     public static final double TURRET_ROTATION_POWER = 1.0;
+    public static double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
 
-    // Miscellaneous constants
+    // Tick constants
     public static final double TURRET_ROTATION_TICKS_PER_DEGREE = 4.317;
     public static final double FLYWHEEL_TICKS_PER_DEGREE = 0.077;
     public static final int TURRET_TICK_LIMIT = 800; // Ticks
 
-    public static double DEFAULT_FLYWHEEL_RPS = 45.0; // RPS
-    public static double ARTIFACT_AIRTIME = 0.5; // Seconds
+    // Duration constants
+    public static double ARTIFACT_AIRTIME = 0.7; // Seconds
+    public static double FEEDING_THROUGHPUT = 0.5; // Seconds
 
-    public static double OPEN_ANGLE   = 0.81;
+    // Transfer constants
+    public static double OPEN_ANGLE = 0.81;
     public static double CLOSED_ANGLE = 0.6;
 
-    // Adaptive turret variables
+    // PID
+    public static PIDController flywheelPID = new PIDController(0.5, 0.0, 0.0003, 0.0, 0.2);
+
+    // Instance variables
     public double targetSpeed = DEFAULT_FLYWHEEL_RPS;
     public double hoodPosition = 0.5;
 
     public double distance = 0.0;
-    public double lastRecordedError = 0.0;
-    public double lastRecordedTime = 0.0;
-    public double lastIntegral = 0.0;
-
-    // Flywheel PID
-    public static double beta = 0.1;
-    public static double tau = 0.1;
-    public static double K = 0.1;
-    public static double lambda = 0.1;
-
-    public static double Kp = 0.5;
-    public static double Ki = 0.0;
-    public static double Kd = 0.0003;
-    public static double Kf = 0.0;
-    public static double Ks = 0.2;
+    public Pose virtualRobotPose, virtualGoalPose;
 
     // Declare actuators
     public DcMotorEx leftFront, leftBack, rightFront, rightBack;
-    public DcMotorEx intake, transfer, turretFlywheel, turretRotation;
+    public DcMotorEx intake, transfer, flywheelA, flywheelB, turretRotation;
     public Servo turretHood, gate;
     public Limelight3A limelight;
 
@@ -70,8 +63,8 @@ public class HardwareController {
      * Map devices; set all devices to default direction
      *
      * @param hardwareMap HardwareMap object
-    */
-    public HardwareController(HardwareMap hardwareMap, boolean useLambda) {
+     */
+    public HardwareController(HardwareMap hardwareMap) {
         // Map drivetrain motors
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -80,14 +73,13 @@ public class HardwareController {
 
         // Map mechanism motors
         intake = hardwareMap.get(DcMotorEx.class, "intake");
-        transfer = hardwareMap.get(DcMotorEx.class, "transfer");
-        turretFlywheel = hardwareMap.get(DcMotorEx.class, "turretFlywheel");
+        flywheelA = hardwareMap.get(DcMotorEx.class, "flywheelA");
+        flywheelB = hardwareMap.get(DcMotorEx.class, "flywheelB");
         turretRotation = hardwareMap.get(DcMotorEx.class, "turretRotation");
-        turretRotation.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, new PIDFCoefficients(5.0, 1.0, 0.0, 0.0));
 
         // Map servos
         turretHood = hardwareMap.get(Servo.class, "turretHood");
-        gate = hardwareMap.get(Servo.class, "turretGate");
+        gate = hardwareMap.get(Servo.class, "gate");
 
         // Map limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -96,7 +88,6 @@ public class HardwareController {
         limelight.start();
 
         setAllToDefault();
-        if (useLambda) computePIDCoefFromLambda();
     }
 
     /**
@@ -104,7 +95,7 @@ public class HardwareController {
      * Left drivetrain motors run reverse
      * Right drivetrain motors run forward
      * Default target turret rotation position (angles) to zero
-    */
+     */
     private void setAllToDefault() {
         // Set drivetrain motor directions
         leftFront.setDirection(DcMotorEx.Direction.REVERSE);
@@ -115,7 +106,8 @@ public class HardwareController {
         // Set mechanism motor directions
         intake.setDirection(DcMotorEx.Direction.REVERSE);
         transfer.setDirection(DcMotorEx.Direction.REVERSE);
-        turretFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
+        flywheelA.setDirection(DcMotorEx.Direction.REVERSE);
+        flywheelB.setDirection(DcMotorEx.Direction.REVERSE);
         turretRotation.setDirection(DcMotorEx.Direction.FORWARD);
 
         // Set servo directions
@@ -123,36 +115,19 @@ public class HardwareController {
         gate.setDirection(Servo.Direction.FORWARD);
         gate.setPosition(0.6);
 
-        turretFlywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        turretFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheelA.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flywheelA.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheelB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flywheelB.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Set turret rotation motor to use encoder
         turretRotation.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         turretRotation.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Set default target position
+        turretRotation.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, new PIDFCoefficients(5.0, 1.0, 0.0, 0.0));
         turretRotation.setTargetPosition(0);
         turretRotation.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        turretRotation.setPower(TURRET_ROTATION_POWER);
-    }
-
-    public void computePIDCoefFromLambda() {
-        // Recompute Kp and Kd if lambda constants are changed
-        Kp = ((1.0 + beta) * tau) / (K * lambda);
-        Kd = beta * tau / K;
-        // Lambda tuned PIDs only use PD
-        Ki = 0.0;
-        Kf = 0.0;
-        Kf = 0.0;
-    }
-
-    /**
-     * Reset turret rotation and hood position
-    */
-    public void resetTurret() {
-        // Reset all turret actuators to default position
-        updateTurretTarget(0);
-        targetSpeed = 35.0;
-        turretHood.setPosition(0.5);
+        //turretRotation.setPower(TURRET_ROTATION_POWER);
     }
 
     /**
@@ -160,35 +135,50 @@ public class HardwareController {
      *
      * @param follower robot follower object
      * @param goalPose goal pose
-    */
+     */
     public void updateTurret(Follower follower, Pose goalPose, double timestamp) {
+        /* VELOCITY CORRECTION */
+
         // Translate the goal pose in accordance with expected velocity if enabled
         if (enableArtifactVelocityCorrection) goalPose = new Pose(
-                    goalPose.getX() - ARTIFACT_AIRTIME * follower.getVelocity().getXComponent(),
-                    goalPose.getY() - ARTIFACT_AIRTIME * follower.getVelocity().getYComponent()
-            );
+                goalPose.getX() - ARTIFACT_AIRTIME * follower.getVelocity().getXComponent(),
+                goalPose.getY() - ARTIFACT_AIRTIME * follower.getVelocity().getYComponent()
+        );
+
+        /* TURRET ALIGNMENT */
 
         // Align turret if enabled
         if (enableAutoAiming) {
-            alignTurretToHeading(follower.getPose(), goalPose);
+            computeVirtualPoses(follower.getPose(), goalPose);
+            alignTurretToHeading();
         }
         // Else set to default position
         else {
             turretRotation.setTargetPosition((int) (-90.0 * TURRET_ROTATION_TICKS_PER_DEGREE));
         }
 
-        // Control flywheel if enabled
+        /* FLYWHEEL CONTROL */
+
         if (enableFlywheel) {
             // If flywheel enabled set parameters by distance
             double distance = follower.getPose().distanceFrom(goalPose);
             updateFlywheelByDistance(distance, follower.getPose().getY());
-        // Else set to zero velocity
+            // Else set to zero velocity
         } else {
             targetSpeed = 0.0;
         }
         // Set the flywheel power
-        PDController(timestamp - lastRecordedTime);
-        lastRecordedTime = timestamp;
+        flywheelA.setPower(
+                Math.max(-1.0, Math.min(flywheelPID.compute(
+                        targetSpeed, flywheelA.getVelocity()
+                ), 1.0))
+        );
+        // Set the flywheel power
+        flywheelB.setPower(
+                Math.max(-1.0, Math.min(flywheelPID.compute(
+                        targetSpeed, flywheelA.getVelocity()
+                ), 1.0))
+        );
     }
 
     /**
@@ -216,21 +206,28 @@ public class HardwareController {
 
     /**
      * Align the turret by heading
-     *
-     * @param robotPose robot pose
-     * @param goalPose goal pose
     */
-    private void alignTurretToHeading(Pose robotPose, Pose goalPose) {
+    private void alignTurretToHeading() {
         // Computes the robot->goal vector
-        Vector goalPosition = new Vector(goalPose);
-        Vector robotPosition = new Vector(robotPose);
+        Vector goalPosition = new Vector(virtualGoalPose);
+        Vector robotPosition = new Vector(virtualRobotPose);
         Vector goalFromRobot = goalPosition.minus(robotPosition);
         // Robot heading offset
         int headingShifted = (int) (Math.toDegrees(Math.atan2(goalFromRobot.getYComponent(), goalFromRobot.getXComponent())));
         int headingOffset = headingShifted - 90;
-        turretAngle = headingOffset - (int)(Math.toDegrees(robotPose.getHeading()));
+        turretAngle = headingOffset - (int)(Math.toDegrees(virtualRobotPose.getHeading()));
 
         updateTurretTarget(turretAngle);
+    }
+
+    /**
+     * Compute the effective target for turret alignment
+     *
+     * @param goalPose goal pose
+     */
+    private void computeVirtualPoses(Pose robotPose, Pose goalPose) {
+        /* VIRTUAL ROBOT POSE */
+        /* VIRTUAL GOAL POSE */
     }
 
     /**
@@ -252,28 +249,68 @@ public class HardwareController {
             turretHood.setPosition(hoodPosition);
     }
 
-    /**
-     * PD controller for turret velocity
-     *
-     * @param deltaTime time since last run cycle
-     */
-    public void PDController(double deltaTime) {
-        double proportional = targetSpeed - (turretFlywheel.getVelocity() / 28.0);
-        double integral     = lastIntegral + proportional * deltaTime;
-        double derivative   = (proportional - lastRecordedError) / deltaTime;
-        double feedforward  = targetSpeed;
-        double _static      = Math.signum(proportional);
-        // Compute power
-        double power = Kp * proportional + Ki * integral + Kd * derivative + Kf * feedforward + Ks * _static;
-        // Clip power
-        power = Math.max(Math.min(power, 1.0), -1.0);
-        turretFlywheel.setPower(power);
-
-        // Save previous
-        lastRecordedError = proportional;
-        lastIntegral = integral;
-    }
-
     // Hood Angle: 0.00438x + 0.0457
     // Flywheel Speed (RPS): 0.176x + 33.9
+}
+
+
+class PIDController {
+    public double Kp, Ki, Kd, Kf, Ks;
+    private double lastError, lastTimestamp, integral = 0.0;
+    private Timer plantTimer;
+
+    public PIDController(double p, double i, double d, double f, double s) {
+        setCoefficients(p, i, d, f, s);
+        plantTimer = new Timer();
+        plantTimer.resetTimer();
+    }
+
+    public PIDController(double beta, double tau, double K, double lambda) {
+        setCoefficients(beta, tau, K, lambda);
+        plantTimer = new Timer();
+        plantTimer.resetTimer();
+    }
+
+    /**
+     * Set the coefficients of the controller
+     *
+     * @param p proportional coefficient
+     * @param i integral coefficient
+     * @param d derivative coefficient
+     * @param f feedforward coefficient
+     * @param s static coefficient
+     */
+    public void setCoefficients(double p, double i, double d, double f, double s) {
+        // Map coefficients
+        Kp = p; Ki = i; Kd = d; Kf = f; Ks = s;
+    }
+
+    /**
+     * Set the coefficients of the controller (by lambda constants)
+     *
+     * @param beta figure
+     * @param tau it
+     * @param K out
+     * @param lambda ;)
+     */
+    public void setCoefficients(double beta, double tau, double K, double lambda) {
+        // Compute PID coefficients from lambda-tuned constants
+        Kp = ((1.0 + beta) * tau) / (K * lambda);
+        Kd = beta * tau / K;
+        // Lambda tuned PIDs only use PD
+        Ki = 0.0; Kf = 0.0; Ks = 0.0;
+    }
+
+    public double compute(double setpoint, double measurement) {
+        double deltaTime = plantTimer.getElapsedTimeSeconds() - lastTimestamp;
+        lastTimestamp = plantTimer.getElapsedTimeSeconds();
+
+        // Compute PID
+        double error = setpoint - measurement;
+        double derivative = (error - lastError) / deltaTime;
+        integral += error * deltaTime;
+        lastError = error;
+
+        return Kp * error + Ki * integral + Kd * derivative + Kf * setpoint + Ks * Math.signum(error);
+    }
 }

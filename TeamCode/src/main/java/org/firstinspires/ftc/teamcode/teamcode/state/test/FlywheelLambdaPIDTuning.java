@@ -85,7 +85,7 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
             packet.put("Error", hardwareController.lastRecordedError);
             packet.put("Power", hardwareController.turretFlywheel.getPower());
 
-            packet.put("Kp", HardwareController.Kp);
+            packet.put("Kp", HardwareController.turret.Kp);
             packet.put("Kd", HardwareController.Kd);
 
             dashboard.sendTelemetryPacket(packet);

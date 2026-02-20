@@ -56,7 +56,7 @@ class DebuggerTeleOp extends OpMode {
         opmodeTimer.resetTimer();
 
         // Instanciate controllers
-        hardwareController = new HardwareController(hardwareMap, false);
+        hardwareController = new HardwareController(hardwareMap);
         hardwareController.enableArtifactVelocityCorrection = false;
 
         // Configure follower
@@ -163,7 +163,8 @@ class DebuggerTeleOp extends OpMode {
         follower.breakFollowing();
 
         // Reset turret
-        hardwareController.turretFlywheel.setPower(0.0);
+        hardwareController.flywheelA.setPower(0.0);
+        hardwareController.flywheelB.setPower(0.0);
         hardwareController.updateTurretTarget(0.0);
     }
 
@@ -204,7 +205,7 @@ class DebuggerTeleOp extends OpMode {
         // Debug telemetry (On panels)
         packet.put("Position (In)", follower.getPose());
         packet.put("Velocity (In/Sec)", follower.getVelocity());
-        packet.put("Flywheel Velocity (RPS)", hardwareController.turretFlywheel.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+        packet.put("Flywheel Velocity (RPS)", hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
 
         packet.put("Turret Angle", hardwareController.turretAngle);
         packet.put("Turret Ticks", hardwareController.turretTicks);
