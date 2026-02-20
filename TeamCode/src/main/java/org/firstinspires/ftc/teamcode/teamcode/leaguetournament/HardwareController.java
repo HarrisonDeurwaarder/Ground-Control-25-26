@@ -21,7 +21,7 @@ import java.util.List;
 public class HardwareController {
     // Power constants
     public static final double INTAKE_POWER = 1.0;
-    public static final double TRANSFER_POWER = 1.0;
+    public static final double TRANSFER_POWER = 0.7;
     public static final double TURRET_ROTATION_POWER = 1.0;
 
     // Miscellaneous constants
@@ -81,7 +81,7 @@ public class HardwareController {
         transfer = hardwareMap.get(DcMotorEx.class, "transfer");
         turretFlywheel = hardwareMap.get(DcMotorEx.class, "turretFlywheel");
         turretRotation = hardwareMap.get(DcMotorEx.class, "turretRotation");
-        turretRotation.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, new PIDFCoefficients(5.0, 1.0, 0.0, 0.0));
+        //turretRotation.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, new PIDFCoefficients(5.0, 1.0, 0.0, 0.0));
 
         // Map servos
         turretHood = hardwareMap.get(Servo.class, "turretHood");
@@ -228,7 +228,7 @@ public class HardwareController {
         // Compute target speed and hood angle using regression values
         if (y >= -12) {
             targetSpeed = Math.min(0.259 * distance + 29.0, 60); // +1 is for diff in target/actual speed}
-            hoodPosition = Math.max(Math.min((0.00296 * distance + 0.107), 0.5), 0.19);
+            hoodPosition = Math.max(Math.min(((0.00296 + 0.0010) * distance + 0.107), 0.5), 0.19);
         }
         else {
             targetSpeed = 57.0;
