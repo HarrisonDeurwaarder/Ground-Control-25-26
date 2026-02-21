@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
-@TeleOp(name = "TeleOp State", group = "League Tournament")
+@TeleOp(name = "TeleOp", group = "State")
 public class TeleOpPackage extends SelectableOpMode {
     public static Follower follower;
     public TeleOpPackage() {
@@ -142,7 +142,7 @@ class DebuggerTeleOp extends OpMode {
             hardwareController.intake.setPower(0.0);
         }
         // Perform turret updates
-        hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
+        hardwareController.updateTurret(follower, goalPose);
 
         updateTelemetry();
     }
@@ -175,7 +175,7 @@ class DebuggerTeleOp extends OpMode {
         if (isRobotCentric) {
             controls[0] = -gamepad1.left_stick_y;
             controls[1] = -gamepad1.left_stick_x;
-            controls[2] = gamepad1.right_stick_x;
+            controls[2] = -gamepad1.right_stick_x;
         }
         // Scale all controls if precision mode is enabled
         if (slowMode) {
@@ -237,8 +237,8 @@ class RedNearTeleOp extends DebuggerTeleOp {
     @Override
     protected double[] getDefaultTeleOpControls() {
         double[] controls = {
-                gamepad1.left_stick_y,
-                gamepad1.left_stick_x,
+                -gamepad1.left_stick_y,
+                -gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
         };
         return controls;
@@ -257,8 +257,8 @@ class RedFarTeleOp extends DebuggerTeleOp {
     @Override
     protected double[] getDefaultTeleOpControls() {
         double[] controls = {
-                gamepad1.left_stick_y,
-                gamepad1.left_stick_x,
+                -gamepad1.left_stick_y,
+                -gamepad1.left_stick_x,
                 -gamepad1.right_stick_x,
         };
         return controls;
@@ -279,7 +279,7 @@ class BlueNearTeleOp extends DebuggerTeleOp {
         double[] controls = {
                 -gamepad1.left_stick_y,
                 -gamepad1.left_stick_x,
-                -gamepad1.right_stick_x,
+                gamepad1.right_stick_x,
         };
         return controls;
     }
@@ -299,7 +299,7 @@ class BlueFarTeleOp extends DebuggerTeleOp {
         double[] controls = {
                 -gamepad1.left_stick_y,
                 -gamepad1.left_stick_x,
-                -gamepad1.right_stick_x,
+                gamepad1.right_stick_x,
         };
         return controls;
     }

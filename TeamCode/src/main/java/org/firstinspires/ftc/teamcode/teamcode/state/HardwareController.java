@@ -31,7 +31,7 @@ public class HardwareController {
 
     // Duration constants
     public static double ARTIFACT_AIRTIME = 0.7; // Seconds
-    public static double FEEDING_THROUGHPUT = 0.5; // Seconds
+    public static double FEEDING_LATENCY = 0.5; // Seconds
 
     // Transfer constants
     public static double OPEN_ANGLE = 0.66;
@@ -59,9 +59,9 @@ public class HardwareController {
     public boolean tagDetected = false;
 
     // Control flow flags
-    public boolean enableAutoAiming = true;
-    public boolean enableFlywheel = true;
     public boolean enableArtifactVelocityCorrection = false;
+    public boolean enableAutoAiming = false;
+    public boolean enableFlywheel = false;
 
     /**
      * Map devices; set all devices to default direction
@@ -111,7 +111,7 @@ public class HardwareController {
         intake.setDirection(DcMotorEx.Direction.FORWARD);
         flywheelA.setDirection(DcMotorEx.Direction.REVERSE);
         flywheelB.setDirection(DcMotorEx.Direction.REVERSE);
-        turretRotation.setDirection(DcMotorEx.Direction.FORWARD);
+        turretRotation.setDirection(DcMotorEx.Direction.REVERSE);
 
         // Set servo directions
         turretHood.setDirection(Servo.Direction.FORWARD);
@@ -139,7 +139,7 @@ public class HardwareController {
      * @param follower robot follower object
      * @param goalPose goal pose
      */
-    public void updateTurret(Follower follower, Pose goalPose, double timestamp) {
+    public void updateTurret(Follower follower, Pose goalPose) {
         /* VELOCITY CORRECTION */
 
         // Translate the goal pose in accordance with expected velocity if enabled
@@ -148,11 +148,19 @@ public class HardwareController {
                 goalPose.getY() - ARTIFACT_AIRTIME * follower.getVelocity().getYComponent()
         );
 
+        /* VELOCITY CORRECTION */
+
+        if (enableArtifactVelocityCorrection) {
+            computeVirtualPoses(follower, goalPose);
+        } else {
+            virtualRobotPose = follower.getPose();
+            virtualGoalPose = goalPose;
+        }
+
         /* TURRET ALIGNMENT */
 
         // Align turret if enabled
-        if (false) { // enableAutoAiming
-            computeVirtualPoses(follower.getPose(), goalPose);
+        if (enableAutoAiming) {
             alignTurretToHeading();
         }
         // Else set to default position
@@ -228,9 +236,21 @@ public class HardwareController {
      *
      * @param goalPose goal pose
      */
-    private void computeVirtualPoses(Pose robotPose, Pose goalPose) {
+    private void computeVirtualPoses(Follower follower, Pose goalPose) {
         /* VIRTUAL ROBOT POSE */
+
+        virtualRobotPose = new Pose(
+                follower.getPose().getX() + FEEDING_LATENCY * follower.getVelocity().getXComponent() + (Math.pow(FEEDING_LATENCY, 2) / 2) * follower.getAcceleration().getXComponent(),
+                follower.getPose().getY() + FEEDING_LATENCY * follower.getVelocity().getYComponent() + (Math.pow(FEEDING_LATENCY, 2) / 2) * follower.getAcceleration().getYComponent(),
+                follower.getHeading() + FEEDING_LATENCY * follower.getAngularVelocity()
+        );
+
         /* VIRTUAL GOAL POSE */
+
+        virtualGoalPose = new Pose(
+                goalPose.getX() - computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getXComponent() + FEEDING_LATENCY * follower.getAcceleration().getXComponent()),
+                goalPose.getY() - computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getYComponent() + FEEDING_LATENCY * follower.getAcceleration().getYComponent())
+        );
     }
 
     /**
@@ -251,6 +271,8 @@ public class HardwareController {
             //turretFlywheel.setVelocity(targetSpeed);
             turretHood.setPosition(hoodPosition); //
     }
+
+    private double computeAirtime(Pose robotPose, Pose goalPose) { return 0.0 * robotPose.distanceFrom(goalPose) + 0.5; }
 
     // Hood Angle: 0.00438x + 0.0457
     // Flywheel Speed (RPS): 0.176x + 33.9

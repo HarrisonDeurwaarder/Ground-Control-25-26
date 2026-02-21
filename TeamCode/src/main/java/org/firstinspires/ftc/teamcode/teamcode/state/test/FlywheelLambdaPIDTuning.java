@@ -50,6 +50,7 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
     private HardwareController hardwareController;
 
     public static double targetSpeed = 30;
+    public static double K, tau, lambda, beta = 0.0;
 
     @Override
     public void runOpMode() {
@@ -69,9 +70,8 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
 
         // Functional loop of OpMode
         while (opModeIsActive()) {
-            hardwareController.targetSpeed = targetSpeed;
-            HardwareController.flywheelPID.compute(hardwareController.targetSpeed, opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
-            lastRecordedTime = opmodeTimer.getElapsedTimeSeconds();
+            HardwareController.flywheelPID.setCoefficients(K, tau, lambda, beta);
+            HardwareController.flywheelPID.compute(hardwareController.targetSpeed, hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
 
             // Display parameter information
             telemetry.addLine("K = steady-state plant gain");

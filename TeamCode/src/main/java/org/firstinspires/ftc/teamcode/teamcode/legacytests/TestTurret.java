@@ -9,6 +9,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -32,6 +33,7 @@ Strategy: Start turret looking forward (encoder position 0)
 Limits: (-90 degrees, +90 degrees) or (-735 ticks, +735 ticks)
  */
 
+@Disabled
 @TeleOp(name="Turret Test", group="Tests")
 public class TestTurret extends LinearOpMode{
 

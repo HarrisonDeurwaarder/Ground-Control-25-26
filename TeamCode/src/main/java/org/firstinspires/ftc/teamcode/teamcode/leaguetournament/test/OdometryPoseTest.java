@@ -37,10 +37,12 @@ import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 
+@Disabled
 @Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Odometry Pose Test", group="Test")
 public class OdometryPoseTest extends LinearOpMode {

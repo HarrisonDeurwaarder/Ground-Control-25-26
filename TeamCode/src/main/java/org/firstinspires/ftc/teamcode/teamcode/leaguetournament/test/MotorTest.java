@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode.teamcode.leaguetournament.test;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+@Disabled
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Motor Test", group="Test")
 public class MotorTest extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();

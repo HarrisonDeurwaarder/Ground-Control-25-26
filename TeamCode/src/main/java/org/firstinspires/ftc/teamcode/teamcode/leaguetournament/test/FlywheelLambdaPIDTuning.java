@@ -33,10 +33,12 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
+@Disabled
 @Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel Lambda Tuner", group="Test")
 public class FlywheelLambdaPIDTuning extends LinearOpMode {

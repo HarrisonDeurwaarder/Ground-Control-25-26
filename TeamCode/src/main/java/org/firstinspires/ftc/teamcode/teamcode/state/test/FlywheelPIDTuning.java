@@ -49,6 +49,8 @@ public class FlywheelPIDTuning extends LinearOpMode {
     private HardwareController hardwareController;
 
     public static double targetSpeed = 30;
+    public static double Kp = 0.1;
+    public static double Ki, Kd, Kf, Ks = 0.0;
 
     @Override
     public void runOpMode() {
@@ -68,9 +70,20 @@ public class FlywheelPIDTuning extends LinearOpMode {
 
         // Functional loop of OpMode
         while (opModeIsActive()) {
-            hardwareController.targetSpeed = targetSpeed;
-            HardwareController.flywheelPID.compute(targetSpeed, opmodeTimer.getElapsedTimeSeconds() - lastRecordedTime);
-            lastRecordedTime = opmodeTimer.getElapsedTimeSeconds();
+            HardwareController.flywheelPID.setCoefficients(Kp, Ki, Kd, Kf, Ks);
+            HardwareController.flywheelPID.compute(targetSpeed, hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+
+            hardwareController.flywheelA.setPower(
+                    Math.max(-1.0, Math.min(HardwareController.flywheelPID.compute(
+                            targetSpeed, hardwareController.flywheelA.getVelocity()/28.0
+                    ), 1.0))
+            );
+            // Set the flywheel power
+            hardwareController.flywheelB.setPower(
+                    Math.max(-1.0, Math.min(HardwareController.flywheelPID.compute(
+                            targetSpeed, hardwareController.flywheelA.getVelocity()/28.0
+                    ), 1.0))
+            );
 
             // Panels telemetry
             packet.put("Target Speed (RPS)", targetSpeed);

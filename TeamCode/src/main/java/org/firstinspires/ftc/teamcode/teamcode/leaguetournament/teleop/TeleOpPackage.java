@@ -12,6 +12,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.telemetry.SelectableOpMode;
 import com.pedropathing.util.PoseHistory;
 import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -22,6 +23,7 @@ import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareControll
 
 import java.util.ArrayList;
 
+@Disabled
 @Config
 @TeleOp(name = "TeleOp", group = "League Tournament")
 public class TeleOpPackage extends SelectableOpMode {

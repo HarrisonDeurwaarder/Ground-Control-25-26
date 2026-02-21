@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 
 @Config
-@Autonomous(name = "Autonomous State", group = "League Tournament")
+@Autonomous(name = "Autonomous", group = "State")
 public class AutoPackage extends SelectableOpMode {
     public static Follower follower;
     public AutoPackage() {
@@ -88,7 +88,7 @@ abstract class DebuggerAuto extends OpMode {
 
         // Perform turret updates
         if (cycleState < 5) {
-            hardwareController.updateTurret(follower, goalPose, opmodeTimer.getElapsedTimeSeconds());
+            hardwareController.updateTurret(follower, goalPose);
         }
         // Log telemetry
         updateTelemetry();

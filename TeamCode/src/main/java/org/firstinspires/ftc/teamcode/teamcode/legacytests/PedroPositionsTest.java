@@ -38,6 +38,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -45,6 +46,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.pedroPathing.delta.ConstantsDelta;
 import org.firstinspires.ftc.teamcode.teamcode.leaguemeet2.utils.HardwareController;
 
+@Disabled
 @Autonomous(name="Pedro Position Test", group="Tests")
 public class PedroPositionsTest extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();

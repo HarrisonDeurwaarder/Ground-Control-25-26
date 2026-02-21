@@ -38,10 +38,12 @@ import com.bylazar.graph.PanelsGraph;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.teamcode.leaguetournament.HardwareController;
 
+@Disabled
 @Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel PIDF Tuner", group="Test")
 public class FlywheelPIDTuning extends LinearOpMode {
