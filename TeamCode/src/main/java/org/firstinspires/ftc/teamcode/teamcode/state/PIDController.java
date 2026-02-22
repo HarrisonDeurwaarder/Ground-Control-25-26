@@ -19,6 +19,11 @@ public class PIDController {
         plantTimer.resetTimer();
     }
 
+    @Override
+    public String toString() {
+        return String.format("PIDController(p=%g, i=%g, d=%g, f=%g, s=%g, error=%g)", Kp, Ki, Kd, Kf, Ks, lastError);
+    }
+
     /**
      * Set the coefficients of the controller
      *

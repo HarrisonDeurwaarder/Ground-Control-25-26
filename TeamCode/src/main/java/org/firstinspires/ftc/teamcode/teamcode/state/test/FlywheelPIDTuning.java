@@ -38,7 +38,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel PID Tuner State", group="Test")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel PID Tuner", group="Test")
 public class FlywheelPIDTuning extends LinearOpMode {
 
     private Timer opmodeTimer;
@@ -49,8 +49,8 @@ public class FlywheelPIDTuning extends LinearOpMode {
     private HardwareController hardwareController;
 
     public static double targetSpeed = 30;
-    public static double Kp = 0.1;
-    public static double Ki, Kd, Kf, Ks = 0.0;
+    public static double macroKp, macroKi, macroKd, macroKf, macroKs = 0.0;
+    public static double microKp, microKi, microKd, microKf, microKs = 0.0;
 
     @Override
     public void runOpMode() {
@@ -70,26 +70,15 @@ public class FlywheelPIDTuning extends LinearOpMode {
 
         // Functional loop of OpMode
         while (opModeIsActive()) {
-            HardwareController.flywheelPID.setCoefficients(Kp, Ki, Kd, Kf, Ks);
-            HardwareController.flywheelPID.compute(targetSpeed, hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
-
-            hardwareController.flywheelA.setPower(
-                    Math.max(-1.0, Math.min(HardwareController.flywheelPID.compute(
-                            targetSpeed, hardwareController.flywheelA.getVelocity()/28.0
-                    ), 1.0))
-            );
-            // Set the flywheel power
-            hardwareController.flywheelB.setPower(
-                    Math.max(-1.0, Math.min(HardwareController.flywheelPID.compute(
-                            targetSpeed, hardwareController.flywheelA.getVelocity()/28.0
-                    ), 1.0))
-            );
+            HardwareController.flywheelMacroPID.setCoefficients(macroKp, macroKi, macroKd, macroKf, macroKs);
+            HardwareController.flywheelMicroPID.setCoefficients(microKp, microKi, microKd, microKf, microKs);
+            hardwareController.sendFlywheelCommand(targetSpeed);
 
             // Panels telemetry
             packet.put("Target Speed (RPS)", targetSpeed);
             packet.put("Current Speed (RPS)", hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
-            packet.put("Error", HardwareController.flywheelPID.lastError);
-            packet.put("Power", hardwareController.flywheelA.getPower());
+            packet.put("PowerA", hardwareController.flywheelA.getPower());
+            packet.put("PowerB", hardwareController.flywheelA.getPower());
 
             dashboard.sendTelemetryPacket(packet);
         }

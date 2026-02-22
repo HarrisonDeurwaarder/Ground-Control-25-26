@@ -23,22 +23,32 @@ public class HardwareController {
 
     // Tick constants
     public static final double TURRET_ROTATION_TICKS_PER_DEGREE = 2.241; //4.317;
+    public static final int TURRET_TICK_LIMIT = 400; // Ticks
     // 133T : 24T
     // 5.2:1 Gearbox
     // 28 Ticks/rotation motor
     public static final double FLYWHEEL_TICKS_PER_DEGREE = 0.078;
-    public static final int TURRET_TICK_LIMIT = 400; // Ticks
+    public static final double DRIVETRAIN_TICKS_PER_DEGREE = 1.065;
 
     // Duration constants
     public static double ARTIFACT_AIRTIME = 0.7; // Seconds
     public static double FEEDING_LATENCY = 0.5; // Seconds
+    public static double MICRO_TUNING_THRESHOLD = 3.0; // RPS
 
-    // Transfer constants
-    public static double OPEN_ANGLE = 0.66;
-    public static double CLOSED_ANGLE = 0.5;
+    // Gate constants
+    public static double GATE_OPEN_ANGLE = 0.66;
+    public static double GATE_CLOSED_ANGLE = 0.5;
+
+    // Lifting constants
+    public static double CLUTCH_DRIVE_ANGLE = 0.0;
+    public static double CLUTCH_LIFT_ANGLE = 0.0;
+    public static double LOCK_DRIVE_ANGLE = 0.0;
+    public static double LOCK_LIFT_ANGLE = 0.0;
+    public static double LIFTING_VELOCITY = 1.0; // RPS
 
     // PID
-    public static PIDController flywheelPID = new PIDController(0.1, 0.0, 0.0003, 0.0, 0.2);
+    public static PIDController flywheelMacroPID = new PIDController(0.1, 0.0, 0.0, 0.01, 0.003);
+    public static PIDController flywheelMicroPID = new PIDController(0.1, 0.0, 0.0, 0.01, 0.003);
 
     // Instance variables
     public double targetSpeed = DEFAULT_FLYWHEEL_RPS;
@@ -50,7 +60,7 @@ public class HardwareController {
     // Declare actuators
     public DcMotorEx leftFront, leftBack, rightFront, rightBack;
     public DcMotorEx intake, transfer, flywheelA, flywheelB, turretRotation;
-    public Servo turretHood, gate;
+    public Servo turretHood, gate, clutchLeft, clutchRight, lock;
     public Limelight3A limelight;
 
     // Telemetry variables
@@ -59,9 +69,9 @@ public class HardwareController {
     public boolean tagDetected = false;
 
     // Control flow flags
-    public boolean enableArtifactVelocityCorrection = false;
-    public boolean enableAutoAiming = false;
-    public boolean enableFlywheel = false;
+    public static boolean enableArtifactVelocityCorrection = false;
+    public static boolean enableAutoAiming = false;
+    public static boolean enableFlywheel = false;
 
     /**
      * Map devices; set all devices to default direction
@@ -85,6 +95,10 @@ public class HardwareController {
         turretHood = hardwareMap.get(Servo.class, "hood");
         gate = hardwareMap.get(Servo.class, "gate");
 
+        clutchLeft = hardwareMap.get(Servo.class, "clutchLeft");
+        clutchRight = hardwareMap.get(Servo.class, "clutchRight");
+        lock = hardwareMap.get(Servo.class, "lock");
+
         // Map limelight
         //limelight = hardwareMap.get(Limelight3A.class, "limelight");
         // Set poll rate
@@ -102,10 +116,10 @@ public class HardwareController {
      */
     private void setAllToDefault() {
         // Set drivetrain motor directions
-        //leftFront.setDirection(DcMotorEx.Direction.FORWARD);
-        //leftBack.setDirection(DcMotorEx.Direction.REVERSE);
-        //rightFront.setDirection(DcMotorEx.Direction.FORWARD);
-        //rightBack.setDirection(DcMotorEx.Direction.REVERSE);
+        leftFront.setDirection(DcMotorEx.Direction.FORWARD);
+        leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+        rightFront.setDirection(DcMotorEx.Direction.FORWARD);
+        rightBack.setDirection(DcMotorEx.Direction.REVERSE);
 
         // Set mechanism motor directions
         intake.setDirection(DcMotorEx.Direction.FORWARD);
@@ -118,6 +132,13 @@ public class HardwareController {
         gate.setDirection(Servo.Direction.FORWARD);
         gate.setPosition(0.5);
 
+        //clutchLeft.setDirection(Servo.Direction.FORWARD);
+        //clutchLeft.setPosition(CLUTCH_DRIVE_ANGLE);
+        //clutchRight.setDirection(Servo.Direction.FORWARD);
+        //clutchRight.setPosition(CLUTCH_DRIVE_ANGLE);
+        //lock.setDirection(Servo.Direction.FORWARD);
+        //lock.setPosition(LOCK_DRIVE_ANGLE);
+
         flywheelA.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flywheelA.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheelB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -128,7 +149,7 @@ public class HardwareController {
         turretRotation.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Set default target position
         turretRotation.setTargetPosition(0);
-        turretRotation.setPower(0.5);
+        turretRotation.setPower(0.8);
         turretRotation.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         //turretRotation.setPower(TURRET_ROTATION_POWER);
     }
@@ -174,22 +195,45 @@ public class HardwareController {
             // If flywheel enabled set parameters by distance
             double distance = follower.getPose().distanceFrom(goalPose);
             updateFlywheelByDistance(distance, follower.getPose().getY());
-            // Else set to zero velocity
+
+            sendFlywheelCommand(targetSpeed);
         } else {
-            targetSpeed = 0.0;
+            flywheelA.setPower(0.0);
+            flywheelB.setPower(0.0);
         }
+    }
+
+    /**
+     * High-level send a velocity to the flywheel
+     *
+     * @param velocity target velocity in RPS
+     */
+    public void sendFlywheelCommand(double velocity) {
+        double flywheelVel = flywheelA.getVelocity() / (360 * FLYWHEEL_TICKS_PER_DEGREE);
+        // Select fine-adjustment pid if necessary
+        PIDController pid = Math.abs(velocity - flywheelVel) <= MICRO_TUNING_THRESHOLD ? flywheelMicroPID : flywheelMacroPID;
+        double power = pid.compute(velocity, flywheelVel);
         // Set the flywheel power
         flywheelA.setPower(
-                Math.max(-1.0, Math.min(flywheelPID.compute(
-                        targetSpeed, flywheelA.getVelocity()/28.0
-                ), 1.0))
+                Math.max(-0.7, Math.min(power, 1.0))
         );
         // Set the flywheel power
         flywheelB.setPower(
-                Math.max(-1.0, Math.min(flywheelPID.compute(
-                        targetSpeed, flywheelA.getVelocity()/28.0
-                ), 1.0))
+                Math.max(-0.7, Math.min(power, 1.0))
         );
+    }
+
+    public void startLift() {
+        // Activate the clutch
+        //clutchLeft.setPosition(CLUTCH_LIFT_ANGLE);
+        //clutchRight.setPosition(CLUTCH_LIFT_ANGLE);
+        // Lock the plate
+        //lock.setPosition(LOCK_LIFT_ANGLE);
+        // Drive motors
+        leftFront.setVelocity(LIFTING_VELOCITY * DRIVETRAIN_TICKS_PER_DEGREE * 360.0);
+        leftBack.setVelocity(LIFTING_VELOCITY * DRIVETRAIN_TICKS_PER_DEGREE * 360.0);
+        rightFront.setVelocity(LIFTING_VELOCITY * DRIVETRAIN_TICKS_PER_DEGREE * 360.0);
+        rightBack.setVelocity(LIFTING_VELOCITY * DRIVETRAIN_TICKS_PER_DEGREE * 360.0);
     }
 
     /**
@@ -260,11 +304,11 @@ public class HardwareController {
         // Compute distance to goal
         // Compute target speed and hood angle using regression values
         if (y >= -12) {
-            targetSpeed = 20.0; // Math.min(0.259 * distance + 29.0, 60); // +1 is for diff in target/actual speed}
+            targetSpeed = 50.0; // Math.min(0.259 * distance + 29.0, 60); // +1 is for diff in target/actual speed}
             hoodPosition = 0.5; // Math.max(Math.min((0.00296 * distance + 0.107), 0.5), 0.19);
         }
         else {
-            targetSpeed = 20.0;
+            targetSpeed = 50.0;
             hoodPosition = 0.5;
         }
             // Send values

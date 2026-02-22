@@ -115,7 +115,7 @@ abstract class DebuggerAuto extends OpMode {
                 // Advance if flywheel is up to speed
                 double flywheelRPS = hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360.0);
                 if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
                     incrementCycleState();
                 }
                 break;
@@ -133,7 +133,7 @@ abstract class DebuggerAuto extends OpMode {
             // Disable feeder and intake artifacts
             case 0:
                 if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+                    hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
                     follower.followPath(grabPickup, true);
                     incrementPathState();
                 }
@@ -152,7 +152,7 @@ abstract class DebuggerAuto extends OpMode {
             // Shoot artifacts
             case 3:
                 if (pathTimer.getElapsedTimeSeconds() >= READY_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
                     incrementCycleState();
                 }
                 break;
@@ -171,7 +171,7 @@ abstract class DebuggerAuto extends OpMode {
             // Disable feeder and open gate
             case 0:
                 if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
-                    hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+                    hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
                     follower.followPath(openGate, true);
                     incrementPathState();
                 }
@@ -205,7 +205,7 @@ abstract class DebuggerAuto extends OpMode {
             // Shoot artifacts
             case 6:
                 if (pathTimer.getElapsedTimeSeconds() >= READY_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
                     incrementCycleState();
                 }
                 break;
@@ -217,7 +217,7 @@ abstract class DebuggerAuto extends OpMode {
      */
     protected void runEndAuto(PathChain endAuto) {
         if (pathState == 0 && pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
-            hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+            hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
             follower.followPath(endAuto, true);
             incrementCycleState();
 

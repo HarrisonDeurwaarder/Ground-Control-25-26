@@ -42,7 +42,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Turret Regression Tuner State", group="Test")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Turret Regression Tuner", group="Test")
 public class TurretCoefTuning extends LinearOpMode {
     private Timer opmodeTimer;
     private Follower follower;
@@ -50,7 +50,7 @@ public class TurretCoefTuning extends LinearOpMode {
     private TelemetryPacket packet;
     private FtcDashboard dashboard;
 
-    private static double hoodZero = 0.19;
+    private static double hoodZero = 0.0;
     private double timeState = 0.0;
     public static Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
     public static Pose goalPose = new Pose(60.0, 60.0);
@@ -69,6 +69,7 @@ public class TurretCoefTuning extends LinearOpMode {
 
         // Instanciate controllers
         hardwareController = new HardwareController(hardwareMap);
+        hardwareController.enableFlywheel = true;
 
         // Configure follower
         follower = ConstantsEpsilon.createFollower(hardwareMap);
@@ -101,60 +102,53 @@ public class TurretCoefTuning extends LinearOpMode {
             /* NON-DRIVING CONTROLS */
 
             // Switch gate to closed only if robot is not feeding
-            if (gamepad1.right_trigger < 0.05) hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+            if (gamepad1.right_trigger < 0.05) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
 
             // FEEDING CONDITIONAL
             // When trigger is held and flywheel velocity is acceptable, feed
             if (gamepad1.right_trigger >= 0.05) {
                 // Switch gate to open
-                hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+                hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
                 // Switch intake mode to [intake] if needed
-                if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+                if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
                 // Then feed and intake
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-                hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
             }
 
             // INTAKE CONDITIONAL
             // When trigger is held, intake
             else if (gamepad1.left_trigger >= 0.05) {
                 // Switch intake mode to reverse if needed
-                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
                 // Then power intake and gate
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-                hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
             }
 
             // OUTTAKE CONDITIONAL
             // When trigger is held, intake
             else if (gamepad1.left_bumper) {
                 // Switch intake mode to reverse if needed
-                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
-                    hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
-                    hardwareController.transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+                if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
+                    hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
                 }
                 // Then power intake and gate
                 hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-                hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
             }
 
             // Else don't power either motor
             else {
                 hardwareController.intake.setPower(0.0);
-                hardwareController.transfer.setPower(0.0);
             }
 
             /* TUNING LOGIC */
 
             // Flywheel
             hardwareController.targetSpeed = flywheelTargetSpeed;
-            HardwareController.flywheelPID.compute(targetSpeed, opmodeTimer.getElapsedTimeSeconds() - timeState);
+            hardwareController.sendFlywheelCommand(flywheelTargetSpeed);
             timeState = opmodeTimer.getElapsedTimeSeconds();
             // Hood
             hardwareController.turretHood.setPosition(Math.max(hoodZero, hoodPosition));
@@ -164,7 +158,7 @@ public class TurretCoefTuning extends LinearOpMode {
     }
 
     public void updateTelemetry() {
-        Pose turretCenter = new Pose(follower.getPose().getX(), follower.getPose().getY() - 3.0);
+        Pose turretCenter = new Pose(follower.getPose().getX(), follower.getPose().getY() - 2.0);
 
         // Debug telemetry (On panels)
         packet.put("Distance (in)", turretCenter.distanceFrom(goalPose));

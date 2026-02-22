@@ -39,7 +39,7 @@ import org.firstinspires.ftc.teamcode.teamcode.legacytests.PIDController;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel Lambda Tuner State", group="Test")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Flywheel Lambda Tuner", group="Test")
 public class FlywheelLambdaPIDTuning extends LinearOpMode {
 
     private Timer opmodeTimer;
@@ -50,7 +50,8 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
     private HardwareController hardwareController;
 
     public static double targetSpeed = 30;
-    public static double K, tau, lambda, beta = 0.0;
+    public static double microK, microTau, microLambda, microBeta = 0.0;
+    public static double macroK, macroTau, macroLambda, macroBeta = 0.0;
 
     @Override
     public void runOpMode() {
@@ -70,8 +71,9 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
 
         // Functional loop of OpMode
         while (opModeIsActive()) {
-            HardwareController.flywheelPID.setCoefficients(K, tau, lambda, beta);
-            HardwareController.flywheelPID.compute(hardwareController.targetSpeed, hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+            HardwareController.flywheelMacroPID.setCoefficients(macroK, macroTau, macroLambda, macroBeta);
+            HardwareController.flywheelMicroPID.setCoefficients(microK, microTau, microLambda, microBeta);
+            hardwareController.sendFlywheelCommand(targetSpeed);
 
             // Display parameter information
             telemetry.addLine("K = steady-state plant gain");
@@ -82,14 +84,11 @@ public class FlywheelLambdaPIDTuning extends LinearOpMode {
             // Panels telemetry
             packet.put("Target Speed (RPS)", targetSpeed);
             packet.put("Current Speed (RPS)", hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
-            packet.put("Error", HardwareController.flywheelPID.lastError);
-            packet.put("Power", hardwareController.flywheelA.getPower());
+            packet.put("PowerA", hardwareController.flywheelA.getPower());
+            packet.put("PowerB", hardwareController.flywheelA.getPower());
 
-            packet.put("Kp", HardwareController.flywheelPID.Kp);
-            packet.put("Ki", HardwareController.flywheelPID.Ki);
-            packet.put("Kd", HardwareController.flywheelPID.Kd);
-            packet.put("Kf", HardwareController.flywheelPID.Kf);
-            packet.put("Ks", HardwareController.flywheelPID.Ks);
+            packet.put("Micro", HardwareController.flywheelMicroPID);
+            packet.put("Macro", HardwareController.flywheelMicroPID);
 
             dashboard.sendTelemetryPacket(packet);
         }

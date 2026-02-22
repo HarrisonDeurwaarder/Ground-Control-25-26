@@ -39,12 +39,14 @@ class DebuggerTeleOp extends OpMode {
     protected FtcDashboard dashboard;
 
     // Poses
-    protected Pose startingPose = new Pose(0.0, 0.0, Math.toRadians(90.0));
-    protected Pose goalPose     = new Pose(60.0, 60.0);
+    protected Pose startingPose     = new Pose(0.0, 0.0, Math.toRadians(90.0));
+    protected Pose goalPose         = new Pose(60.0, 60.0);
+    protected Pose recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
 
     // Boolean flags
-    protected boolean isRobotCentric = false;
+    protected boolean isRobotCentric = true;
     protected boolean slowMode = false;
+    protected boolean liftingStarted = false;
 
     // Constants
     protected static double SLOW_MODE_MULTIPLIER = 0.2;
@@ -57,7 +59,9 @@ class DebuggerTeleOp extends OpMode {
 
         // Instanciate controllers
         hardwareController = new HardwareController(hardwareMap);
-        hardwareController.enableArtifactVelocityCorrection = false;
+        HardwareController.enableArtifactVelocityCorrection = false;
+        HardwareController.enableAutoAiming = true;
+        HardwareController.enableFlywheel = true;
 
         // Configure follower
         follower = ConstantsEpsilon.createFollower(hardwareMap);
@@ -83,9 +87,20 @@ class DebuggerTeleOp extends OpMode {
         displayControls();
 
         follower.update();
-        setTeleOpDrive();
 
-        /* NON-DRIVING CONTROLS */
+        // Lifting block
+        if (!liftingStarted) {
+            setTeleOpDrive();
+        } else {
+            hardwareController.startLift();
+        }
+
+        // Recalibrate pose
+        if (gamepad1.dpadUpWasPressed()) {
+            // Override follower pose
+            follower.setPose(recalibratedPose.copy());
+        }
+
 
         // Toggle slow mode
         if (gamepad1.aWasPressed()) slowMode = !slowMode;
@@ -93,20 +108,23 @@ class DebuggerTeleOp extends OpMode {
         // Toggle robot-centered
         if (gamepad1.bWasPressed()) isRobotCentric = !isRobotCentric;
 
+        // Start lifting
+        if (gamepad1.dpadDownWasPressed()) liftingStarted = true;
+
         // Toggle auto-aiming
-        if (gamepad1.xWasPressed()) hardwareController.enableAutoAiming = !hardwareController.enableAutoAiming;
+        if (gamepad1.xWasPressed()) HardwareController.enableAutoAiming = !HardwareController.enableAutoAiming;
 
         // Toggle flywheel
-        if (gamepad1.yWasPressed()) hardwareController.enableFlywheel = !hardwareController.enableFlywheel;
+        if (gamepad1.yWasPressed()) HardwareController.enableFlywheel = !HardwareController.enableFlywheel;
 
         // Switch gate to closed only if robot is not feeding
-        if (gamepad1.right_trigger < 0.05) hardwareController.gate.setPosition(HardwareController.CLOSED_ANGLE);
+        if (gamepad1.right_trigger < 0.05) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
 
         // FEEDING CONDITIONAL
         // When trigger is held and flywheel velocity is acceptable, feed
         if (gamepad1.right_trigger >= 0.05) {
             // Switch gate to open
-            hardwareController.gate.setPosition(HardwareController.OPEN_ANGLE);
+            hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
             // Switch intake mode to [intake] if needed
             if (!hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
                 hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -230,8 +248,9 @@ class RedNearTeleOp extends DebuggerTeleOp {
     RedNearTeleOp() {
         super();
         // Reassign poses
-        this.startingPose = new Pose(47.8, 0.0, Math.toRadians(90));
-        this.goalPose     = new Pose(60.0, 60.0);
+        this.startingPose     = new Pose(47.8, 0.0, Math.toRadians(90));
+        this.goalPose         = new Pose(60.0, 60.0);
+        this.recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
     }
 
     @Override
@@ -250,8 +269,9 @@ class RedFarTeleOp extends DebuggerTeleOp {
     RedFarTeleOp() {
         super();
         // Reassign poses
-        this.startingPose = new Pose(36.0, -63.0, Math.toRadians(90.0));
-        this.goalPose     = new Pose(60.0, 60.0);
+        this.startingPose     = new Pose(36.0, -63.0, Math.toRadians(90.0));
+        this.goalPose         = new Pose(60.0, 60.0);
+        this.recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
     }
 
     @Override
@@ -270,8 +290,9 @@ class BlueNearTeleOp extends DebuggerTeleOp {
     BlueNearTeleOp() {
         super();
         // Reassign poses
-        this.startingPose = new Pose(-47.8, 0.0, Math.toRadians(90));
-        this.goalPose     = new Pose(-60.0, 60.0);
+        this.startingPose     = new Pose(-47.8, 0.0, Math.toRadians(90));
+        this.goalPose         = new Pose(-60.0, 60.0);
+        this.recalibratedPose = new Pose(64.0, -63.0, Math.toRadians(90.0));
     }
 
     @Override
@@ -290,8 +311,9 @@ class BlueFarTeleOp extends DebuggerTeleOp {
     BlueFarTeleOp() {
         super();
         // Reassign poses
-        this.startingPose = new Pose(-36.0, -63.0, Math.toRadians(90.0));
-        this.goalPose     = new Pose(-60.0, 60.0);
+        this.startingPose     = new Pose(-36.0, -63.0, Math.toRadians(90.0));
+        this.goalPose         = new Pose(-60.0, 60.0);
+        this.recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
     }
 
     @Override
