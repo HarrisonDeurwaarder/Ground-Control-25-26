@@ -41,15 +41,16 @@ abstract class DebuggerAuto extends OpMode {
     protected FtcDashboard dashboard;
     protected int pathState, cycleState = 0;
 
-    public static double FEED_DURATION      = 1.0;
+    public static double FEED_DURATION      = 0.7;
     public static double RC_GATE_DURATION   = 0.0;
     public static double RC_INTAKE_DURATION = 1.5;
-    public static double READY_DURATION     = 0.5;
+    public static double READY_DURATION     = 0.0;
     public static double FLYWHEEL_ACCEPTED_ERROR = 1.0; // RPS
 
     protected Pose goalPose =  new Pose(60.0, 60.0);
     protected Pose startPose = new Pose(40.2, 60.9, Math.toRadians(90.0));
     protected Pose scorePose = new Pose(24.0, 10.8, Math.toRadians(0.0));
+    protected boolean overrideAutoShoot = true;
 
     @Override
     public final void init() {
@@ -75,9 +76,13 @@ abstract class DebuggerAuto extends OpMode {
     @Override
     public final void start() {
         pathTimer.resetTimer();
-
+        // Hardware flags
+        HardwareController.enableAutoAiming = true;
+        HardwareController.enableFlywheel = true;
+        HardwareController.enableVirtualGoalPose = false;
+        HardwareController.enableVirtualRobotPose = false;
+        // Provide constant intake power
         hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
-        hardwareController.transfer.setPower(HardwareController.TRANSFER_POWER);
     }
 
     @Override
@@ -86,10 +91,17 @@ abstract class DebuggerAuto extends OpMode {
         follower.update();
         autoPathUpdate();
 
-        // Perform turret updates
         if (cycleState < 5) {
+            // Perform turret updates
             hardwareController.updateTurret(follower, goalPose);
+            // Auto shoot
+            if (hardwareController.inShootingZone(follower) && !overrideAutoShoot) {
+                hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
+            } else {
+                hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
+            }
         }
+
         // Log telemetry
         updateTelemetry();
     }
@@ -113,9 +125,8 @@ abstract class DebuggerAuto extends OpMode {
             // Feed for duration
             case 1:
                 // Advance if flywheel is up to speed
-                double flywheelRPS = hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360.0);
-                if (hardwareController.targetSpeed - FLYWHEEL_ACCEPTED_ERROR <= flywheelRPS) {
-                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
+                if (!follower.isBusy()) {
+                    overrideAutoShoot = false;
                     incrementCycleState();
                 }
                 break;
@@ -147,14 +158,7 @@ abstract class DebuggerAuto extends OpMode {
                 break;
             // Get to score position
             case 2:
-                if (!follower.isBusy()) incrementPathState();
-                break;
-            // Shoot artifacts
-            case 3:
-                if (pathTimer.getElapsedTimeSeconds() >= READY_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
-                    incrementCycleState();
-                }
+                if (!follower.isBusy()) incrementCycleState();
                 break;
         }
     }
@@ -200,14 +204,7 @@ abstract class DebuggerAuto extends OpMode {
                 break;
             // Get to score position
             case 5:
-                if (!follower.isBusy()) incrementPathState();
-                break;
-            // Shoot artifacts
-            case 6:
-                if (pathTimer.getElapsedTimeSeconds() >= READY_DURATION) {
-                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
-                    incrementCycleState();
-                }
+                if (!follower.isBusy()) incrementCycleState();
                 break;
         }
     }
@@ -224,11 +221,11 @@ abstract class DebuggerAuto extends OpMode {
             // Disable all motors
             hardwareController.gate.setPosition(0.5);
             hardwareController.intake.setPower(0.0);
-            hardwareController.transfer.setPower(0.0);
 
             // Reset turret
             hardwareController.flywheelA.setPower(0.0);
             hardwareController.updateTurretTarget(0.0);
+            HardwareController.enableAutoAiming = false; // for good measure
 
             incrementCycleState();
         }
@@ -266,6 +263,11 @@ abstract class DebuggerAuto extends OpMode {
         packet.put("Path Timer", pathTimer.getElapsedTime());
         packet.put("Target Pose", follower.getCurrentPath() != null ? follower.getCurrentPath().getPose(1.0) == null : null);
 
+        packet.put("Gate Position", hardwareController.gate.getPosition());
+
+        packet.put("In Shooting Zone?", hardwareController.inShootingZone(follower));
+        packet.put("Auto Shoot Override?", overrideAutoShoot);
+
         packet.put("Position (In)", follower.getPose());
         packet.put("Velocity (In/Sec)", follower.getVelocity());
         packet.put("Flywheel Velocity (Rotations/Sec)", hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
@@ -279,19 +281,19 @@ abstract class DebuggerAuto extends OpMode {
 
 
 class RedNearAuto extends DebuggerAuto {
-    protected Pose postPickup1Pose =         new Pose(54.7, 8.8, Math.toRadians(0.0));
+    protected Pose postPickup1Pose =         new Pose(47.5, 16.3, Math.toRadians(0.0));
 
-    protected Pose intermediatePickup2Pose = new Pose(25.9, -16, Math.toRadians(0.0));
-    protected Pose postPickup2Pose =         new Pose(58.5, -15.5,Math.toRadians(0.0));
+    protected Pose intermediatePickup2Pose = new Pose(25.9, -6.5, Math.toRadians(0.0));
+    protected Pose postPickup2Pose =         new Pose(53.0, -5.5,Math.toRadians(0.0));
 
-    protected Pose intermediatePickup3Pose = new Pose(19.9, -43.1, Math.toRadians(0.0));
-    protected Pose postPickup3Pose =         new Pose(61.3, -39.1, Math.toRadians(0.0));
+    protected Pose intermediatePickup3Pose = new Pose(25.9, -30.8, Math.toRadians(0.0));
+    protected Pose postPickup3Pose =         new Pose(53.0, -29.3, Math.toRadians(0.0));
 
-    protected Pose RCIntermediatePose =      new Pose(61.7, -20.9, Math.toRadians(28.5));
-    protected Pose RCGatePose =              new Pose(58.9, -12.8, Math.toRadians(19.5));
-    protected Pose RCIntakePose =            new Pose(63.0, -18.1, Math.toRadians(50.9));
+    protected Pose RCIntermediatePose =      new Pose(53.7, -15.9, Math.toRadians(28.5));
+    protected Pose RCGatePose =              new Pose(51.5, -7.8, Math.toRadians(26.3));
+    protected Pose RCIntakePose =            new Pose(54.8, -19.0, Math.toRadians(58.9));
 
-    protected Pose endAutoPose =             new Pose(47.8, 0.0, Math.toRadians(90));
+    protected Pose endAutoPose =             new Pose(45.9, 0.0, Math.toRadians(90));
 
     protected Path scorePreload;
     protected PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3, openGateRC, intakeRC, scoreRC, endAuto;
@@ -300,8 +302,8 @@ class RedNearAuto extends DebuggerAuto {
         super();
         // Reset poses
         this.goalPose =  new Pose(60.0, 60.0);
-        this.startPose = new Pose(40.2, 60.9, Math.toRadians(90.0));
-        this.scorePose = new Pose(24.0, 10.8, Math.toRadians(0.0));
+        this.startPose = new Pose(37.0, 68.0, Math.toRadians(0.0));
+        this.scorePose = new Pose(15.0, 21.0, Math.toRadians(0.0));
     }
 
     /**

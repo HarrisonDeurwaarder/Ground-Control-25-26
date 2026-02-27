@@ -16,18 +16,19 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class ConstantsEpsilon {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(14.5)
+            .mass(14.06)
             // Deceleration rates
-            .forwardZeroPowerAcceleration(-70.0)
-            .lateralZeroPowerAcceleration(-90.0)
+            .forwardZeroPowerAcceleration(-43.0)
+            .lateralZeroPowerAcceleration(-69.0)
             // Enable secondary PID
             .useSecondaryTranslationalPIDF(false)
             .useSecondaryHeadingPIDF(false)
             .useSecondaryDrivePIDF(false)
             // PID values
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0.0, 0.004, 0.05))
-            .headingPIDFCoefficients(new PIDFCoefficients(1.5, 0.0, 0.05, 0.04))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.1, 0.0, 0.0, 0.1, 0.6));
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0.0, 0.002, 0.04))
+            .headingPIDFCoefficients(new PIDFCoefficients(1.0, 0.0, 0.03, 0.045))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.1, 0.0, 0.0, 0.1, 0.5))
+            .centripetalScaling(0.0002);
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1.0)
@@ -42,8 +43,8 @@ public class ConstantsEpsilon {
             .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             // Cartesian velocity
-            .xVelocity(51.0) //51
-            .yVelocity(41.0); //41
+            .xVelocity(72.0) //51
+            .yVelocity(56.0); //41
 
     public static PinpointConstants pinpointConstants = new PinpointConstants()
             // Pinpoint offset from robot center
