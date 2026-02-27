@@ -96,8 +96,12 @@ public class LiftTest extends LinearOpMode {
             }
             if (gamepad1.xWasPressed()) {
                 liftStarted = true;
+                hardwareController.rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                hardwareController.leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 hardwareController.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 hardwareController.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                hardwareController.rightFront.setTargetPosition(0);
+                hardwareController.leftFront.setTargetPosition(0);
                 hardwareController.rightFront.setPower(liftPower);
                 hardwareController.leftFront.setPower(liftPower);
             }
