@@ -13,6 +13,7 @@ import com.pedropathing.telemetry.SelectableOpMode;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
@@ -68,6 +69,7 @@ abstract class DebuggerAuto extends OpMode {
 
         // Hardware controller for mechanism access
         hardwareController = new HardwareController(hardwareMap);
+        HardwareController.SHOOTING_TOLERANCE = 0.0;
     }
 
     @Override
@@ -224,7 +226,10 @@ abstract class DebuggerAuto extends OpMode {
 
             // Reset turret
             hardwareController.flywheelA.setPower(0.0);
-            hardwareController.updateTurretTarget(0.0);
+            hardwareController.turretRotation.setTargetPosition(0);
+            hardwareController.turretRotation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            hardwareController.flywheelA.setPower(0.0);
+            hardwareController.flywheelB.setPower(0.0);
             HardwareController.enableAutoAiming = false; // for good measure
 
             incrementCycleState();
@@ -286,7 +291,7 @@ class RedNearAuto extends DebuggerAuto {
     protected Pose intermediatePickup2Pose = new Pose(25.9, -6.5, Math.toRadians(0.0));
     protected Pose postPickup2Pose =         new Pose(53.0, -5.5,Math.toRadians(0.0));
 
-    protected Pose intermediatePickup3Pose = new Pose(25.9, -30.8, Math.toRadians(0.0));
+    protected Pose intermediatePickup3Pose = new Pose(24.9, -26.8, Math.toRadians(0.0));
     protected Pose postPickup3Pose =         new Pose(53.0, -29.3, Math.toRadians(0.0));
 
     protected Pose RCIntermediatePose =      new Pose(53.7, -15.9, Math.toRadians(28.5));
