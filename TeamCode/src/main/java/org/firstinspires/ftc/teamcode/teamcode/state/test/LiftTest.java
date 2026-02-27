@@ -25,12 +25,13 @@ public class LiftTest extends LinearOpMode {
 
 
     public double clutchPower = 0.2;
-    public double liftPower = 0.8;
+    public static double liftPower = 0.8;
 
     public double targetSpeed = 30.0;
     public boolean clutchEngaged = false;
     public int liftPosition = 0;
     public int liftIncrement = 100;
+    public static double liftRatio = 1.0; // left:right multiplier
 
     public boolean liftStarted = false;
 
@@ -88,10 +89,12 @@ public class LiftTest extends LinearOpMode {
                 }
             }
             else {
+                hardwareController.rightFront.setPower(liftPower);
+                hardwareController.leftFront.setPower(liftPower);
                 if (gamepad1.dpadUpWasPressed()) {
                     liftPosition -= liftIncrement;
                     hardwareController.rightFront.setTargetPosition(liftPosition);
-                    hardwareController.leftFront.setTargetPosition(liftPosition);
+                    hardwareController.leftFront.setTargetPosition((int) (liftRatio* (double) liftPosition));
                 }
             }
             if (gamepad1.xWasPressed()) {
@@ -114,7 +117,7 @@ public class LiftTest extends LinearOpMode {
     public void updateTelemetry() {
         packet.put("Left Motor Current", hardwareController.leftFront.getCurrent(CurrentUnit.MILLIAMPS));
         packet.put("Right Motor Current", hardwareController.rightFront.getCurrent(CurrentUnit.MILLIAMPS));
-        packet.put("Left Motor Position", hardwareController.rightFront.getCurrentPosition());
+        packet.put("Left Motor Position", hardwareController.leftFront.getCurrentPosition());
         packet.put("Right Motor Position", hardwareController.rightFront.getCurrentPosition());
         dashboard.sendTelemetryPacket(packet);
 
