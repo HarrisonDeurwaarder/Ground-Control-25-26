@@ -432,9 +432,10 @@ class RedNearAuto extends DebuggerAuto {
 
 
 class RedFarAuto extends DebuggerAuto {
-    protected Pose postPickup1Pose =    new Pose(61.5, -61.0, Math.toRadians(0.0));
-    protected Pose rcExcessIntakePose = new Pose(61.5, -61.0, Math.toRadians(0.0));
-    protected Pose endAutoPose =        new Pose(36.0, -63.0, Math.toRadians(90.0));
+    protected Pose intermediatePickup1Pose = new Pose(23.3, -31.0, Math.toRadians(0.0));
+    protected Pose postPickup1Pose =    new Pose(51.0, -29.3, Math.toRadians(0.0));
+    protected Pose rcExcessIntakePose = new Pose(57.1, -54.0, Math.toRadians(0.0));
+    protected Pose endAutoPose =        new Pose(33.3, -61.1, Math.toRadians(90.0));
 
     protected Path scorePreload;
     protected PathChain grabPickup1, scorePickup1, rcExcessIntake, rcExcessScore, endAuto;
@@ -443,8 +444,8 @@ class RedFarAuto extends DebuggerAuto {
         super();
         // Reset poses
         this.goalPose =  new Pose(60.0, 60.0);
-        this.startPose = new Pose(12.0, -66.7, Math.toRadians(90.0));
-        this.scorePose = new Pose(17.0, -58.0, Math.toRadians(0.0));
+        this.startPose = new Pose(28.8, -63.8, Math.toRadians(90.0));
+        this.scorePose = new Pose(14.0, -54.0, Math.toRadians(0.0));
     }
 
     /**
@@ -468,7 +469,7 @@ class RedFarAuto extends DebuggerAuto {
 
         // Shooting position for artifact set #1
         scorePickup1 = follower.pathBuilder()
-                .addPath(new BezierLine(postPickup1Pose, scorePose))
+                .addPath(new BezierCurve(postPickup1Pose, intermediatePickup1Pose, scorePose))
                 .setLinearHeadingInterpolation(postPickup1Pose.getHeading(), scorePose.getHeading())
                 .build();
 
