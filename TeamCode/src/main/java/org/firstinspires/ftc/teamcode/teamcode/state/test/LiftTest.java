@@ -7,6 +7,7 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -23,11 +24,15 @@ public class LiftTest extends LinearOpMode {
     private FtcDashboard dashboard;
 
 
-    public double clutchPower = 0.3;
-    public double liftPower = 1.0;
+    public double clutchPower = 0.2;
+    public double liftPower = 0.8;
 
     public double targetSpeed = 30.0;
     public boolean clutchEngaged = false;
+    public int liftPosition = 0;
+    public int liftIncrement = 100;
+
+    public boolean liftStarted = false;
 
 
     @Override
@@ -69,21 +74,34 @@ public class LiftTest extends LinearOpMode {
                     hardwareController.LEFT_CLUTCH_LIFT_ANGLE :
                     hardwareController.LEFT_CLUTCH_DRIVE_ANGLE);
 
-            if (gamepad1.left_trigger > 0.05)
-            {
-                hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
-                hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
-                hardwareController.leftFront.setPower(-clutchPower);
-                hardwareController.rightFront.setPower(-clutchPower);
-            }
-            else if (gamepad1.right_trigger > 0.05) {
-                hardwareController.leftFront.setPower(-liftPower);
-                hardwareController.rightFront.setPower(-liftPower);
+            if (!liftStarted) {
+                if (gamepad1.left_trigger > 0.05)
+                {
+                    hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
+                    hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
+                    hardwareController.leftFront.setPower(-clutchPower);
+                    hardwareController.rightFront.setPower(-clutchPower);
+                }
+                else {
+                    hardwareController.leftFront.setPower(0.0);
+                    hardwareController.rightFront.setPower(0.0);
+                }
             }
             else {
-                hardwareController.leftFront.setPower(0.0);
-                hardwareController.rightFront.setPower(0.0);
+                if (gamepad1.dpadUpWasPressed()) {
+                    liftPosition -= liftIncrement;
+                    hardwareController.rightFront.setTargetPosition(liftPosition);
+                    hardwareController.leftFront.setTargetPosition(liftPosition);
+                }
             }
+            if (gamepad1.xWasPressed()) {
+                liftStarted = true;
+                hardwareController.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                hardwareController.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                hardwareController.rightFront.setPower(liftPower);
+                hardwareController.leftFront.setPower(liftPower);
+            }
+
 
             updateTelemetry();
         }
