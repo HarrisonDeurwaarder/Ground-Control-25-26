@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
 
 @Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Turret Regression Tuner", group="Test")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Lift Test", group="Test")
 public class LiftTest extends LinearOpMode {
     private Timer opmodeTimer;
     private Follower follower;
@@ -36,14 +36,17 @@ public class LiftTest extends LinearOpMode {
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
 
+        follower = ConstantsEpsilon.createFollower(hardwareMap);
+        follower.setStartingPose(new Pose());
+        follower.update();
+
         // Instanciate controllers
         hardwareController = new HardwareController(hardwareMap);
         packet = new TelemetryPacket();
         dashboard = FtcDashboard.getInstance();
-        follower.startTeleOpDrive(true);
 
-        hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_DRIVE_ANGLE);
-        hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_DRIVE_ANGLE);
+        hardwareController.clutchLeft.setPosition(HardwareController.LEFT_CLUTCH_DRIVE_ANGLE);
+        hardwareController.clutchRight.setPosition(HardwareController.RIGHT_CLUTCH_DRIVE_ANGLE);
 
         hardwareController.leftFront.setPower(0.0);
         hardwareController.rightFront.setPower(0.0);
