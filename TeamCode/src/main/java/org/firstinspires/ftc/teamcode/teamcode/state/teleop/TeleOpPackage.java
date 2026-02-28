@@ -78,7 +78,7 @@ class DebuggerTeleOp extends OpMode {
     public boolean clutchEngaged = false;
     public int liftPositionLeft = 0;
     public int liftPositionRight = 0;
-    public static int liftIncrement = 80
+    public static int liftIncrement = 80;
     public static int tolerance = 10;
     protected boolean liftMode = false;
     protected boolean liftingStarted = false;
@@ -126,6 +126,51 @@ class DebuggerTeleOp extends OpMode {
         // Lifting block
         if (!liftMode) {
             setTeleOpDrive();
+        }
+        // Lifting loop
+        if (liftMode) {
+            if (!liftingStarted) {
+                if (gamepad2.y)
+                {
+                    hardwareController.leftFront.setPower(-clutchPower);
+                    hardwareController.rightFront.setPower(-clutchPower);
+                    hardwareController.leftBack.setPower(clutchPower/2.0);
+                    hardwareController.rightBack.setPower(clutchPower/2.0);
+                }
+                else {
+                    hardwareController.leftFront.setPower(0.0);
+                    hardwareController.rightFront.setPower(0.0);
+                    hardwareController.leftBack.setPower(0.0);
+                    hardwareController.rightBack.setPower(0.0);
+                }
+            }
+            else {
+                hardwareController.rightFront.setPower(liftPower);
+                hardwareController.leftFront.setPower(liftPower);
+                if (Math.abs(hardwareController.rightFront.getCurrentPosition() - liftPositionRight) < tolerance
+                        && Math.abs(hardwareController.leftFront.getCurrentPosition() - liftPositionLeft) < tolerance) {
+                    if (gamepad2.left_bumper){
+                        liftPositionLeft -= liftIncrement;
+                        hardwareController.leftFront.setTargetPosition(liftPositionLeft);
+                    }
+                    if (gamepad2.right_bumper) {
+                        liftPositionRight -= liftIncrement;
+                        hardwareController.rightFront.setTargetPosition(liftPositionRight);
+                    }
+                }
+            }
+            if (gamepad2.xWasPressed()) {
+                liftingStarted = true;
+                hardwareController.rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                hardwareController.leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                hardwareController.rightFront.setTargetPosition(0);
+                hardwareController.leftFront.setTargetPosition(0);
+                hardwareController.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                hardwareController.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                hardwareController.rightFront.setPower(liftPower);
+                hardwareController.leftFront.setPower(liftPower);
+            }
+
         }
 
         // Auto shoot
@@ -282,44 +327,7 @@ class DebuggerTeleOp extends OpMode {
             hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
             hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);        }
 
-        // Lifting loop
-        if (liftMode) {
-            if (!liftingStarted) {
-                if (gamepad2.left_trigger > 0.05)
-                {
-                    hardwareController.leftFront.setPower(-clutchPower);
-                    hardwareController.rightFront.setPower(-clutchPower);
-                    hardwareController.leftBack.setPower(clutchPower/2.0);
-                    hardwareController.rightBack.setPower(clutchPower/2.0);
-                }
-                else {
-                    hardwareController.leftFront.setPower(0.0);
-                    hardwareController.rightFront.setPower(0.0);
-                    hardwareController.leftBack.setPower(0.0);
-                    hardwareController.rightBack.setPower(0.0);
-                }
-            }
-            else {
-                hardwareController.rightFront.setPower(liftPower);
-                hardwareController.leftFront.setPower(liftPower);
-                if (Math.abs(hardwareController.rightFront.getCurrentPosition() - liftPositionRight) < tolerance
-                        && Math.abs(hardwareController.leftFront.getCurrentPosition() - liftPositionLeft) < tolerance) {
-                    if (gamepad2.left_bumper){
-                        liftPositionLeft -= liftIncrement;
-                        hardwareController.leftFront.setTargetPosition(liftPositionLeft);
-                    }
-                    if (gamepad2.right_bumper) {
-                        liftPositionRight -= liftIncrement;
-                        hardwareController.rightFront.setTargetPosition(liftPositionRight);
-                    }
-                }
-            }
-            if (gamepad2.xWasPressed()) {
-                liftingStarted = true;
-                hardwareController.activateLift();
-            }
 
-        }
         // Toggle auto-aiming
         if (gamepad1.xWasPressed()) HardwareController.enableAutoAiming = !HardwareController.enableAutoAiming;
         // Toggle flywheel
@@ -414,13 +422,11 @@ class DebuggerTeleOp extends OpMode {
         // Start lifting
         if (gamepad2.left_bumper && gamepad2.right_bumper && (opmodeTimer.getElapsedTimeSeconds() >= 100.0 || TeleOpPackage.debugLift)) {
             liftMode = true;
-            // Only reset time at start
-            if (timeSinceLiftingStarted == 0.0) {
-                timeSinceLiftingStarted = opmodeTimer.getElapsedTimeSeconds();
-            }
-            // Commence lifting
-            hardwareController.startLift(timeSinceLiftingStarted);
+            hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
+            hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
+
         }
+
         // Toggle auto-aiming
         if (gamepad2.aWasPressed()) HardwareController.enableAutoAiming = !HardwareController.enableAutoAiming;
         // Toggle flywheel
