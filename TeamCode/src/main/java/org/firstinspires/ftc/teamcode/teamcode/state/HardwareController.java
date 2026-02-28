@@ -322,14 +322,14 @@ public class HardwareController {
         virtualRobotPose = enableVirtualRobotPose ? new Pose(
                 follower.getPose().getX() + FEEDING_LATENCY * follower.getVelocity().getXComponent() + (Math.pow(FEEDING_LATENCY, 2) / 2) * follower.getAcceleration().getXComponent(),
                 follower.getPose().getY() + FEEDING_LATENCY * follower.getVelocity().getYComponent() + (Math.pow(FEEDING_LATENCY, 2) / 2) * follower.getAcceleration().getYComponent(),
-                follower.getHeading() + FEEDING_LATENCY * follower.getAngularVelocity()
+                follower.getHeading() //+ FEEDING_LATENCY * follower.getAngularVelocity()
         ) : follower.getPose();
 
         /* VIRTUAL GOAL POSE */
 
         virtualGoalPose = enableVirtualGoalPose ? new Pose(
-                goalPose.getX() - computeAirtime(virtualRobotPose, goalPose) * (follower.getVelocity().getXComponent() + FEEDING_LATENCY * follower.getAcceleration().getXComponent()),
-                goalPose.getY() - computeAirtime(virtualRobotPose, goalPose) * (follower.getVelocity().getYComponent() + FEEDING_LATENCY * follower.getAcceleration().getYComponent())
+                goalPose.getX() - computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getXComponent() + FEEDING_LATENCY * follower.getAcceleration().getXComponent()),
+                goalPose.getY() - computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getYComponent() + FEEDING_LATENCY * follower.getAcceleration().getYComponent())
         ) : goalPose;
     }
 
@@ -365,7 +365,7 @@ public class HardwareController {
         }
     }
 
-    private double computeAirtime(Pose robotPose, Pose goalPose) { return 0.0479 * robotPose.distanceFrom(goalPose) + 0.676; }
+    public double computeAirtime(Pose robotPose, Pose goalPose) { return 0.0479 * robotPose.distanceFrom(goalPose) + 0.676; }
 
     // Hood Angle: 0.00438x + 0.0457
     // Flywheel Speed (RPS): 0.176x + 33.9

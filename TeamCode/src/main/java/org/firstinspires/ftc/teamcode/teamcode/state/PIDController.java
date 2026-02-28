@@ -60,9 +60,9 @@ public class PIDController {
 
         // Compute PID
         double error = setpoint - measurement;
-        double derivative = (error - lastError) / deltaTime;
+        double derivative = -(measurement - lastError) / deltaTime;
         integral += error * deltaTime;
-        lastError = error;
+        lastError = measurement;
 
         return Kp * error + Ki * integral + Kd * derivative + Kf * setpoint + Ks * Math.signum(error);
     }

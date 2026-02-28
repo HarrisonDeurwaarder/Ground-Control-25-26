@@ -66,7 +66,8 @@ class DebuggerTeleOp extends OpMode {
     public static boolean scoringMacroEnabled = false;
     public static boolean parkingMacroEnabled = false;
 
-    protected FuturePose currentRobotPose, scoringPose, parkingPose;
+    protected Pose parkingPose = new Pose(0.0, 0.0, -90.0);
+    protected FuturePose currentRobotPose, scoringPose;
     protected Path scorePath, parkPath;
 
     // Constants
@@ -276,12 +277,15 @@ class DebuggerTeleOp extends OpMode {
         // Toggle flywheel
         if (gamepad1.yWasPressed()) HardwareController.enableFlywheel = !HardwareController.enableFlywheel;
 
+        // Parking macro
+        if (gamepad1.dpad_down) parkingMacro();
+
         // Switch gate to closed only if robot is not feeding
-        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) < 0.05 && (!TeleOpPackage.autoShooting || hardwareController.inShootingZone(follower))) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
+        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) < 0.05 && !(TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
 
         // FEEDING CONDITIONAL
         // When trigger is held and flywheel velocity is acceptable, feed
-        if ((TeleOpPackage.invertControls ? gamepad1.left_trigger : gamepad1.right_trigger) >= 0.05) {
+        if ((TeleOpPackage.invertControls ? gamepad1.left_trigger : gamepad1.right_trigger) >= 0.05 || (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) {
             // Switch gate to open
             hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
             // Switch intake mode to [intake] if needed
@@ -373,16 +377,18 @@ class DebuggerTeleOp extends OpMode {
         if (gamepad2.aWasPressed()) HardwareController.enableAutoAiming = !HardwareController.enableAutoAiming;
         // Toggle flywheel
         if (gamepad2.bWasPressed()) HardwareController.enableFlywheel = !HardwareController.enableFlywheel;
+        // Toggle autoshooting
+        if (gamepad2.xWasPressed()) TeleOpPackage.autoShooting = !TeleOpPackage.autoShooting;
         // Manually override turret rotation
         if (gamepad2.dpad_right) hardwareController.manualRotationOverride--;
         if (gamepad2.dpad_left) hardwareController.manualRotationOverride++;
 
         // Switch gate to closed only if robot is not feeding
-        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) < 0.05) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
+        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) < 0.05 && !(TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
 
         // FEEDING CONDITIONAL
         // When trigger is held and flywheel velocity is acceptable, feed
-        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) >= 0.05) {
+        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) >= 0.05 || (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) {
             // Switch gate to open
             hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
             // Switch intake mode to [intake] if needed
@@ -429,8 +435,15 @@ class DebuggerTeleOp extends OpMode {
         packet.put("Velocity (In/Sec)", follower.getVelocity());
         packet.put("Flywheel Velocity (RPS)", hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
 
-        packet.put("Virtual Goal Offset", goalPose.minus(hardwareController.virtualGoalPose));
-        packet.put("Virtual Robot Offset", follower.getPose().minus(hardwareController.virtualRobotPose));
+        packet.put("Virtual Goal Offset", goalPose.minus(new Pose(
+                follower.getPose().getX() + HardwareController.FEEDING_LATENCY * follower.getVelocity().getXComponent() + (Math.pow(HardwareController.FEEDING_LATENCY, 2) / 2) * follower.getAcceleration().getXComponent(),
+                follower.getPose().getY() + HardwareController.FEEDING_LATENCY * follower.getVelocity().getYComponent() + (Math.pow(HardwareController.FEEDING_LATENCY, 2) / 2) * follower.getAcceleration().getYComponent(),
+                follower.getHeading() //+ FEEDING_LATENCY * follower.getAngularVelocity()
+        )));
+        packet.put("Virtual Robot Offset", follower.getPose().minus(new Pose(
+                goalPose.getX() - hardwareController.computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getXComponent() + HardwareController.FEEDING_LATENCY * follower.getAcceleration().getXComponent()),
+                goalPose.getY() - hardwareController.computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getYComponent() + HardwareController.FEEDING_LATENCY * follower.getAcceleration().getYComponent())
+        )));
 
         packet.put("In Shooting Zone", hardwareController.inShootingZone(follower));
         packet.put("Shooting Pose", hardwareController.getNearestShootingPose(follower));

@@ -69,7 +69,7 @@ abstract class DebuggerAuto extends OpMode {
 
         // Hardware controller for mechanism access
         hardwareController = new HardwareController(hardwareMap);
-        HardwareController.SHOOTING_TOLERANCE = 0.0;
+        HardwareController.SHOOTING_TOLERANCE = 3.0;
     }
 
     @Override
@@ -93,15 +93,13 @@ abstract class DebuggerAuto extends OpMode {
         follower.update();
         autoPathUpdate();
 
-        if (cycleState < 5) {
-            // Perform turret updates
-            hardwareController.updateTurret(follower, goalPose);
-            // Auto shoot
-            if (hardwareController.inShootingZone(follower) && !overrideAutoShoot) {
-                hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
-            } else {
-                hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
-            }
+        // Perform turret updates
+        hardwareController.updateTurret(follower, goalPose);
+        // Auto shoot
+        if (hardwareController.inShootingZone(follower) && !overrideAutoShoot) {
+            hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
+        } else {
+            hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
         }
 
         // Log telemetry
@@ -218,21 +216,24 @@ abstract class DebuggerAuto extends OpMode {
         if (pathState == 0 && pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
             hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
             follower.followPath(endAuto, true);
-            incrementCycleState();
 
             // Disable all motors
             hardwareController.gate.setPosition(0.5);
             hardwareController.intake.setPower(0.0);
 
-            // Reset turret
-            hardwareController.flywheelA.setPower(0.0);
-            hardwareController.turretRotation.setTargetPosition(0);
-            hardwareController.turretRotation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            hardwareController.flywheelA.setPower(0.0);
-            hardwareController.flywheelB.setPower(0.0);
-            HardwareController.enableAutoAiming = false; // for good measure
+            // Continue only if not shooting
+            if (!hardwareController.inShootingZone(follower)) {
+                // Reset turret
+                hardwareController.turretRotation.setTargetPosition(0);
+                hardwareController.turretRotation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                // Disable flywheels
+                hardwareController.flywheelA.setPower(0.0);
+                hardwareController.flywheelB.setPower(0.0);
+                HardwareController.enableAutoAiming = false; // for good measure
+                HardwareController.enableFlywheel = false;
 
-            incrementCycleState();
+                incrementCycleState();
+            }
         }
     }
 
@@ -295,10 +296,10 @@ class RedNearAuto extends DebuggerAuto {
     protected Pose postPickup3Pose =         new Pose(53.0, -29.3, Math.toRadians(0.0));
 
     protected Pose RCIntermediatePose =      new Pose(53.7, -15.9, Math.toRadians(28.5));
-    protected Pose RCGatePose =              new Pose(51.5, -7.8, Math.toRadians(26.3));
-    protected Pose RCIntakePose =            new Pose(54.8, -19.0, Math.toRadians(58.9));
+    protected Pose RCGatePose =              new Pose(55.5, -10.5, Math.toRadians(32.9));
+    protected Pose RCIntakePose =            new Pose(56.8, -15.0, Math.toRadians(43.7));
 
-    protected Pose endAutoPose =             new Pose(45.9, 0.0, Math.toRadians(90));
+    protected Pose endAutoPose =             new Pose(15.0, 6.0, Math.toRadians(0.0));
 
     protected Path scorePreload;
     protected PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3, openGateRC, intakeRC, scoreRC, endAuto;
@@ -334,6 +335,7 @@ class RedNearAuto extends DebuggerAuto {
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(postPickup1Pose, scorePose))
                 .setLinearHeadingInterpolation(postPickup1Pose.getHeading(), scorePose.getHeading())
+                .setBrakingStart(1.4)
                 .build();
 
         /* ARTIFACT SET 2 */
@@ -362,6 +364,7 @@ class RedNearAuto extends DebuggerAuto {
         scorePickup3 = follower.pathBuilder()
                 .addPath(new BezierLine(postPickup3Pose, scorePose))
                 .setLinearHeadingInterpolation(postPickup3Pose.getHeading(), scorePose.getHeading())
+                .setBrakingStart(1.4)
                 .build();
 
         /* RAMP CAMP PROTOCOL */
@@ -412,18 +415,23 @@ class RedNearAuto extends DebuggerAuto {
                 runRCCycle(openGateRC, intakeRC, scoreRC);
                 break;
 
-            // Artifact set 1
+            // RC 2
             case 3:
+                runRCCycle(openGateRC, intakeRC, scoreRC);
+                break;
+
+            // Artifact set 1
+            case 4:
                 runArtifactSetCycle(grabPickup1, scorePickup1);
                 break;
 
             // Artifact set 3
-            case 4:
+            case 5:
                 runArtifactSetCycle(grabPickup3, scorePickup3);
                 break;
 
             // End-of-auto parking
-            case 5:
+            case 6:
                 runEndAuto(endAuto);
                 break;
         }
