@@ -84,10 +84,14 @@ public class LiftTest extends LinearOpMode {
                     hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
                     hardwareController.leftFront.setPower(-clutchPower);
                     hardwareController.rightFront.setPower(-clutchPower);
+                    hardwareController.leftBack.setPower(clutchPower/2.0);
+                    hardwareController.rightBack.setPower(clutchPower/2.0);
                 }
                 else {
                     hardwareController.leftFront.setPower(0.0);
                     hardwareController.rightFront.setPower(0.0);
+                    hardwareController.leftBack.setPower(0.0);
+                    hardwareController.rightBack.setPower(0.0);
                 }
             }
             else {

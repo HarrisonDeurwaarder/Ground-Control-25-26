@@ -72,6 +72,18 @@ class DebuggerTeleOp extends OpMode {
 
     // Constants
 
+    public static double clutchPower = 0.3;
+    public static double liftPower = 1.0;
+
+    public double targetSpeed = 30.0;
+    public boolean clutchEngaged = false;
+    public int liftPositionLeft = 0;
+    public int liftPositionRight = 0;
+    public static int liftIncrement = 50;
+    public static int tolerance = 10;
+
+    // Lift Constants
+
     @Override
     public final void init() {
 
