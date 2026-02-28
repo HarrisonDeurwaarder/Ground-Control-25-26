@@ -466,7 +466,7 @@ class DebuggerTeleOp extends OpMode {
 
         // OUTTAKE CONDITIONAL
         // When trigger is held, intake
-        else if (TeleOpPackage.invertControls ? gamepad2.right_bumper : gamepad2.left_bumper) {
+        else if ((TeleOpPackage.invertControls ? gamepad2.right_bumper : gamepad2.left_bumper) && !liftingStarted) {
             // Switch intake mode to reverse if needed
             if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
                 hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -574,7 +574,7 @@ class RedNearTeleOp extends DebuggerTeleOp {
     RedNearTeleOp() {
         super();
         // Reassign poses
-        this.startingPose     = new Pose(45.9, 0.0, Math.toRadians(90));
+        this.startingPose     = new Pose(15.0, 6.0, Math.toRadians(0.0));
         this.goalPose         = new Pose(60.0, 64.0);
         this.recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
     }
@@ -595,8 +595,8 @@ class RedFarTeleOp extends DebuggerTeleOp {
     RedFarTeleOp() {
         super();
         // Reassign poses
-        this.startingPose     = new Pose(36.0, -63.0, Math.toRadians(90.0));
-        this.goalPose         = new Pose(60.0, 60.0);
+        this.startingPose     = new Pose(20.3, -49.1, Math.toRadians(90.0));
+        this.goalPose         = new Pose(60.0, 64.0);
         this.recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
     }
 
@@ -616,8 +616,8 @@ class BlueNearTeleOp extends DebuggerTeleOp {
     BlueNearTeleOp() {
         super();
         // Reassign poses
-        this.startingPose     = new Pose(-47.8, 0.0, Math.toRadians(90));
-        this.goalPose         = new Pose(-60.0, 60.0);
+        this.startingPose     = new Pose(-15.0, 6.0, Math.toRadians(180.0));
+        this.goalPose         = new Pose(-60.0, 64.0);
         this.recalibratedPose = new Pose(64.0, -63.0, Math.toRadians(90.0));
     }
 
@@ -637,8 +637,8 @@ class BlueFarTeleOp extends DebuggerTeleOp {
     BlueFarTeleOp() {
         super();
         // Reassign poses
-        this.startingPose     = new Pose(-36.0, -63.0, Math.toRadians(90.0));
-        this.goalPose         = new Pose(-60.0, 60.0);
+        this.startingPose     = new Pose(-20.3, -49.1, Math.toRadians(90.0));
+        this.goalPose         = new Pose(-60.0, 64.0);
         this.recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
     }
 
