@@ -25,7 +25,7 @@ public class TeleOpPackage extends SelectableOpMode {
     public static double SLOW_MODE_MULTIPLIER = 0.2;
     public static boolean using2Drivers = true;
     public static boolean invertControls = true;
-    public static boolean autoShooting = true;
+    public static boolean autoShooting = false;
     public static boolean debugLift = false;
     public TeleOpPackage() {
         super("Select a TeleOp", s -> {
@@ -379,7 +379,7 @@ class DebuggerTeleOp extends OpMode {
         // Toggle flywheel
         if (gamepad2.bWasPressed()) HardwareController.enableFlywheel = !HardwareController.enableFlywheel;
         // Toggle autoshooting
-        if (gamepad2.xWasPressed()) TeleOpPackage.autoShooting = !TeleOpPackage.autoShooting;
+        // if (gamepad2.xWasPressed()) TeleOpPackage.autoShooting = !TeleOpPackage.autoShooting;
         // Manually override turret rotation
         if (gamepad2.dpad_right) hardwareController.manualRotationOverride--;
         if (gamepad2.dpad_left) hardwareController.manualRotationOverride++;

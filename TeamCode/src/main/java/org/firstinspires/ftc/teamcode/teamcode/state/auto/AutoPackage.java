@@ -290,7 +290,7 @@ class RedNearAuto extends DebuggerAuto {
     protected Pose intermediatePickup2Pose = new Pose(25.9, -6.5, Math.toRadians(0.0));
     protected Pose postPickup2Pose =         new Pose(53.0, -5.5,Math.toRadians(0.0));
 
-    protected Pose intermediatePickup3Pose = new Pose(24.9, -26.8, Math.toRadians(0.0));
+    protected Pose intermediatePickup3Pose = new Pose(22.9, -26.8, Math.toRadians(0.0));
     protected Pose postPickup3Pose =         new Pose(53.0, -29.3, Math.toRadians(0.0));
 
     protected Pose RCIntermediatePose =      new Pose(53.7, -15.9, Math.toRadians(28.5));
@@ -438,9 +438,10 @@ class RedNearAuto extends DebuggerAuto {
 
 class RedFarAuto extends DebuggerAuto {
     protected Pose intermediatePickup1Pose = new Pose(23.3, -31.0, Math.toRadians(0.0));
-    protected Pose postPickup1Pose =    new Pose(51.0, -29.3, Math.toRadians(0.0));
-    protected Pose rcExcessIntakePose = new Pose(57.1, -54.0, Math.toRadians(0.0));
-    protected Pose endAutoPose =        new Pose(33.3, -61.1, Math.toRadians(90.0));
+    protected Pose postPickup1Pose =     new Pose(51.0, -29.3, Math.toRadians(0.0));
+    protected Pose rcExcessIntakePose1 = new Pose(58.3, -36.2, Math.toRadians(-38.9));
+    protected Pose rcExcessIntakePose2 = new Pose(57.4, -55.2, Math.toRadians(-15.7));
+    protected Pose endAutoPose =         new Pose(33.3, -61.1, Math.toRadians(90.0));
 
     protected Path scorePreload;
     protected PathChain grabPickup1, scorePickup1, rcExcessIntake, rcExcessScore, endAuto;
@@ -481,13 +482,13 @@ class RedFarAuto extends DebuggerAuto {
         /* RC EXCESS INTAKE PROTOCOL */
 
         rcExcessIntake = follower.pathBuilder()
-                .addPath(new BezierCurve(scorePose, rcExcessIntakePose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), rcExcessIntakePose.getHeading())
+                .addPath(new BezierCurve(scorePose, rcExcessIntakePose1, rcExcessIntakePose2))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), rcExcessIntakePose2.getHeading())
                 .build();
 
         rcExcessScore = follower.pathBuilder()
-                .addPath(new BezierLine(rcExcessIntakePose, scorePose))
-                .setLinearHeadingInterpolation(rcExcessIntakePose.getHeading(), scorePose.getHeading())
+                .addPath(new BezierLine(rcExcessIntakePose2, scorePose))
+                .setLinearHeadingInterpolation(rcExcessIntakePose2.getHeading(), scorePose.getHeading())
                 .build();
 
         /* PARKING PROTOCOL */
@@ -571,7 +572,8 @@ class BlueFarAuto extends RedFarAuto {
         this.scorePose = new Pose(-17.0, -58.0, Math.toRadians(180.0));
 
         this.postPickup1Pose =    new Pose(-61.5, -67.7, Math.toRadians(180.0));
-        this.rcExcessIntakePose = new Pose(-61.5, -67.7, Math.toRadians(180.0));
+        this.rcExcessIntakePose1 = new Pose(-61.5, -67.7, Math.toRadians(180.0));
+        this.rcExcessIntakePose2 = new Pose(-61.5, -67.7, Math.toRadians(180.0));
         this.endAutoPose =        new Pose(-36.0, -67.7, Math.toRadians(90.0));
     }
 }
