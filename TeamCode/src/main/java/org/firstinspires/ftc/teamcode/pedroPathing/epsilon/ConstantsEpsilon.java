@@ -25,9 +25,9 @@ public class ConstantsEpsilon {
             .useSecondaryHeadingPIDF(false)
             .useSecondaryDrivePIDF(false)
             // PID values
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0.0, 0.002, 0.04))
-            .headingPIDFCoefficients(new PIDFCoefficients(1.0, 0.0, 0.03, 0.045))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.1, 0.0, 0.0, 0.1, 0.5))
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0.0, 0.005, 0.02))
+            .headingPIDFCoefficients(new PIDFCoefficients(0.9, 0.0, 0.03, 0.02))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.09, 0.0, 0.0015, 0.1, 0.5))
             .centripetalScaling(0.0002);
 
     public static MecanumConstants driveConstants = new MecanumConstants()

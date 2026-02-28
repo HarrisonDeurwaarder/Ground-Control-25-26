@@ -223,12 +223,10 @@ abstract class DebuggerAuto extends OpMode {
 
             // Continue only if not shooting
             if (!hardwareController.inShootingZone(follower)) {
-                // Reset turret
-                hardwareController.turretRotation.setTargetPosition(0);
-                hardwareController.turretRotation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 // Disable flywheels
                 hardwareController.flywheelA.setPower(0.0);
                 hardwareController.flywheelB.setPower(0.0);
+                hardwareController.manualRotationOverride = 0;
                 HardwareController.enableAutoAiming = false; // for good measure
                 HardwareController.enableFlywheel = false;
 
@@ -296,10 +294,11 @@ class RedNearAuto extends DebuggerAuto {
     protected Pose postPickup3Pose =         new Pose(53.0, -29.3, Math.toRadians(0.0));
 
     protected Pose RCIntermediatePose =      new Pose(53.7, -15.9, Math.toRadians(28.5));
-    protected Pose RCGatePose =              new Pose(55.5, -10.5, Math.toRadians(32.9));
+    protected Pose RCGatePose =              new Pose(46.6, -0.9, Math.toRadians(0.0));
     protected Pose RCIntakePose =            new Pose(56.8, -15.0, Math.toRadians(43.7));
 
     protected Pose endAutoPose =             new Pose(15.0, 6.0, Math.toRadians(0.0));
+    protected Pose scorePose2 =              new Pose(15.0, 21.0, Math.toRadians(45.0));
 
     protected Path scorePreload;
     protected PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3, openGateRC, intakeRC, scoreRC, endAuto;
@@ -307,7 +306,7 @@ class RedNearAuto extends DebuggerAuto {
     RedNearAuto() {
         super();
         // Reset poses
-        this.goalPose =  new Pose(60.0, 60.0);
+        this.goalPose =  new Pose(63.0, 65.0);
         this.startPose = new Pose(37.0, 68.0, Math.toRadians(0.0));
         this.scorePose = new Pose(15.0, 21.0, Math.toRadians(0.0));
     }
@@ -334,8 +333,7 @@ class RedNearAuto extends DebuggerAuto {
         // Shooting position for artifact set #1
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(postPickup1Pose, scorePose))
-                .setLinearHeadingInterpolation(postPickup1Pose.getHeading(), scorePose.getHeading())
-                .setBrakingStart(1.4)
+                .setLinearHeadingInterpolation(postPickup1Pose.getHeading(), scorePose2.getHeading())
                 .build();
 
         /* ARTIFACT SET 2 */
@@ -364,7 +362,6 @@ class RedNearAuto extends DebuggerAuto {
         scorePickup3 = follower.pathBuilder()
                 .addPath(new BezierLine(postPickup3Pose, scorePose))
                 .setLinearHeadingInterpolation(postPickup3Pose.getHeading(), scorePose.getHeading())
-                .setBrakingStart(1.4)
                 .build();
 
         /* RAMP CAMP PROTOCOL */
