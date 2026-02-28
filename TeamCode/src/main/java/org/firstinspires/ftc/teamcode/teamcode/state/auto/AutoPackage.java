@@ -306,7 +306,7 @@ class RedNearAuto extends DebuggerAuto {
     RedNearAuto() {
         super();
         // Reset poses
-        this.goalPose =  new Pose(63.0, 65.0);
+        this.goalPose =  new Pose(61.5, 63.5);
         this.startPose = new Pose(37.0, 68.0, Math.toRadians(0.0));
         this.scorePose = new Pose(15.0, 21.0, Math.toRadians(0.0));
     }
@@ -440,18 +440,49 @@ class RedFarAuto extends DebuggerAuto {
     protected Pose intermediatePickup1Pose = new Pose(23.3, -31.0, Math.toRadians(0.0));
     protected Pose postPickup1Pose =     new Pose(51.0, -29.3, Math.toRadians(0.0));
     protected Pose rcExcessIntakePose1 = new Pose(58.3, -36.2, Math.toRadians(-38.9));
-    protected Pose rcExcessIntakePose2 = new Pose(57.4, -55.2, Math.toRadians(-15.7));
-    protected Pose endAutoPose =         new Pose(33.3, -61.1, Math.toRadians(90.0));
+    protected Pose rcExcessIntakePose2 = new Pose(58.3, -55.2, Math.toRadians(-38.9));
+    protected Pose endAutoPose =         new Pose(33.3, -49.1, Math.toRadians(90.0));
 
     protected Path scorePreload;
-    protected PathChain grabPickup1, scorePickup1, rcExcessIntake, rcExcessScore, endAuto;
+    protected PathChain grabPickup1, scorePickup1, rcExcessIntake1, rcExcessIntake2, rcExcessScore, endAuto;
 
     RedFarAuto() {
         super();
         // Reset poses
-        this.goalPose =  new Pose(60.0, 60.0);
+        this.goalPose =  new Pose(61.5, 63.5);
         this.startPose = new Pose(28.8, -63.8, Math.toRadians(90.0));
-        this.scorePose = new Pose(14.0, -54.0, Math.toRadians(0.0));
+        this.scorePose = new Pose(14.0, -50.0, Math.toRadians(45.0));
+    }
+
+    protected void runExcessCycle(PathChain excess1, PathChain excess2, PathChain score) {
+        switch (pathState) {
+            // Disable feeder and excess1
+            case 0:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION && !follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
+                    follower.followPath(excess1, true);
+                    incrementPathState();
+                }
+                break;
+            // excess2
+            case 1:
+                if (pathTimer.getElapsedTimeSeconds() >= 3.0 && !follower.isBusy()) {
+                    follower.followPath(excess2, true);
+                    incrementPathState();
+                }
+                break;
+            // Go to score position
+            case 2:
+                if (!follower.isBusy()) {
+                    follower.followPath(score, true);
+                    incrementPathState();
+                }
+                break;
+            // Get to score position
+            case 3:
+                if (!follower.isBusy()) incrementCycleState();
+                break;
+        }
     }
 
     /**
@@ -481,9 +512,14 @@ class RedFarAuto extends DebuggerAuto {
 
         /* RC EXCESS INTAKE PROTOCOL */
 
-        rcExcessIntake = follower.pathBuilder()
-                .addPath(new BezierCurve(scorePose, rcExcessIntakePose1, rcExcessIntakePose2))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), rcExcessIntakePose2.getHeading())
+        rcExcessIntake1 = follower.pathBuilder()
+                .addPath(new BezierCurve(scorePose, rcExcessIntakePose1))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), rcExcessIntakePose1.getHeading())
+                .build();
+
+        rcExcessIntake2 = follower.pathBuilder()
+                .addPath(new BezierCurve(rcExcessIntakePose1, rcExcessIntakePose2))
+                .setLinearHeadingInterpolation(rcExcessIntakePose1.getHeading(), rcExcessIntakePose2.getHeading())
                 .build();
 
         rcExcessScore = follower.pathBuilder()
@@ -516,17 +552,17 @@ class RedFarAuto extends DebuggerAuto {
 
             // RC residual #1
             case 2:
-                runArtifactSetCycle(rcExcessIntake, rcExcessScore);
+                runExcessCycle(rcExcessIntake1, rcExcessIntake2, rcExcessScore);
                 break;
 
             // RC residual #2
             case 3:
-                runArtifactSetCycle(rcExcessIntake, rcExcessScore);
+                runExcessCycle(rcExcessIntake1, rcExcessIntake2, rcExcessScore);
                 break;
 
             // RC residual #3
             case 4:
-                runArtifactSetCycle(rcExcessIntake, rcExcessScore);
+                runExcessCycle(rcExcessIntake1, rcExcessIntake2, rcExcessScore);
                 break;
 
             // End-of-auto parking
