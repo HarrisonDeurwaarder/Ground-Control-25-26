@@ -240,6 +240,17 @@ public class HardwareController {
         }
     }
 
+    public void activateLift() {
+        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFront.setTargetPosition(0);
+        leftFront.setTargetPosition(0);
+        rightFront.setPower(liftPower);
+        leftFront.setPower(liftPower);
+    }
+
     /**
      * Send the turret rotation to a certain angle while maintaining the rotational bounds
      *

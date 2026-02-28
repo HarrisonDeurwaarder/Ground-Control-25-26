@@ -12,6 +12,7 @@ import com.pedropathing.telemetry.SelectableOpMode;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -55,8 +56,6 @@ class DebuggerTeleOp extends OpMode {
     // Boolean flags
     protected boolean isRobotCentric = true;
     protected boolean slowMode = false;
-    protected boolean liftingStarted = false;
-    protected double timeSinceLiftingStarted = 0.0;
 
     // Macro variables
 
@@ -71,7 +70,21 @@ class DebuggerTeleOp extends OpMode {
     protected Path scorePath, parkPath;
 
     // Constants
-    
+
+
+    public static double clutchPower = 0.3;
+    public static double liftPower = 1.0;
+
+    public boolean clutchEngaged = false;
+    public int liftPositionLeft = 0;
+    public int liftPositionRight = 0;
+    public static int liftIncrement = 50;
+    public static int tolerance = 10;
+    protected boolean liftMode = false;
+    protected boolean liftingStarted = false;
+    protected double timeSinceLiftingStarted = 0.0;
+
+    // Lift Constants
 
     @Override
     public final void init() {
@@ -111,7 +124,7 @@ class DebuggerTeleOp extends OpMode {
         displayControls();
         follower.update();
         // Lifting block
-        if (!liftingStarted) {
+        if (!liftMode) {
             setTeleOpDrive();
         }
 
@@ -128,7 +141,7 @@ class DebuggerTeleOp extends OpMode {
         }
 
         // C0nstantly update servo pos
-        if (!liftingStarted) {
+        if (!liftMode) {
             hardwareController.clutchLeft.setPosition(HardwareController.LEFT_CLUTCH_DRIVE_ANGLE);
             hardwareController.clutchRight.setPosition(HardwareController.RIGHT_CLUTCH_DRIVE_ANGLE);
         }
@@ -265,13 +278,47 @@ class DebuggerTeleOp extends OpMode {
         if (gamepad1.bWasPressed()) isRobotCentric = !isRobotCentric;
         // Start lifting
         if (gamepad2.left_bumper && gamepad2.right_bumper && (opmodeTimer.getElapsedTimeSeconds() >= 100.0 || TeleOpPackage.debugLift)) {
-            liftingStarted = true;
-            // Only reset time at start
-            if (timeSinceLiftingStarted == 0.0) {
-                timeSinceLiftingStarted = opmodeTimer.getElapsedTimeSeconds();
+            liftMode = true;
+            hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
+            hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);        }
+
+        // Lifting loop
+        if (liftMode) {
+            if (!liftingStarted) {
+                if (gamepad2.left_trigger > 0.05)
+                {
+                    hardwareController.leftFront.setPower(-clutchPower);
+                    hardwareController.rightFront.setPower(-clutchPower);
+                    hardwareController.leftBack.setPower(clutchPower/2.0);
+                    hardwareController.rightBack.setPower(clutchPower/2.0);
+                }
+                else {
+                    hardwareController.leftFront.setPower(0.0);
+                    hardwareController.rightFront.setPower(0.0);
+                    hardwareController.leftBack.setPower(0.0);
+                    hardwareController.rightBack.setPower(0.0);
+                }
             }
-            // Commence lifting
-            hardwareController.startLift(timeSinceLiftingStarted);
+            else {
+                hardwareController.rightFront.setPower(liftPower);
+                hardwareController.leftFront.setPower(liftPower);
+                if (Math.abs(hardwareController.rightFront.getCurrentPosition() - liftPositionRight) < tolerance
+                        && Math.abs(hardwareController.leftFront.getCurrentPosition() - liftPositionLeft) < tolerance) {
+                    if (gamepad2.left_bumper){
+                        liftPositionLeft -= liftIncrement;
+                        hardwareController.leftFront.setTargetPosition(liftPositionLeft);
+                    }
+                    if (gamepad2.right_bumper) {
+                        liftPositionRight -= liftIncrement;
+                        hardwareController.rightFront.setTargetPosition(liftPositionRight);
+                    }
+                }
+            }
+            if (gamepad2.xWasPressed()) {
+                liftingStarted = true;
+                hardwareController.activateLift();
+            }
+
         }
         // Toggle auto-aiming
         if (gamepad1.xWasPressed()) HardwareController.enableAutoAiming = !HardwareController.enableAutoAiming;
@@ -366,7 +413,7 @@ class DebuggerTeleOp extends OpMode {
         }
         // Start lifting
         if (gamepad2.left_bumper && gamepad2.right_bumper && (opmodeTimer.getElapsedTimeSeconds() >= 100.0 || TeleOpPackage.debugLift)) {
-            liftingStarted = true;
+            liftMode = true;
             // Only reset time at start
             if (timeSinceLiftingStarted == 0.0) {
                 timeSinceLiftingStarted = opmodeTimer.getElapsedTimeSeconds();
@@ -464,6 +511,14 @@ class DebuggerTeleOp extends OpMode {
         packet.put("Power", HardwareController.turretRotationPID.compute(hardwareController.turretTicks, hardwareController.turretRotation.getCurrentPosition()));
 
         packet.put("Distance", hardwareController.distance);
+
+        packet.put("Left Motor Current", hardwareController.leftFront.getCurrent(CurrentUnit.MILLIAMPS));
+        packet.put("Right Motor Current", hardwareController.rightFront.getCurrent(CurrentUnit.MILLIAMPS));
+        packet.put("Left Motor Position", hardwareController.leftFront.getCurrentPosition());
+        packet.put("Right Motor Position", hardwareController.rightFront.getCurrentPosition());
+        packet.put("Lift Started", liftingStarted);
+        packet.put("Lift Mode", liftMode);
+
         dashboard.sendTelemetryPacket(packet);
     }
 
