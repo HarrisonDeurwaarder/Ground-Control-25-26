@@ -24,14 +24,16 @@ public class LiftTest extends LinearOpMode {
     private FtcDashboard dashboard;
 
 
-    public double clutchPower = 0.2;
-    public static double liftPower = 0.8;
+    public static double clutchPower = 0.3;
+    public static double liftPower = 1.0;
 
     public double targetSpeed = 30.0;
     public boolean clutchEngaged = false;
-    public int liftPosition = 0;
-    public int liftIncrement = 100;
-    public static double liftRatio = 1.0; // left:right multiplier
+    public int liftPositionLeft = 0;
+    public int liftPositionRight = 0;
+    public static int liftIncrement = 50;
+    public static int tolerance = 10;
+    //public static double liftRatio = 1.0; // left:right multiplier
 
     public boolean liftStarted = false;
 
@@ -91,10 +93,16 @@ public class LiftTest extends LinearOpMode {
             else {
                 hardwareController.rightFront.setPower(liftPower);
                 hardwareController.leftFront.setPower(liftPower);
-                if (gamepad1.dpadUpWasPressed()) {
-                    liftPosition -= liftIncrement;
-                    hardwareController.rightFront.setTargetPosition(liftPosition);
-                    hardwareController.leftFront.setTargetPosition((int) (liftRatio* (double) liftPosition));
+                if (Math.abs(hardwareController.rightFront.getCurrentPosition() - liftPositionRight) < tolerance
+                && Math.abs(hardwareController.leftFront.getCurrentPosition() - liftPositionLeft) < tolerance) {
+                    if (gamepad1.left_trigger > 0.05){
+                        liftPositionLeft -= liftIncrement;
+                        hardwareController.leftFront.setTargetPosition(liftPositionLeft);
+                    }
+                    if (gamepad1.right_trigger > 0.05) {
+                        liftPositionRight -= liftIncrement;
+                        hardwareController.rightFront.setTargetPosition(liftPositionRight);
+                    }
                 }
             }
             if (gamepad1.xWasPressed()) {
