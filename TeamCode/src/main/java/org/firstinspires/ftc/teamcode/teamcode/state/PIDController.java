@@ -4,7 +4,7 @@ import com.pedropathing.util.Timer;
 
 public class PIDController {
     public double Kp, Ki, Kd, Kf, Ks;
-    public double lastError, lastTimestamp, integral = 0.0;
+    public double lastMeasurement, lastTimestamp, integral = 0.0;
     private Timer plantTimer;
 
     public PIDController(double p, double i, double d, double f, double s) {
@@ -21,7 +21,7 @@ public class PIDController {
 
     @Override
     public String toString() {
-        return String.format("PIDController(p=%g, i=%g, d=%g, f=%g, s=%g, error=%g)", Kp, Ki, Kd, Kf, Ks, lastError);
+        return String.format("PIDController(p=%g, i=%g, d=%g, f=%g, s=%g, error=%g)", Kp, Ki, Kd, Kf, Ks, lastMeasurement);
     }
 
     /**
@@ -60,9 +60,9 @@ public class PIDController {
 
         // Compute PID
         double error = setpoint - measurement;
-        double derivative = -(measurement - lastError) / deltaTime;
+        double derivative = -(measurement - lastMeasurement) / deltaTime;
         integral += error * deltaTime;
-        lastError = measurement;
+        lastMeasurement = measurement;
 
         return Kp * error + Ki * integral + Kd * derivative + Kf * setpoint + Ks * Math.signum(error);
     }
