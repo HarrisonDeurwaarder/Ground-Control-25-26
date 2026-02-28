@@ -174,7 +174,7 @@ class DebuggerTeleOp extends OpMode {
         }
 
         // Auto shoot
-        if (TeleOpPackage.autoShooting && HardwareController.enableAutoAiming && HardwareController.enableFlywheel) {
+        if (TeleOpPackage.autoShooting && HardwareController.enableAutoAiming && HardwareController.enableFlywheel && !liftMode) {
             // Feed if in zone
             if (hardwareController.inShootingZone(follower)) {
                 hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
@@ -442,7 +442,9 @@ class DebuggerTeleOp extends OpMode {
 
         // FEEDING CONDITIONAL
         // When trigger is held and flywheel velocity is acceptable, feed
-        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) >= 0.05 || (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) {
+        if (((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) >= 0.05 ||
+                (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) &&
+                !liftMode) {
             // Switch gate to open
             hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
             // Switch intake mode to [intake] if needed
@@ -455,7 +457,9 @@ class DebuggerTeleOp extends OpMode {
 
         // INTAKE CONDITIONAL
         // When trigger is held, intake
-        else if ((TeleOpPackage.invertControls ? gamepad2.right_trigger : gamepad2.left_trigger) >= 0.05 || gamepad1.right_trigger >= 0.05) {
+        else if (((TeleOpPackage.invertControls ? gamepad2.right_trigger : gamepad2.left_trigger) >= 0.05 ||
+                gamepad1.right_trigger >= 0.05) &&
+                !liftMode) {
             // Switch intake mode to reverse if needed
             if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
                 hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -466,7 +470,7 @@ class DebuggerTeleOp extends OpMode {
 
         // OUTTAKE CONDITIONAL
         // When trigger is held, intake
-        else if ((TeleOpPackage.invertControls ? gamepad2.right_bumper : gamepad2.left_bumper) && !liftingStarted) {
+        else if ((TeleOpPackage.invertControls ? gamepad2.right_bumper : gamepad2.left_bumper) && !liftMode) {
             // Switch intake mode to reverse if needed
             if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
                 hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
