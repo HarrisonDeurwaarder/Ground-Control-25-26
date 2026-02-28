@@ -78,7 +78,7 @@ class DebuggerTeleOp extends OpMode {
     public boolean clutchEngaged = false;
     public int liftPositionLeft = 0;
     public int liftPositionRight = 0;
-    public static int liftIncrement = 50;
+    public static int liftIncrement = 80
     public static int tolerance = 10;
     protected boolean liftMode = false;
     protected boolean liftingStarted = false;
