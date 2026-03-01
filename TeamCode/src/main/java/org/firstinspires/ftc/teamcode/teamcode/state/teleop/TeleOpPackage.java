@@ -142,8 +142,8 @@ class DebuggerTeleOp extends OpMode {
                 hardwareController.leftFront.setPower(-clutchPower);
                 hardwareController.rightFront.setPower(-clutchPower);
 
-                hardwareController.leftBack.setPower(clutchPower);
-                hardwareController.rightBack.setPower(clutchPower);
+                hardwareController.leftBack.setPower(clutchPower/2.0);
+                hardwareController.rightBack.setPower(clutchPower/2.0);
             }
             else {
                 hardwareController.leftFront.setPower(0.0);
