@@ -93,12 +93,12 @@ abstract class DebuggerAuto extends OpMode {
 
         // Perform turret updates
         hardwareController.updateTurret(follower, goalPose);
-        /*// Auto shoot
-        if (hardwareController.inShootingZone(follower) && !overrideAutoShoot) {
+        // Auto shoot
+        if (hardwareController.inShootingZone(follower, false) && !overrideAutoShoot) {
             hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
         } else {
             hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
-        }*/
+        }
 
         // Log telemetry
         updateTelemetry();
@@ -237,7 +237,7 @@ abstract class DebuggerAuto extends OpMode {
             hardwareController.intake.setPower(0.0);
 
             // Continue only if not shooting
-            if (!hardwareController.inShootingZone(follower, true)) {
+            if (!hardwareController.inShootingZone(follower, false)) {
                 // Just in case
                 hardwareController.manualRotationOverride = 0;
                 HardwareController.enableFlywheel = false;
@@ -290,7 +290,7 @@ abstract class DebuggerAuto extends OpMode {
 
         packet.put("Gate Position", hardwareController.gate.getPosition());
 
-        packet.put("In Shooting Zone?", hardwareController.inShootingZone(follower, true));
+        packet.put("In Shooting Zone?", hardwareController.inShootingZone(follower, false));
         packet.put("Auto Shoot Override?", overrideAutoShoot);
 
         packet.put("Position (In)", follower.getPose());
