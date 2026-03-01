@@ -6,12 +6,19 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @Config
 public class HardwareController {
@@ -65,6 +72,9 @@ public class HardwareController {
     public DcMotorEx intake, transfer, flywheelA, flywheelB, turretRotation;
     public Servo turretHood, gate, clutchLeft, clutchRight;
     public Limelight3A limelight;
+    public IMU imu;
+    public IMU.Parameters IMUparams;
+
 
     // Telemetry variables
     public int turretAngle = 180;
@@ -117,6 +127,25 @@ public class HardwareController {
 
         clutchLeft = hardwareMap.get(Servo.class, "clutchLeft");
         clutchRight = hardwareMap.get(Servo.class, "clutchRight");
+
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        IMUparams = new IMU.Parameters(
+                new RevHubOrientationOnRobot(
+                        new Orientation(
+                                AxesReference.INTRINSIC,
+                                AxesOrder.ZYX,
+                                AngleUnit.DEGREES,
+                                0,
+                                0,
+                                90,
+                                0  // acquisitionTime, not used
+                        )
+                )
+        );
+
+        imu.initialize(IMUparams);
+
 
         // Map limelight
         //limelight = hardwareMap.get(Limelight3A.class, "limelight");

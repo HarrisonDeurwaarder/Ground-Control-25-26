@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
@@ -72,17 +73,16 @@ class DebuggerTeleOp extends OpMode {
     // Constants
 
 
-    public static double clutchPower = 0.3;
-    public static double liftPower = 1.0;
-
+    public static double maxLiftPower = 1.0;
+    public static double clutchPower = 0.5;
+    public double leftPower = 0.0;
+    public double rightPower = 0.0;
+    public static double powerModifier = 0.08;
     public boolean clutchEngaged = false;
-    public int liftPositionLeft = 0;
-    public int liftPositionRight = 0;
-    public static int liftIncrement = 80;
-    public static int tolerance = 10;
-    protected boolean liftMode = false;
-    protected boolean liftingStarted = false;
-    protected double timeSinceLiftingStarted = 0.0;
+    public double yaw, pitch, roll;
+    public double pitchOffset = 0.0;
+    public boolean liftStarted = false;
+    public boolean liftMode = false;
 
     // Lift Constants
 
@@ -125,59 +125,46 @@ class DebuggerTeleOp extends OpMode {
     public final void loop() {
         // Display controls on gamepad
         displayControls();
-        follower.update();
         // Lifting block
         if (!liftMode) {
             setTeleOpDrive();
+            follower.update();
         }
         // Lifting loop
         if (liftMode) {
-            if (!liftingStarted) {
-                if (gamepad2.y)
-                {
-                    hardwareController.leftFront.setPower(-clutchPower);
-                    hardwareController.rightFront.setPower(-clutchPower);
-                    hardwareController.leftBack.setPower(clutchPower/2.0);
-                    hardwareController.rightBack.setPower(clutchPower/2.0);
-                }
-                else {
-                    hardwareController.leftFront.setPower(0.0);
-                    hardwareController.rightFront.setPower(0.0);
-                    hardwareController.leftBack.setPower(0.0);
-                    hardwareController.rightBack.setPower(0.0);
-                }
+            if (gamepad2.right_bumper && gamepad2.left_bumper) {
+                hardwareController.leftFront.setPower(-leftPower);
+                hardwareController.rightFront.setPower(-rightPower);
+            }
+            else if (gamepad2.right_bumper) {
+                hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
+                hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
+                hardwareController.leftFront.setPower(-clutchPower);
+                hardwareController.rightFront.setPower(-clutchPower);
+
+                hardwareController.leftBack.setPower(clutchPower);
+                hardwareController.rightBack.setPower(clutchPower);
             }
             else {
-                hardwareController.rightFront.setPower(liftPower);
-                hardwareController.leftFront.setPower(liftPower);
-                if (Math.abs(hardwareController.rightFront.getCurrentPosition() - liftPositionRight) < tolerance
-                        && Math.abs(hardwareController.leftFront.getCurrentPosition() - liftPositionLeft) < tolerance) {
-                    if (gamepad2.left_bumper){
-                        liftPositionLeft -= liftIncrement;
-                        hardwareController.leftFront.setTargetPosition(liftPositionLeft);
-                    }
-                    if (gamepad2.right_bumper) {
-                        liftPositionRight -= liftIncrement;
-                        hardwareController.rightFront.setTargetPosition(liftPositionRight);
-                    }
-                }
+                hardwareController.leftFront.setPower(0.0);
+                hardwareController.rightFront.setPower(0.0);
+
+                hardwareController.leftBack.setPower(0.0);
+                hardwareController.rightBack.setPower(0.0);
             }
-            if (gamepad2.xWasPressed()) {
-                liftingStarted = true;
-                hardwareController.rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                hardwareController.leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                hardwareController.rightFront.setTargetPosition(0);
-                hardwareController.leftFront.setTargetPosition(0);
-                hardwareController.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                hardwareController.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                hardwareController.rightFront.setPower(liftPower);
-                hardwareController.leftFront.setPower(liftPower);
-            }
+
+            yaw = hardwareController.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            roll = hardwareController.imu.getRobotYawPitchRollAngles().getRoll(AngleUnit.DEGREES);
+            pitch = hardwareController.imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES);
+
+            leftPower = Math.min(Math.max(maxLiftPower + powerModifier * (pitch + pitchOffset), 0.0), maxLiftPower);
+            rightPower = Math.min(Math.max(maxLiftPower - powerModifier * (pitch + pitchOffset), 0.0), maxLiftPower);
+
 
         }
 
         // Auto shoot
-        if (TeleOpPackage.autoShooting && HardwareController.enableAutoAiming && HardwareController.enableFlywheel) {
+        if (TeleOpPackage.autoShooting && HardwareController.enableAutoAiming && HardwareController.enableFlywheel && !liftMode) {
             // Feed if in zone
             if (hardwareController.inShootingZone(follower)) {
                 hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
@@ -325,10 +312,14 @@ class DebuggerTeleOp extends OpMode {
         // Toggle robot-centered
         if (gamepad1.bWasPressed()) isRobotCentric = !isRobotCentric;
         // Start lifting
-        if (gamepad2.left_bumper && gamepad2.right_bumper && (opmodeTimer.getElapsedTimeSeconds() >= 100.0 || TeleOpPackage.debugLift)) {
-            liftMode = true;
-            hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
-            hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);        }
+        if (gamepad2.y && (opmodeTimer.getElapsedTimeSeconds() >= 100.0 || TeleOpPackage.debugLift)) {
+            if (!liftMode) {
+                pitchOffset = 0.0 - hardwareController.imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES);
+                liftMode = true;
+            }            hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
+            hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
+        }
+
 
 
         // Toggle auto-aiming
@@ -423,10 +414,14 @@ class DebuggerTeleOp extends OpMode {
             follower.setPose(recalibratedPose.copy());
         }
         // Start lifting
-        if (gamepad2.left_bumper && gamepad2.right_bumper && (opmodeTimer.getElapsedTimeSeconds() >= 100.0 || TeleOpPackage.debugLift)) {
-            liftMode = true;
+        if (gamepad2.y && (opmodeTimer.getElapsedTimeSeconds() >= 100.0 || TeleOpPackage.debugLift)) {
+            if (!liftMode) {
+                pitchOffset = 0.0 - hardwareController.imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES);
+                liftMode = true;
+            }
             hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
             hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
+
 
         }
 
@@ -445,7 +440,9 @@ class DebuggerTeleOp extends OpMode {
 
         // FEEDING CONDITIONAL
         // When trigger is held and flywheel velocity is acceptable, feed
-        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) >= 0.05 || (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) {
+        if (((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) >= 0.05 ||
+                (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) &&
+                !liftMode) {
             // Switch gate to open
             hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
             // Switch intake mode to [intake] if needed
@@ -458,7 +455,9 @@ class DebuggerTeleOp extends OpMode {
 
         // INTAKE CONDITIONAL
         // When trigger is held, intake
-        else if ((TeleOpPackage.invertControls ? gamepad2.right_trigger : gamepad2.left_trigger) >= 0.05 || gamepad1.right_trigger >= 0.05) {
+        else if (((TeleOpPackage.invertControls ? gamepad2.right_trigger : gamepad2.left_trigger) >= 0.05 ||
+                gamepad1.right_trigger >= 0.05) &&
+                !liftMode) {
             // Switch intake mode to reverse if needed
             if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.REVERSE)) {
                 hardwareController.intake.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -469,7 +468,7 @@ class DebuggerTeleOp extends OpMode {
 
         // OUTTAKE CONDITIONAL
         // When trigger is held, intake
-        else if ((TeleOpPackage.invertControls ? gamepad2.right_bumper : gamepad2.left_bumper) && !liftingStarted) {
+        else if ((TeleOpPackage.invertControls ? gamepad2.right_bumper : gamepad2.left_bumper) && !liftMode) {
             // Switch intake mode to reverse if needed
             if (hardwareController.intake.getDirection().equals(DcMotorSimple.Direction.FORWARD)) {
                 hardwareController.intake.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -526,9 +525,13 @@ class DebuggerTeleOp extends OpMode {
 
         packet.put("Left Motor Current", hardwareController.leftFront.getCurrent(CurrentUnit.MILLIAMPS));
         packet.put("Right Motor Current", hardwareController.rightFront.getCurrent(CurrentUnit.MILLIAMPS));
-        packet.put("Left Motor Position", hardwareController.leftFront.getCurrentPosition());
-        packet.put("Right Motor Position", hardwareController.rightFront.getCurrentPosition());
-        packet.put("Lift Started", liftingStarted);
+
+        packet.put("_Yaw", yaw);
+        packet.put("_Roll", roll);
+        packet.put("_Pitch", pitch);
+        packet.put("LeftPower", leftPower);
+        packet.put("RightPower", rightPower);
+        packet.put("PitchOffset", pitchOffset);
         packet.put("Lift Mode", liftMode);
 
         dashboard.sendTelemetryPacket(packet);
