@@ -426,23 +426,18 @@ class RedNearAuto extends DebuggerAuto {
                 runRCCycle(openGateRC, intakeRC, scoreRC);
                 break;
 
-            // RC 2
-            case 3:
-                runRCCycle(openGateRC, intakeRC, scoreRC);
-                break;
-
             // Artifact set 1
-            case 4:
+            case 3:
                 runArtifactSetCycle(grabPickup1, scorePickup1);
                 break;
 
             // Artifact set 3
-            case 5:
+            case 4:
                 runArtifactSetCycle(grabPickup3, scorePickup3);
                 break;
 
             // End-of-auto parking
-            case 6:
+            case 5:
                 runEndAuto(endAuto);
                 break;
         }
