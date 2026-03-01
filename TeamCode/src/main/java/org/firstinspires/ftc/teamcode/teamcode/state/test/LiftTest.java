@@ -7,9 +7,8 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.epsilon.ConstantsEpsilon;
 import org.firstinspires.ftc.teamcode.teamcode.state.HardwareController;
@@ -24,18 +23,15 @@ public class LiftTest extends LinearOpMode {
     private FtcDashboard dashboard;
 
 
-    public static double clutchPower = 0.3;
-    public static double liftPower = 1.0;
-
-    public double targetSpeed = 30.0;
+    public static double clutchPower = 0.5;
+    public double leftPower = 0.0;
+    public double rightPower = 0.0;
+    public static double powerModifier = 0.04;
     public boolean clutchEngaged = false;
-    public int liftPositionLeft = 0;
-    public int liftPositionRight = 0;
-    public static int liftIncrement = 50;
-    public static int tolerance = 10;
-    //public static double liftRatio = 1.0; // left:right multiplier
-
+    public double yaw, pitch, roll;
+    public double pitchOffset = 0.0;
     public boolean liftStarted = false;
+
 
 
     @Override
@@ -68,59 +64,39 @@ public class LiftTest extends LinearOpMode {
             /* NON-DRIVING CONTROLS */
 
             // Switch gate to closed only if robot is not feeding
-            if (gamepad1.rightBumperWasPressed()) clutchEngaged = !clutchEngaged;
-
-            hardwareController.clutchRight.setPosition((clutchEngaged) ?
-                    hardwareController.RIGHT_CLUTCH_LIFT_ANGLE :
-                    hardwareController.RIGHT_CLUTCH_DRIVE_ANGLE);
-            hardwareController.clutchLeft.setPosition((clutchEngaged) ?
-                    hardwareController.LEFT_CLUTCH_LIFT_ANGLE :
-                    hardwareController.LEFT_CLUTCH_DRIVE_ANGLE);
-
-            if (!liftStarted) {
-                if (gamepad1.left_trigger > 0.05)
-                {
-                    hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
-                    hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
-                    hardwareController.leftFront.setPower(-clutchPower);
-                    hardwareController.rightFront.setPower(-clutchPower);
-                    hardwareController.leftBack.setPower(clutchPower/2.0);
-                    hardwareController.rightBack.setPower(clutchPower/2.0);
+            if (gamepad1.right_bumper && gamepad1.left_bumper) {
+                hardwareController.leftFront.setPower(-leftPower);
+                hardwareController.rightFront.setPower(-rightPower);
+            }
+            else if (gamepad1.right_bumper) {
+                if (!liftStarted){
+                    liftStarted = true;
+                    pitchOffset = 0.0 - hardwareController.imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES);
                 }
-                else {
-                    hardwareController.leftFront.setPower(0.0);
-                    hardwareController.rightFront.setPower(0.0);
-                    hardwareController.leftBack.setPower(0.0);
-                    hardwareController.rightBack.setPower(0.0);
-                }
+                hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
+                hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
+                hardwareController.leftFront.setPower(-clutchPower);
+                hardwareController.rightFront.setPower(-clutchPower);
+
+                hardwareController.leftBack.setPower(clutchPower);
+                hardwareController.rightBack.setPower(clutchPower);
             }
             else {
-                hardwareController.rightFront.setPower(liftPower);
-                hardwareController.leftFront.setPower(liftPower);
-                if (Math.abs(hardwareController.rightFront.getCurrentPosition() - liftPositionRight) < tolerance
-                && Math.abs(hardwareController.leftFront.getCurrentPosition() - liftPositionLeft) < tolerance) {
-                    if (gamepad1.left_trigger > 0.05){
-                        liftPositionLeft -= liftIncrement;
-                        hardwareController.leftFront.setTargetPosition(liftPositionLeft);
-                    }
-                    if (gamepad1.right_trigger > 0.05) {
-                        liftPositionRight -= liftIncrement;
-                        hardwareController.rightFront.setTargetPosition(liftPositionRight);
-                    }
-                }
-            }
-            if (gamepad1.xWasPressed()) {
-                liftStarted = true;
-                hardwareController.rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                hardwareController.leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                hardwareController.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                hardwareController.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                hardwareController.rightFront.setTargetPosition(0);
-                hardwareController.leftFront.setTargetPosition(0);
-                hardwareController.rightFront.setPower(liftPower);
-                hardwareController.leftFront.setPower(liftPower);
+                hardwareController.leftFront.setPower(0.0);
+                hardwareController.rightFront.setPower(0.0);
+
+                hardwareController.leftBack.setPower(0.0);
+                hardwareController.rightBack.setPower(0.0);
             }
 
+
+
+            yaw = hardwareController.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            roll = hardwareController.imu.getRobotYawPitchRollAngles().getRoll(AngleUnit.DEGREES);
+            pitch = hardwareController.imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES);
+
+            leftPower = Math.min(Math.max(1.0 + powerModifier * (pitch + pitchOffset), 0.0), 1.0);
+            rightPower = Math.min(Math.max(1.0 - powerModifier * (pitch + pitchOffset), 0.0), 1.0);
 
             updateTelemetry();
         }
@@ -131,6 +107,16 @@ public class LiftTest extends LinearOpMode {
         packet.put("Right Motor Current", hardwareController.rightFront.getCurrent(CurrentUnit.MILLIAMPS));
         packet.put("Left Motor Position", hardwareController.leftFront.getCurrentPosition());
         packet.put("Right Motor Position", hardwareController.rightFront.getCurrentPosition());
+
+        packet.put("_Yaw", yaw);
+        packet.put("_Roll", roll);
+        packet.put("_Pitch", pitch);
+        packet.put("LeftPower", leftPower);
+        packet.put("RightPower", rightPower);
+        packet.put("PitchOffset", pitchOffset);
+
+
+
         dashboard.sendTelemetryPacket(packet);
 
         // Controls (On driver hub telemetry)
