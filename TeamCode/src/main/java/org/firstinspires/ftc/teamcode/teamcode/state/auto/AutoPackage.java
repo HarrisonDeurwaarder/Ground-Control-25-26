@@ -68,6 +68,7 @@ abstract class DebuggerAuto extends OpMode {
         // Hardware controller for mechanism access
         hardwareController = new HardwareController(hardwareMap);
         HardwareController.SHOOTING_TOLERANCE = 3.0;
+        follower.setMaxPower(0.7);
     }
 
     @Override
@@ -94,11 +95,11 @@ abstract class DebuggerAuto extends OpMode {
         // Perform turret updates
         hardwareController.updateTurret(follower, goalPose);
         // Auto shoot
-        if (hardwareController.inShootingZone(follower, false) && !overrideAutoShoot) {
+        /*if (hardwareController.inShootingZone(follower, false) && !overrideAutoShoot) {
             hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
         } else {
             hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
-        }
+        }*/
 
         // Log telemetry
         updateTelemetry();
@@ -137,11 +138,15 @@ abstract class DebuggerAuto extends OpMode {
                 follower.followPath(score);
                 incrementPathState();
                 break;
-            // Feed for duration
+            // Open gate
             case 1:
-                // Advance if flywheel is up to speed
                 if (!follower.isBusy()) {
-                    overrideAutoShoot = false;
+                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
+                }
+            //close gate
+            case 2:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
+                    hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
                     incrementCycleState();
                 }
                 break;
@@ -171,9 +176,17 @@ abstract class DebuggerAuto extends OpMode {
                     incrementPathState();
                 }
                 break;
-            // Get to score position
+            // Open gate
             case 2:
-                if (!follower.isBusy()) incrementCycleState();
+                if (!follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
+                }
+            //close gate
+            case 3:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
+                    hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
+                    incrementCycleState();
+                }
                 break;
         }
     }
@@ -217,9 +230,17 @@ abstract class DebuggerAuto extends OpMode {
                     incrementPathState();
                 }
                 break;
-            // Get to score position
+            // Open gate
             case 5:
-                if (!follower.isBusy()) incrementCycleState();
+                if (!follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
+                }
+            //close gate
+            case 6:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
+                    hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
+                    incrementCycleState();
+                }
                 break;
         }
     }
@@ -501,9 +522,17 @@ class RedFarAuto extends DebuggerAuto {
                     incrementPathState();
                 }
                 break;
-            // Get to score position
+            // Open gate
             case 3:
-                if (!follower.isBusy()) incrementCycleState();
+                if (!follower.isBusy()) {
+                    hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
+                }
+                //close gate
+            case 4:
+                if (pathTimer.getElapsedTimeSeconds() >= FEED_DURATION) {
+                    hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
+                    incrementCycleState();
+                }
                 break;
         }
     }
@@ -588,13 +617,8 @@ class RedFarAuto extends DebuggerAuto {
                 runExcessCycle(rcExcessIntake1, rcExcessIntake2, rcExcessScore);
                 break;
 
-            // RC residual #3
-            case 5:
-                runExcessCycle(rcExcessIntake1, rcExcessIntake2, rcExcessScore);
-                break;
-
             // End-of-auto parking
-            case 6:
+            case 5:
                 runEndAuto(endAuto);
                 break;
         }
