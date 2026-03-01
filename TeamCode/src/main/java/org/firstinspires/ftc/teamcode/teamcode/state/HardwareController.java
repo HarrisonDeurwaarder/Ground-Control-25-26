@@ -42,7 +42,7 @@ public class HardwareController {
     public static double FEEDING_LATENCY = 0.4; // Seconds
     public static double MICRO_TUNING_THRESHOLD = 3.0; // RPS
     public static double SHOOTING_TOLERANCE = 3.0; // Inches
-    public static double AIRTIME_DEFAULT = 0.27;
+    public static double AIRTIME_DEFAULT = 0.25;
 
     // Gate constants
     public static double GATE_OPEN_ANGLE = 0.66;

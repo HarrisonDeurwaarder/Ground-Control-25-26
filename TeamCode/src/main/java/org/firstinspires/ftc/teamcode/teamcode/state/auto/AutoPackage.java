@@ -44,9 +44,7 @@ abstract class DebuggerAuto extends OpMode {
 
     public static double FEED_DURATION      = 0.55;
     public static double RC_GATE_DURATION   = 0.0;
-    public static double RC_INTAKE_DURATION = 1.5;
-    public static double READY_DURATION     = 0.0;
-    public static double FLYWHEEL_ACCEPTED_ERROR = 1.0; // RPS
+    public static double RC_INTAKE_DURATION = 1.0;
 
     protected Pose goalPose =  new Pose(60.0, 60.0);
     protected Pose startPose = new Pose(40.2, 60.9, Math.toRadians(90.0));
