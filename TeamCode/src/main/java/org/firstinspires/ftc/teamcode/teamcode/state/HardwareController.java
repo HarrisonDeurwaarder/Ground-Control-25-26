@@ -35,6 +35,7 @@ public class HardwareController {
     public static double FEEDING_LATENCY = 0.4; // Seconds
     public static double MICRO_TUNING_THRESHOLD = 3.0; // RPS
     public static double SHOOTING_TOLERANCE = 3.0; // Inches
+    public static double AIRTIME_DEFAULT = 0.2;
 
     // Gate constants
     public static double GATE_OPEN_ANGLE = 0.66;
@@ -282,6 +283,15 @@ public class HardwareController {
         return (pose.getY() + SHOOTING_TOLERANCE >= Math.abs(pose.getX())) || (pose.getY() - SHOOTING_TOLERANCE + 48.0 <= -Math.abs(pose.getX()));
     }
 
+    public boolean inShootingZone(Follower follower, double velMagLimit) {
+        Pose pose = follower.getPose();
+        // Check close & far positions
+        boolean inZone = (pose.getY() + SHOOTING_TOLERANCE >= Math.abs(pose.getX())) || (pose.getY() - SHOOTING_TOLERANCE + 48.0 <= -Math.abs(pose.getX()));
+        boolean lowVel = follower.getVelocity().getMagnitude() <= velMagLimit;
+        // Ensure both conditions are true
+        return inZone && lowVel;
+    }
+
     public Pose getNearestShootingPose(Follower follower) {
         Pose pose = follower.getPose();
         double Px = pose.getX();
@@ -343,16 +353,16 @@ public class HardwareController {
         /* VIRTUAL ROBOT POSE */
 
         virtualRobotPose = enableVirtualRobotPose ? new Pose(
-                follower.getPose().getX() + FEEDING_LATENCY * follower.getVelocity().getXComponent() + (Math.pow(FEEDING_LATENCY, 2) / 2) * follower.getAcceleration().getXComponent(),
-                follower.getPose().getY() + FEEDING_LATENCY * follower.getVelocity().getYComponent() + (Math.pow(FEEDING_LATENCY, 2) / 2) * follower.getAcceleration().getYComponent(),
+                follower.getPose().getX() + FEEDING_LATENCY * follower.getVelocity().getXComponent(),
+                follower.getPose().getY() + FEEDING_LATENCY * follower.getVelocity().getYComponent(),
                 follower.getHeading() //+ FEEDING_LATENCY * follower.getAngularVelocity()
         ) : follower.getPose();
 
         /* VIRTUAL GOAL POSE */
 
         virtualGoalPose = enableVirtualGoalPose ? new Pose(
-                goalPose.getX() - computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getXComponent() + FEEDING_LATENCY * follower.getAcceleration().getXComponent()),
-                goalPose.getY() - computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getYComponent() + FEEDING_LATENCY * follower.getAcceleration().getYComponent())
+                goalPose.getX() - computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getXComponent()),
+                goalPose.getY() - computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getYComponent())
         ) : goalPose;
     }
 
@@ -367,13 +377,13 @@ public class HardwareController {
         } else if (distance <= 80) {
             targetSpeed = 0.3 * distance + 25.0;
         } else if (distance <= 90) {
-            targetSpeed = 0.2 * distance + 33.0;
-        } else if (distance <= 120) {
-            targetSpeed = 0.23 * distance + 29.0;
-        } else if (distance <= 130) {
-            targetSpeed = 0.3 * distance + 21.0;
-        } else {
             targetSpeed = 0.2 * distance + 34.0;
+        } else if (distance <= 120) {
+            targetSpeed = 0.23 * distance + 31.0;
+        } else if (distance <= 130) {
+            targetSpeed = 0.3 * distance + 25.0;
+        } else {
+            targetSpeed = 0.2 * distance + 39.5;
         }
 
         // Compute hood angle
@@ -388,7 +398,8 @@ public class HardwareController {
         }
     }
 
-    public double computeAirtime(Pose robotPose, Pose goalPose) { return 0.0479 * robotPose.distanceFrom(goalPose) + 0.676; }
+    //public double computeAirtime(Pose robotPose, Pose goalPose) { return 0.0479 * robotPose.distanceFrom(goalPose) + 0.676; }
+    public double computeAirtime(Pose robotPose, Pose goalPose) { return AIRTIME_DEFAULT; }
 
     // Hood Angle: 0.00438x + 0.0457
     // Flywheel Speed (RPS): 0.176x + 33.9

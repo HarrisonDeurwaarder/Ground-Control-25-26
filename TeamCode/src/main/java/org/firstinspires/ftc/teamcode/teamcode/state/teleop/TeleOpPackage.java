@@ -101,7 +101,9 @@ class DebuggerTeleOp extends OpMode {
 
         // Configure follower
         follower = ConstantsEpsilon.createFollower(hardwareMap);
-        follower.setStartingPose(startingPose);
+        follower.setStartingPose(
+                (Pose) blackboard.getOrDefault("Auto Ending Pose", startingPose)
+        );
         follower.update();
 
         //loadMacroPaths();
@@ -110,6 +112,7 @@ class DebuggerTeleOp extends OpMode {
         dashboard = FtcDashboard.getInstance();
 
         follower.startTeleOpDrive(true);
+
     }
 
     @Override
@@ -488,6 +491,7 @@ class DebuggerTeleOp extends OpMode {
         packet.put("Position (In)", follower.getPose());
         packet.put("Velocity (In/Sec)", follower.getVelocity());
         packet.put("Flywheel Velocity (RPS)", hardwareController.flywheelA.getVelocity() / (HardwareController.FLYWHEEL_TICKS_PER_DEGREE * 360));
+        packet.put("FW Target vel", hardwareController.targetSpeed);
 
         packet.put("Virtual Goal Offset", goalPose.minus(new Pose(
                 follower.getPose().getX() + HardwareController.FEEDING_LATENCY * follower.getVelocity().getXComponent() + (Math.pow(HardwareController.FEEDING_LATENCY, 2) / 2) * follower.getAcceleration().getXComponent(),
@@ -498,6 +502,8 @@ class DebuggerTeleOp extends OpMode {
                 goalPose.getX() - hardwareController.computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getXComponent() + HardwareController.FEEDING_LATENCY * follower.getAcceleration().getXComponent()),
                 goalPose.getY() - hardwareController.computeAirtime(follower.getPose(), goalPose) * (follower.getVelocity().getYComponent() + HardwareController.FEEDING_LATENCY * follower.getAcceleration().getYComponent())
         )));
+        packet.put("FWA Power", hardwareController.flywheelA.getPower());
+        packet.put("FWA Power", hardwareController.flywheelB.getPower());
 
         packet.put("In Shooting Zone", hardwareController.inShootingZone(follower));
         packet.put("Shooting Pose", hardwareController.getNearestShootingPose(follower));
@@ -574,7 +580,7 @@ class RedNearTeleOp extends DebuggerTeleOp {
     RedNearTeleOp() {
         super();
         // Reassign poses
-        this.startingPose     = new Pose(15.0, 0.0, Math.toRadians(0.0));
+        this.startingPose     = new Pose(14.4, -0.4, Math.toRadians(0.0));
         this.goalPose         = new Pose(60.0, 64.0);
         this.recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
     }
@@ -595,7 +601,7 @@ class RedFarTeleOp extends DebuggerTeleOp {
     RedFarTeleOp() {
         super();
         // Reassign poses
-        this.startingPose     = new Pose(20.3, -49.1, Math.toRadians(90.0));
+        this.startingPose     = new Pose(16.3, -40.7, Math.toRadians(90.0));
         this.goalPose         = new Pose(60.0, 64.0);
         this.recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
     }
@@ -616,7 +622,7 @@ class BlueNearTeleOp extends DebuggerTeleOp {
     BlueNearTeleOp() {
         super();
         // Reassign poses
-        this.startingPose     = new Pose(-15.0, 0.0, Math.toRadians(180.0));
+        this.startingPose     = new Pose(-14.4, -0.4, Math.toRadians(0.0));
         this.goalPose         = new Pose(-60.0, 64.0);
         this.recalibratedPose = new Pose(64.0, -63.0, Math.toRadians(90.0));
     }
@@ -637,7 +643,7 @@ class BlueFarTeleOp extends DebuggerTeleOp {
     BlueFarTeleOp() {
         super();
         // Reassign poses
-        this.startingPose     = new Pose(-20.3, -49.1, Math.toRadians(90.0));
+        this.startingPose     = new Pose(-16.3, -40.7, Math.toRadians(90.0));
         this.goalPose         = new Pose(-60.0, 64.0);
         this.recalibratedPose = new Pose(-64.0, -63.0, Math.toRadians(90.0));
     }

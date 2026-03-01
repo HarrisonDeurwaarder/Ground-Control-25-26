@@ -81,8 +81,8 @@ abstract class DebuggerAuto extends OpMode {
         // Hardware flags
         HardwareController.enableAutoAiming = true;
         HardwareController.enableFlywheel = true;
-        HardwareController.enableVirtualGoalPose = false;
-        HardwareController.enableVirtualRobotPose = false;
+        HardwareController.enableVirtualGoalPose = true;
+        HardwareController.enableVirtualRobotPose = true;
         // Provide constant intake power
         hardwareController.intake.setPower(HardwareController.INTAKE_POWER);
     }
@@ -104,6 +104,20 @@ abstract class DebuggerAuto extends OpMode {
 
         // Log telemetry
         updateTelemetry();
+    }
+
+    @Override
+    public final void stop() {
+        // Save ending position to blackboard
+        blackboard.put("Auto Ending Pose", follower.getPose());
+        // Disable all motors
+        hardwareController.gate.setPosition(0.5);
+        hardwareController.intake.setPower(0.0);
+        follower.breakFollowing();
+        // Reset turret
+        hardwareController.flywheelA.setPower(0.0);
+        hardwareController.flywheelB.setPower(0.0);
+        hardwareController.turretRotation.setTargetPosition(0);
     }
 
     protected abstract void buildPaths();
@@ -295,9 +309,9 @@ class RedNearAuto extends DebuggerAuto {
 
     protected Pose RCIntermediatePose =      new Pose(53.7, -15.9, Math.toRadians(28.5));
     protected Pose RCGatePose =              new Pose(48.6, -0.9, Math.toRadians(0.0));
-    protected Pose RCIntakePose =            new Pose(57.3, -15.0, Math.toRadians(43.7));
+    protected Pose RCIntakePose =            new Pose(59.3, -15.0, Math.toRadians(43.7));
 
-    protected Pose endAutoPose =             new Pose(15.0, 0.0, Math.toRadians(0.0));
+    protected Pose endAutoPose =             new Pose(14.4, -0.4, Math.toRadians(0.0));
     protected Pose scorePose2 =              new Pose(15.0, 21.0, Math.toRadians(45.0));
 
     protected Path scorePreload;
@@ -306,7 +320,7 @@ class RedNearAuto extends DebuggerAuto {
     RedNearAuto() {
         super();
         // Reset poses
-        this.goalPose =  new Pose(67.5, 60.5);
+        this.goalPose =  new Pose(60.0, 64.0);
         this.startPose = new Pose(37.0, 68.0, Math.toRadians(0.0));
         this.scorePose = new Pose(15.0, 21.0, Math.toRadians(0.0));
     }
@@ -441,7 +455,7 @@ class RedFarAuto extends DebuggerAuto {
     protected Pose postPickup1Pose =     new Pose(38.0, -29.3, Math.toRadians(0.0));
     protected Pose rcExcessIntakePose1 = new Pose(53.3, -36.2, Math.toRadians(-38.9));
     protected Pose rcExcessIntakePose2 = new Pose(56.3, -55.2, Math.toRadians(-38.9));
-    protected Pose endAutoPose =         new Pose(20.3, -49.1, Math.toRadians(90.0));
+    protected Pose endAutoPose =         new Pose(16.3, -40.7, Math.toRadians(90.0));
 
     protected Path scorePreload;
     protected PathChain grabPickup1, scorePickup1, rcExcessIntake1, rcExcessIntake2, rcExcessScore, endAuto;
@@ -449,7 +463,7 @@ class RedFarAuto extends DebuggerAuto {
     RedFarAuto() {
         super();
         // Reset poses
-        this.goalPose =  new Pose(61.5, 63.5);
+        this.goalPose =  new Pose(60.0, 64.0);
         this.startPose = new Pose(15.8, -63.8, Math.toRadians(90.0));
         this.scorePose = new Pose(1.0, -50.0, Math.toRadians(45.0));
     }
@@ -590,7 +604,7 @@ class BlueNearAuto extends RedNearAuto {
     BlueNearAuto() {
         super();
         // Reset poses
-        this.goalPose =  new Pose(-67.5, 60.5);
+        this.goalPose =  new Pose(-60.0, 64.0);
         this.startPose = new Pose(-37.0, 68.0, Math.toRadians(180.0));
         this.scorePose = new Pose(-15.0, 21.0, Math.toRadians(180.0));
         this.scorePose2 = new Pose(-15.0, 21.0, Math.toRadians(180.0 - 45.0));
@@ -598,14 +612,14 @@ class BlueNearAuto extends RedNearAuto {
         this.postPickup1Pose =         new Pose(-47.5, 16.3, Math.toRadians(180.0));
 
         this.intermediatePickup2Pose = new Pose(-25.9, -6.5, Math.toRadians(180.0));
-        this.postPickup2Pose =         new Pose(-53.0, -5.5,Math.toRadians(180.0));
+        this.postPickup2Pose =         new Pose(-57.0, -5.5,Math.toRadians(180.0));
 
         this.intermediatePickup3Pose = new Pose(-22.9, -26.8, Math.toRadians(180.0));
         this.postPickup3Pose =         new Pose(-53.0, -29.3, Math.toRadians(180.0));
 
         this.RCIntermediatePose =      new Pose(-53.7, -15.9, Math.toRadians(180.0 - 28.5));
         this.RCGatePose =              new Pose(-48.6, -0.9, Math.toRadians(180.0));
-        this.RCIntakePose =            new Pose(-57.3, -15.0, Math.toRadians(180.0 - 43.7));
+        this.RCIntakePose =            new Pose(-61.3, -15.0, Math.toRadians(180.0 - 43.7));
 
         this.endAutoPose =             new Pose(-15.0, 0.0, Math.toRadians(180.0));
     }
@@ -616,7 +630,7 @@ class BlueFarAuto extends RedFarAuto {
     BlueFarAuto() {
         super();
         // Reset poses
-        this.goalPose =  new Pose(-61.5, 63.5);
+        this.goalPose =  new Pose(-60.0, 64.0);
         this.startPose = new Pose(-15.8, -63.8, Math.toRadians(90.0));
         this.scorePose = new Pose(-1.0, -50.0, Math.toRadians(180.0 - 45.0));
 
@@ -624,6 +638,6 @@ class BlueFarAuto extends RedFarAuto {
         this.postPickup1Pose =    new Pose(-38.0, -29.3, Math.toRadians(180.0));
         this.rcExcessIntakePose1 = new Pose(-53.3, -36.2, Math.toRadians(180.0 + 38.9));
         this.rcExcessIntakePose2 = new Pose(-56.3, -55.2, Math.toRadians(180.0 + 38.9));
-        this.endAutoPose =        new Pose(-20.3, -49.1, Math.toRadians(90.0));
+        this.endAutoPose =        new Pose(-16.3, -40.7, Math.toRadians(90.0));
     }
 }
