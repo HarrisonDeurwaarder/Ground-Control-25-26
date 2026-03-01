@@ -93,21 +93,24 @@ abstract class DebuggerAuto extends OpMode {
 
         // Perform turret updates
         hardwareController.updateTurret(follower, goalPose);
-        // Auto shoot
+        /*// Auto shoot
         if (hardwareController.inShootingZone(follower) && !overrideAutoShoot) {
             hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
         } else {
             hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
-        }
+        }*/
 
         // Log telemetry
         updateTelemetry();
+
+        // Save ending position to blackboard in case of issues
+        blackboard.put("Auto Pose", follower.getPose());
     }
 
     @Override
     public final void stop() {
         // Save ending position to blackboard
-        blackboard.put("Auto Ending Pose", follower.getPose());
+        blackboard.put("Auto Pose", follower.getPose());
         // Disable all motors
         hardwareController.gate.setPosition(0.5);
         hardwareController.intake.setPower(0.0);
@@ -234,13 +237,19 @@ abstract class DebuggerAuto extends OpMode {
             hardwareController.intake.setPower(0.0);
 
             // Continue only if not shooting
-            if (!hardwareController.inShootingZone(follower)) {
+            if (!hardwareController.inShootingZone(follower, true)) {
+                // Just in case
+                hardwareController.manualRotationOverride = 0;
+                HardwareController.enableFlywheel = false;
+                HardwareController.enableAutoAiming = false;
                 // Disable flywheels
+                hardwareController.gate.setPosition(0.5);
+                hardwareController.intake.setPower(0.0);
+                follower.breakFollowing();
+                // Reset turret
                 hardwareController.flywheelA.setPower(0.0);
                 hardwareController.flywheelB.setPower(0.0);
-                hardwareController.manualRotationOverride = 0;
-                HardwareController.enableAutoAiming = false; // for good measure
-                HardwareController.enableFlywheel = false;
+                hardwareController.turretRotation.setTargetPosition(0);
 
                 incrementCycleState();
             }
@@ -281,7 +290,7 @@ abstract class DebuggerAuto extends OpMode {
 
         packet.put("Gate Position", hardwareController.gate.getPosition());
 
-        packet.put("In Shooting Zone?", hardwareController.inShootingZone(follower));
+        packet.put("In Shooting Zone?", hardwareController.inShootingZone(follower, true));
         packet.put("Auto Shoot Override?", overrideAutoShoot);
 
         packet.put("Position (In)", follower.getPose());
@@ -446,8 +455,8 @@ class RedNearAuto extends DebuggerAuto {
 class RedFarAuto extends DebuggerAuto {
     protected Pose intermediatePickup1Pose = new Pose(10.3, -31.0, Math.toRadians(0.0));
     protected Pose postPickup1Pose =     new Pose(38.0, -29.3, Math.toRadians(0.0));
-    protected Pose rcExcessIntakePose1 = new Pose(53.3, -36.2, Math.toRadians(-38.9));
-    protected Pose rcExcessIntakePose2 = new Pose(56.3, -55.2, Math.toRadians(-38.9));
+    protected Pose rcExcessIntakePose1 = new Pose(55.3, -36.2, Math.toRadians(-38.9));
+    protected Pose rcExcessIntakePose2 = new Pose(57.3, -55.2, Math.toRadians(-38.9));
     protected Pose endAutoPose =         new Pose(16.3, -40.7, Math.toRadians(90.0));
 
     protected Path scorePreload;
@@ -458,12 +467,12 @@ class RedFarAuto extends DebuggerAuto {
         // Reset poses
         this.goalPose =  new Pose(60.0, 64.0);
         this.startPose = new Pose(15.8, -63.8, Math.toRadians(90.0));
-        this.scorePose = new Pose(1.0, -50.0, Math.toRadians(45.0));
+        this.scorePose = new Pose(3.0, -55.0, Math.toRadians(45.0));
     }
 
-    protected void runDelay() {
+    protected void runDelay(double delay) {
         // Run delay
-        if (pathTimer.getElapsedTimeSeconds() >= 3.0) {
+        if (pathTimer.getElapsedTimeSeconds() >= delay) {
             incrementCycleState();
         }
     }
@@ -556,7 +565,7 @@ class RedFarAuto extends DebuggerAuto {
         switch (cycleState) {
             // Initial delay
             case 0:
-                runDelay();
+                runDelay(3.0);
                 break;
 
             // Preload

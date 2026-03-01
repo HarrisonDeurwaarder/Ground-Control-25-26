@@ -26,7 +26,7 @@ public class TeleOpPackage extends SelectableOpMode {
     public static Follower follower;
     public static double SLOW_MODE_MULTIPLIER = 0.2;
     public static boolean using2Drivers = true;
-    public static boolean invertControls = true;
+    public static boolean invertControls = false;
     public static boolean autoShooting = false;
     public static boolean debugLift = false;
     public TeleOpPackage() {
@@ -102,7 +102,7 @@ class DebuggerTeleOp extends OpMode {
         // Configure follower
         follower = ConstantsEpsilon.createFollower(hardwareMap);
         follower.setStartingPose(
-                (Pose) blackboard.getOrDefault("Auto Ending Pose", startingPose)
+                (Pose) blackboard.getOrDefault("Auto Pose", startingPose)
         );
         follower.update();
 
@@ -137,8 +137,8 @@ class DebuggerTeleOp extends OpMode {
                 hardwareController.rightFront.setPower(-rightPower);
             }
             else if (gamepad2.right_bumper) {
-                hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
-                hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
+                hardwareController.clutchRight.setPosition(HardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
+                hardwareController.clutchLeft.setPosition(HardwareController.LEFT_CLUTCH_LIFT_ANGLE);
                 hardwareController.leftFront.setPower(-clutchPower);
                 hardwareController.rightFront.setPower(-clutchPower);
 
@@ -166,7 +166,7 @@ class DebuggerTeleOp extends OpMode {
         // Auto shoot
         if (TeleOpPackage.autoShooting && HardwareController.enableAutoAiming && HardwareController.enableFlywheel && !liftMode) {
             // Feed if in zone
-            if (hardwareController.inShootingZone(follower)) {
+            if (hardwareController.inShootingZone(follower, false)) {
                 hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
             }
             // Stop feeding if not in zone (and manual trigger is not active)
@@ -316,8 +316,8 @@ class DebuggerTeleOp extends OpMode {
             if (!liftMode) {
                 pitchOffset = 0.0 - hardwareController.imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES);
                 liftMode = true;
-            }            hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
-            hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
+            }            hardwareController.clutchLeft.setPosition(HardwareController.LEFT_CLUTCH_LIFT_ANGLE);
+            hardwareController.clutchRight.setPosition(HardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
         }
 
 
@@ -331,11 +331,11 @@ class DebuggerTeleOp extends OpMode {
         if (gamepad1.dpad_down) parkingMacro();
 
         // Switch gate to closed only if robot is not feeding
-        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) < 0.05 && !(TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
+        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) < 0.05 && !(TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower, false))) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
 
         // FEEDING CONDITIONAL
         // When trigger is held and flywheel velocity is acceptable, feed
-        if ((TeleOpPackage.invertControls ? gamepad1.left_trigger : gamepad1.right_trigger) >= 0.05 || (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) {
+        if ((TeleOpPackage.invertControls ? gamepad1.left_trigger : gamepad1.right_trigger) >= 0.05 || (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower, false))) {
             // Switch gate to open
             hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
             // Switch intake mode to [intake] if needed
@@ -419,8 +419,8 @@ class DebuggerTeleOp extends OpMode {
                 pitchOffset = 0.0 - hardwareController.imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES);
                 liftMode = true;
             }
-            hardwareController.clutchLeft.setPosition(hardwareController.LEFT_CLUTCH_LIFT_ANGLE);
-            hardwareController.clutchRight.setPosition(hardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
+            hardwareController.clutchLeft.setPosition(HardwareController.LEFT_CLUTCH_LIFT_ANGLE);
+            hardwareController.clutchRight.setPosition(HardwareController.RIGHT_CLUTCH_LIFT_ANGLE);
 
 
         }
@@ -436,12 +436,12 @@ class DebuggerTeleOp extends OpMode {
         if (gamepad2.dpad_left) hardwareController.manualRotationOverride++;
 
         // Switch gate to closed only if robot is not feeding
-        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) < 0.05 && !(TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
+        if ((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) < 0.05 && !(TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower, false))) hardwareController.gate.setPosition(HardwareController.GATE_CLOSED_ANGLE);
 
         // FEEDING CONDITIONAL
         // When trigger is held and flywheel velocity is acceptable, feed
         if (((TeleOpPackage.invertControls ? gamepad2.left_trigger : gamepad2.right_trigger) >= 0.05 ||
-                (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower))) &&
+                (TeleOpPackage.autoShooting && hardwareController.inShootingZone(follower, false))) &&
                 !liftMode) {
             // Switch gate to open
             hardwareController.gate.setPosition(HardwareController.GATE_OPEN_ANGLE);
@@ -504,7 +504,7 @@ class DebuggerTeleOp extends OpMode {
         packet.put("FWA Power", hardwareController.flywheelA.getPower());
         packet.put("FWA Power", hardwareController.flywheelB.getPower());
 
-        packet.put("In Shooting Zone", hardwareController.inShootingZone(follower));
+        packet.put("In Shooting Zone", hardwareController.inShootingZone(follower, false));
         packet.put("Shooting Pose", hardwareController.getNearestShootingPose(follower));
         packet.put("Upper Zone", follower.getPose().getY() + HardwareController.SHOOTING_TOLERANCE >= Math.abs(follower.getPose().getX()));
         packet.put("Lower Zone", follower.getPose().getY() - HardwareController.SHOOTING_TOLERANCE + 48.0 <= -Math.abs(follower.getPose().getX()));

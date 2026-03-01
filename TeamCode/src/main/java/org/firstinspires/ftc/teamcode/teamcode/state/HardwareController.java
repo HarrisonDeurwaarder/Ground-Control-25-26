@@ -306,19 +306,11 @@ public class HardwareController {
         );
     }
 
-    public boolean inShootingZone(Follower follower) {
-        Pose pose = follower.getPose();
-        // Check close & far positions
-        return (pose.getY() + SHOOTING_TOLERANCE >= Math.abs(pose.getX())) || (pose.getY() - SHOOTING_TOLERANCE + 48.0 <= -Math.abs(pose.getX()));
-    }
-
-    public boolean inShootingZone(Follower follower, double velMagLimit) {
+    public boolean inShootingZone(Follower follower, boolean enforceNoPath) {
         Pose pose = follower.getPose();
         // Check close & far positions
         boolean inZone = (pose.getY() + SHOOTING_TOLERANCE >= Math.abs(pose.getX())) || (pose.getY() - SHOOTING_TOLERANCE + 48.0 <= -Math.abs(pose.getX()));
-        boolean lowVel = follower.getVelocity().getMagnitude() <= velMagLimit;
-        // Ensure both conditions are true
-        return inZone && lowVel;
+        return inZone && !(enforceNoPath && follower.isBusy());
     }
 
     public Pose getNearestShootingPose(Follower follower) {
@@ -412,7 +404,7 @@ public class HardwareController {
         } else if (distance <= 130) {
             targetSpeed = 0.3 * distance + 25.0;
         } else {
-            targetSpeed = 0.2 * distance + 39.5;
+            targetSpeed = 0.2 * distance + 38.5;
         }
 
         // Compute hood angle
